@@ -368,6 +368,31 @@ describe('LobbyDiscoveryUI', () => {
     expect(maxInput.max).toBe('62');
   });
 
+  it('does not collapse the team max slider to exactly 2x min when the 2x toggle is enabled', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+    const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
+    const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement;
+
+    minSlider.value = '8';
+    minSlider.dispatchEvent(new Event('input'));
+    maxSlider.value = '20';
+    maxSlider.dispatchEvent(new Event('input'));
+
+    twoTimesCheckbox.checked = true;
+    twoTimesCheckbox.dispatchEvent(new Event('change'));
+
+    expect(maxSlider.value).toBe('20');
+  });
+
   it('renders without the old player-list discovery slot and exposes FFA and 2x controls', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
@@ -551,6 +576,46 @@ describe('LobbyDiscoveryUI', () => {
     ui.receiveLobbyUpdate(lobbies);
 
     expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(2);
+  });
+
+  it('evaluates every lobby instead of only the first displayed lobby per source', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 30, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const lobbies = [
+      {
+        gameID: 'ffa-too-small',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+      {
+        gameID: 'ffa-match',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 40,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(1);
+    const [notificationPayload] = vi.mocked(BrowserNotificationUtils.show).mock.calls[0] ?? [];
+    expect(notificationPayload?.tag).toContain('ffa-match');
   });
 
   it('cleanup clears queue card pulses without scheduling another sync tick', () => {

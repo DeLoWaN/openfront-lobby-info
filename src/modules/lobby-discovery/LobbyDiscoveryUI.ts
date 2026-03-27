@@ -170,16 +170,16 @@ export class LobbyDiscoveryUI {
         return;
       }
 
-      const displayedLobbies = this.getDisplayedLobbiesBySource(lobbies);
       const matchedSources = new Set<QueueSource>();
       const matchedKeys = new Set<string>();
       const newMatches: Lobby[] = [];
       let hasNewMatch = false;
 
-      for (const [source, lobby] of Object.entries(displayedLobbies) as Array<
-        [QueueSource, Lobby | undefined]
-      >) {
-        if (!lobby) continue;
+      for (const lobby of lobbies) {
+        const source = getLobbyQueueSource(lobby);
+        if (!source) {
+          continue;
+        }
         if (
           !this.engine.matchesCriteria(lobby, this.criteriaList, {
             isTeamTwoTimesMinEnabled: this.isTeamTwoTimesMinEnabled,
@@ -275,23 +275,6 @@ export class LobbyDiscoveryUI {
     }
 
     return true;
-  }
-
-  private getDisplayedLobbiesBySource(
-    lobbies: Lobby[]
-  ): Partial<Record<QueueSource, Lobby>> {
-    const displayed: Partial<Record<QueueSource, Lobby>> = {};
-
-    for (const lobby of lobbies) {
-      const source = getLobbyQueueSource(lobby);
-      if (!source || displayed[source]) {
-        continue;
-      }
-
-      displayed[source] = lobby;
-    }
-
-    return displayed;
   }
 
   private getQueueCardElements(): Partial<Record<QueueSource, HTMLElement>> {
@@ -795,8 +778,7 @@ export class LobbyDiscoveryUI {
     let maxVal = parseInt(maxSlider.value, 10);
 
     if (applyTwoTimesConstraint && this.isTeamTwoTimesMinEnabled) {
-      maxVal = Math.min(parseInt(maxSlider.max, 10), Math.max(1, 2 * minVal));
-      maxSlider.value = String(maxVal);
+      maxVal = Math.min(parseInt(maxSlider.max, 10), Math.max(1, maxVal));
     }
 
     if (minVal > maxVal) {
