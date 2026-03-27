@@ -1,6 +1,6 @@
 {
   "name": "openfront-bundle-userscript",
-  "version": "2.7.1",
+  "version": "2.8.15",
   "description": "OpenFront.io Lobby Intel + Discovery",
   "type": "module",
   "scripts": {

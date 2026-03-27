@@ -13,7 +13,17 @@ export interface GameConfig {
   gameMap?: string;
   gameMapSize?: 'Compact' | 'Normal' | string;
   publicGameModifiers?: {
-    isCompact: boolean;
+    isCompact?: boolean;
+    isRandomSpawn?: boolean;
+    isCrowded?: boolean;
+    isHardNations?: boolean;
+    startingGold?: number;
+    goldMultiplier?: number;
+    isAlliancesDisabled?: boolean;
+    isPortsDisabled?: boolean;
+    isNukesDisabled?: boolean;
+    isSAMsDisabled?: boolean;
+    isPeaceTime?: boolean;
   };
   disableNations?: boolean;
   maxClients?: number;
@@ -28,6 +38,9 @@ export interface Lobby {
   gameID: string;
   gameConfig: GameConfig;
   maxClients?: number;
+  numClients?: number;
+  publicGameType?: 'ffa' | 'team' | 'special' | string;
+  startsAt?: number;
 }
 
 /**
@@ -38,6 +51,11 @@ export interface LobbiesUpdateMessage {
   data?: {
     lobbies: Lobby[];
   };
+}
+
+export interface PublicGamesResponse {
+  games?: Partial<Record<'ffa' | 'team' | 'special', Lobby[]>>;
+  serverTime?: number;
 }
 
 /**

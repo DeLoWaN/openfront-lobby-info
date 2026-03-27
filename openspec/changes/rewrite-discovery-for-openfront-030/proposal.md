@@ -15,9 +15,21 @@ regressions.
 - Adapt the existing discovery flow to OpenFront `0.30` public queue data while
   preserving the prior userscript look-and-feel, panel structure, and visual
   personality wherever practical.
+- Remove the obsolete player-list/sidebar product surface instead of trying to
+  keep it alive alongside the `0.30` homepage.
 - Add `FFA`, `Team`, `Humans Vs Nations`, and modifier support through minimal
   extensions of the existing panel instead of a redesign.
-- Keep discovery notify-only.
+- Keep the desktop discovery panel fully visible, wider by default,
+  redimensionnable, and vertically scrollable when content exceeds the viewport.
+- Replace awkward modifier selects with a clearer binary exclusion toggle:
+  `Allowed` or `Blocked`, implemented as a true two-button segmented control.
+- Keep discovery notify-only, but use homepage card feedback instead of
+  floating popups when a displayed queue matches: one continuous high-contrast
+  animated highlight on the matching card, using a contrast color that stays
+  clearly visible against native OpenFront blues.
+- Keep FFA capacity filtering aligned with total lobby capacity, but interpret
+  Team min/max filters as `players per team` so formats like `4 teams x 8` and
+  `6 teams x 12` match as users expect.
 - Add a small, additive enhancement that makes the current player easier to spot
   in the native join modal without replacing the modal UI.
 
@@ -40,8 +52,8 @@ regressions.
 
 ## Impact
 
-- Affected code: the existing discovery/runtime files, their tests, and the
-  join-modal enhancement point.
+- Affected code: the existing discovery/runtime files, the old player-list boot
+  path and layout wrapper, their tests, and the join-modal enhancement point.
 - Main constraint: reuse the last good UI shell rather than replacing it.
 - Tests: focus on queue compatibility, filter behavior, notify-only guarantees,
   and additive current-player highlighting.

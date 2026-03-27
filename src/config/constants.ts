@@ -13,6 +13,7 @@ export const CONFIG = {
  */
 export const STORAGE_KEYS = {
   lobbyDiscoverySettings: "OF_LOBBY_DISCOVERY_SETTINGS",
+  lobbyDiscoveryPanelSize: "OF_LOBBY_DISCOVERY_PANEL_SIZE",
   playerListPanelPosition: "OF_PLAYER_LIST_PANEL_POSITION",
   playerListPanelSize: "OF_PLAYER_LIST_PANEL_SIZE",
   playerListShowOnlyClans: "OF_PLAYER_LIST_SHOW_ONLY_CLANS",
