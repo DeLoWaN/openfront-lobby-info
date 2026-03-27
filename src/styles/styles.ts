@@ -604,22 +604,23 @@ export function getStyles(): string {
     .of-player-list-button:hover { background: rgba(80,110,160,0.5); border-color: ${COLORS.borderAccent}; }
 
     .discovery-panel {
-      position: relative;
-      width: 100%;
-      max-width: none;
-      max-height: none;
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      width: min(560px, calc(100vw - 32px));
+      max-height: calc(100vh - 48px);
       margin: 0;
-      border: none;
-      border-bottom: 1px solid ${COLORS.border};
-      border-radius: 0;
-      box-shadow: none;
+      border: 1px solid ${COLORS.border};
+      border-radius: ${RADIUS.lg};
+      box-shadow: ${SHADOWS.lg};
       transition: opacity ${TIMING.slow}, transform ${TIMING.slow};
       cursor: default;
+      overflow: hidden;
     }
     .discovery-panel::after { display: none; }
     .discovery-panel.hidden { display: none; }
-    .discovery-body { display: flex; flex-direction: column; }
-    .discovery-content { display: flex; flex-direction: column; gap: ${SPACING.sm}; padding: ${SPACING.sm} ${SPACING.md} ${SPACING.md}; }
+    .discovery-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .discovery-content { display: flex; flex-direction: column; gap: ${SPACING.sm}; padding: ${SPACING.sm} ${SPACING.md} ${SPACING.md}; overflow-y: auto; overflow-x: hidden; min-height: 0; }
     .discovery-status-bar {
       display: flex;
       justify-content: space-between;
@@ -636,62 +637,7 @@ export function getStyles(): string {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: ${SPACING.sm};
     }
-    .discovery-modes {
-      display: flex;
-      flex-direction: column;
-      gap: ${SPACING.xs};
-    }
-    .discovery-modes-rail {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px ${SPACING.sm};
-      border-radius: ${RADIUS.md};
-      border: 1px solid ${COLORS.border};
-      background: rgba(14, 22, 34, 0.55);
-      cursor: pointer;
-      transition: background ${TIMING.fast}, border-color ${TIMING.fast};
-    }
-    .discovery-modes-rail:hover {
-      border-color: ${COLORS.borderAccent};
-      background: rgba(20, 30, 46, 0.75);
-    }
-    .discovery-modes-caret {
-      color: ${COLORS.textMuted};
-      font-size: 0.9em;
-      transition: transform ${TIMING.fast}, color ${TIMING.fast};
-    }
-    .discovery-modes-label {
-      font-size: 0.7em;
-      color: ${COLORS.textMuted};
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      font-family: ${FONTS.display};
-      margin-right: 2px;
-    }
-    .discovery-modes-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: ${COLORS.textMuted};
-      opacity: 0.7;
-    }
-    .discovery-modes-body {
-      max-height: 0;
-      opacity: 0;
-      overflow: hidden;
-      margin-top: 0;
-      transition: max-height ${TIMING.slow}, opacity ${TIMING.fast}, margin-top ${TIMING.fast};
-    }
-    .discovery-modes.is-expanded .discovery-modes-body {
-      max-height: 2000px;
-      opacity: 1;
-      margin-top: ${SPACING.xs};
-    }
-    .discovery-modes.is-expanded .discovery-modes-caret {
-      transform: rotate(90deg);
-      color: ${COLORS.textPrimary};
-    }
+    .discovery-modes { display: flex; flex-direction: column; gap: ${SPACING.sm}; }
     .discovery-clanmate-button {
       width: 100%;
       background: rgba(22, 34, 52, 0.9);
@@ -718,6 +664,9 @@ export function getStyles(): string {
       flex-direction: column;
       gap: ${SPACING.xs};
       margin-top: ${SPACING.xs};
+    }
+    .discovery-mode-inner.is-disabled {
+      opacity: 0.72;
     }
     .discovery-section {
       display: flex;
@@ -782,6 +731,89 @@ export function getStyles(): string {
     .three-times-checkbox { display: flex; align-items: center; gap: ${SPACING.xs}; font-size: 0.78em; color: ${COLORS.textPrimary}; margin: 0 5px; }
     .three-times-checkbox input[type="checkbox"] { width: 15px; height: 15px; }
     .capacity-range-fill { position: absolute; height: 100%; background: rgba(46, 211, 241, 0.5); border-radius: 3px; pointer-events: none; opacity: 0.7; transition: left 0.1s ease, width 0.1s ease; }
+    .discovery-modifier-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: ${SPACING.xs};
+    }
+    .discovery-modifier-grid label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: ${SPACING.sm};
+      font-size: 0.82em;
+      color: ${COLORS.textSecondary};
+      min-width: 0;
+    }
+    .discovery-modifier-grid label > span:first-child {
+      flex: 1 1 auto;
+      min-width: 0;
+      color: ${COLORS.textPrimary};
+      white-space: nowrap;
+    }
+    .discovery-binary-toggle {
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2px;
+      flex: 0 0 144px;
+      min-width: 144px;
+      padding: 2px;
+      border: 1px solid ${COLORS.border};
+      border-radius: 999px;
+      background: rgba(20, 30, 46, 0.78);
+    }
+    .discovery-binary-option {
+      position: relative;
+      display: flex;
+      width: 100%;
+      min-width: 0;
+      cursor: pointer;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .discovery-binary-option:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.28);
+      outline-offset: 1px;
+      border-radius: 999px;
+    }
+    .discovery-binary-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      color: ${COLORS.textMuted};
+      font-size: 0.66em;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: ${FONTS.display};
+      transition: background ${TIMING.fast}, color ${TIMING.fast}, box-shadow ${TIMING.fast};
+      user-select: none;
+      white-space: nowrap;
+    }
+    .discovery-binary-option[aria-pressed="true"] .discovery-binary-label {
+      color: ${COLORS.textPrimary};
+      background: rgba(46, 211, 241, 0.18);
+      box-shadow: inset 0 0 0 1px rgba(46, 211, 241, 0.24);
+    }
+    .discovery-binary-toggle[data-state="blocked"] .discovery-binary-option[aria-pressed="true"] .discovery-binary-label {
+      background: rgba(245, 101, 101, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(245, 101, 101, 0.3);
+    }
+    .of-current-player-boost {
+      box-shadow: 0 0 0 1px rgba(46, 211, 241, 0.75), 0 0 16px rgba(46, 211, 241, 0.25);
+      background: linear-gradient(90deg, rgba(46, 211, 241, 0.16), rgba(46, 211, 241, 0.06));
+    }
+    .of-current-player-team-boost {
+      box-shadow: inset 0 0 0 1px rgba(46, 211, 241, 0.55), 0 0 20px rgba(46, 211, 241, 0.15);
+    }
     .capacity-slider { position: absolute; width: 100%; height: 6px; top: 0; left: 0; background: transparent; outline: none; -webkit-appearance: none; pointer-events: none; margin: 0; }
     .capacity-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: ${COLORS.accent}; cursor: pointer; pointer-events: all; border: 2px solid rgba(5, 20, 26, 0.9); box-shadow: ${SHADOWS.sm}; }
     .capacity-slider-min { z-index: 2; }
@@ -806,50 +838,35 @@ export function getStyles(): string {
     .discovery-toggle-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
     .current-game-info { margin: 6px 0; padding: 6px ${SPACING.sm}; background: rgba(46, 211, 241, 0.1); border-radius: ${RADIUS.sm}; font-size: 0.8em; color: rgba(147, 197, 253, 0.9); text-align: center; border: 1px solid rgba(46, 211, 241, 0.25); }
     .current-game-info.not-applicable { background: rgba(100, 100, 100, 0.1); color: ${COLORS.textMuted}; border-color: rgba(100, 100, 100, 0.2); font-style: italic; }
-    .game-found-notification {
-      position: fixed;
-      top: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-100px);
-      background: linear-gradient(135deg, rgba(12, 20, 32, 0.95) 0%, rgba(10, 16, 28, 0.9) 100%);
-      border: 1px solid ${COLORS.borderAccent};
-      border-radius: ${RADIUS.lg};
-      padding: ${SPACING.xl} 30px;
-      z-index: ${Z_INDEX.notification};
-      color: ${COLORS.textPrimary};
-      font-family: ${FONTS.display};
-      font-size: 0.9em;
-      font-weight: 700;
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      cursor: pointer;
-      box-shadow: ${SHADOWS.md};
-      transition: transform ${TIMING.slow}, opacity ${TIMING.slow};
-      opacity: 0;
-      min-width: 300px;
-      max-width: 520px;
+    @keyframes discoveryCardActiveBeacon {
+      0% {
+        box-shadow:
+          0 0 0 3px rgba(255, 168, 38, 0.98) inset,
+          0 0 28px rgba(255, 122, 26, 0.42);
+        filter: saturate(1.08) brightness(1.04);
+      }
+      50% {
+        box-shadow:
+          0 0 0 4px rgba(255, 209, 102, 1) inset,
+          0 0 48px rgba(255, 122, 26, 0.72),
+          0 0 0 12px rgba(255, 168, 38, 0.18);
+        filter: saturate(1.2) brightness(1.14);
+      }
+      100% {
+        box-shadow:
+          0 0 0 3px rgba(255, 168, 38, 0.98) inset,
+          0 0 28px rgba(255, 122, 26, 0.42);
+        filter: saturate(1.08) brightness(1.04);
+      }
     }
-    .game-found-notification .notification-title {
-      font-size: 1.1em;
+    .of-discovery-card-active {
+      border-color: rgba(255, 168, 38, 0.96) !important;
+      transition:
+        box-shadow ${TIMING.fast},
+        filter ${TIMING.fast},
+        border-color ${TIMING.fast};
+      animation: discoveryCardActiveBeacon 1.45s ease-in-out infinite;
     }
-    .game-found-notification .notification-detail {
-      font-size: 0.85em;
-      margin-top: ${SPACING.sm};
-      text-transform: none;
-      letter-spacing: 0.06em;
-      color: ${COLORS.textSecondary};
-      font-family: ${FONTS.mono};
-    }
-    .game-found-notification .notification-hint {
-      font-size: 0.7em;
-      margin-top: 6px;
-      text-transform: none;
-      letter-spacing: 0.08em;
-      color: ${COLORS.textMuted};
-    }
-    .game-found-notification.notification-visible { transform: translateX(-50%) translateY(0); opacity: 1; }
-    .game-found-notification.notification-dismissing { transform: translateX(-50%) translateY(-100px); opacity: 0; }
-    .game-found-notification:hover { background: rgba(16, 26, 40, 0.96); border-color: ${COLORS.accentHover}; box-shadow: 0 0 18px rgba(46, 211, 241, 0.2); }
+
   `;
 }

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LobbyDiscoveryUI } from '@/modules/lobby-discovery/LobbyDiscoveryUI';
 import { STORAGE_KEYS } from '@/config/constants';
 import { SoundUtils } from '@/utils/SoundUtils';
+import { BrowserNotificationUtils } from '@/utils/BrowserNotificationUtils';
 
 vi.mock('@/utils/LobbyUtils', () => ({
   LobbyUtils: {
@@ -22,9 +23,46 @@ vi.mock('@/utils/SoundUtils', () => ({
   },
 }));
 
+vi.mock('@/utils/BrowserNotificationUtils', () => ({
+  BrowserNotificationUtils: {
+    isSupported: vi.fn(() => true),
+    isBackgrounded: vi.fn(() => true),
+    ensurePermission: vi.fn(async () => true),
+    show: vi.fn(() => true),
+    focusWindow: vi.fn(),
+  },
+}));
+
 describe('LobbyDiscoveryUI', () => {
   let store: Map<string, any>;
   let ui: LobbyDiscoveryUI | null;
+
+  function mountHomepageCards(joined = false): void {
+    document.body.innerHTML = `
+      <div id="page-play">
+        <game-mode-selector>
+          <div class="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
+            <div class="hidden sm:block">
+              <button id="ffa-card" class="queue-card">FFA</button>
+            </div>
+            <div class="hidden sm:flex sm:flex-col sm:gap-4">
+              <div class="flex-1 min-h-0">
+                <button id="special-card" class="queue-card">Special</button>
+              </div>
+              <div class="flex-1 min-h-0">
+                <button id="team-card" class="queue-card">Team</button>
+              </div>
+            </div>
+          </div>
+        </game-mode-selector>
+      </div>
+      <join-lobby-modal></join-lobby-modal>
+      <host-lobby-modal></host-lobby-modal>
+    `;
+
+    const joinLobbyModal = document.querySelector('join-lobby-modal') as any;
+    joinLobbyModal.currentLobbyId = joined ? 'joined-lobby' : '';
+  }
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -38,8 +76,12 @@ describe('LobbyDiscoveryUI', () => {
       store.set(key, value);
     });
 
-    document.body.innerHTML = '';
+    mountHomepageCards();
     vi.clearAllMocks();
+    vi.mocked(BrowserNotificationUtils.isSupported).mockReturnValue(true);
+    vi.mocked(BrowserNotificationUtils.isBackgrounded).mockReturnValue(true);
+    vi.mocked(BrowserNotificationUtils.ensurePermission).mockResolvedValue(true);
+    vi.mocked(BrowserNotificationUtils.show).mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -52,19 +94,31 @@ describe('LobbyDiscoveryUI', () => {
     document.body.innerHTML = '';
   });
 
-  it('shows one notification for repeated matching updates and deduplicates sound', () => {
+  it('keeps matching cards in one animated active state and deduplicates sound across repeated updates', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
-      criteria: [{ gameMode: 'Team', teamCount: null, minPlayers: null, maxPlayers: null }],
+      criteria: [
+        { gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null },
+        { gameMode: 'Team', teamCount: null, minPlayers: null, maxPlayers: null },
+      ],
       discoveryEnabled: true,
       soundEnabled: true,
-      isTeamThreeTimesMinEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
     });
 
     ui = new LobbyDiscoveryUI();
 
     const lobbies = [
       {
+        gameID: 'ffa-101',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+      {
         gameID: 'team-101',
+        publicGameType: 'team',
         gameConfig: {
           gameMode: 'Team',
           teamCount: 2,
@@ -74,18 +128,33 @@ describe('LobbyDiscoveryUI', () => {
     ] as any;
 
     ui.receiveLobbyUpdate(lobbies);
+
+    expect(document.querySelectorAll('.game-found-notification')).toHaveLength(0);
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(true);
+    expect(document.getElementById('team-card')?.classList.contains('of-discovery-card-active')).toBe(true);
+    expect(document.getElementById('special-card')?.classList.contains('of-discovery-card-active')).toBe(false);
+    expect(document.querySelectorAll('.of-discovery-card-badge')).toHaveLength(0);
+    expect(SoundUtils.playGameFoundSound).toHaveBeenCalledTimes(1);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+    expect(document.getElementById('team-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+
     ui.receiveLobbyUpdate(lobbies);
 
-    expect(document.querySelectorAll('.game-found-notification')).toHaveLength(1);
     expect(SoundUtils.playGameFoundSound).toHaveBeenCalledTimes(1);
   });
 
-  it('respects sound toggle when disabled', () => {
+  it('suppresses pulse and sound completely while already joined in a public lobby', () => {
+    mountHomepageCards(true);
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [{ gameMode: 'Team', teamCount: null, minPlayers: null, maxPlayers: null }],
       discoveryEnabled: true,
-      soundEnabled: false,
-      isTeamThreeTimesMinEnabled: false,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
     });
 
     ui = new LobbyDiscoveryUI();
@@ -93,6 +162,7 @@ describe('LobbyDiscoveryUI', () => {
     const lobbies = [
       {
         gameID: 'team-202',
+        publicGameType: 'team',
         gameConfig: {
           gameMode: 'Team',
           teamCount: 3,
@@ -103,7 +173,574 @@ describe('LobbyDiscoveryUI', () => {
 
     ui.receiveLobbyUpdate(lobbies);
 
-    expect(document.querySelectorAll('.game-found-notification')).toHaveLength(1);
+    expect(document.querySelectorAll('.game-found-notification')).toHaveLength(0);
+    expect(document.querySelector('.of-discovery-card-active')).toBeFalsy();
     expect(SoundUtils.playGameFoundSound).not.toHaveBeenCalled();
+  });
+
+  it('resumes pulsing once the joined public lobby state is cleared', () => {
+    mountHomepageCards(true);
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const lobbies = [
+      {
+        gameID: 'ffa-303',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+    expect(document.querySelector('.of-discovery-card-active')).toBeFalsy();
+
+    const joinLobbyModal = document.querySelector('join-lobby-modal') as any;
+    joinLobbyModal.currentLobbyId = '';
+
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+    expect(SoundUtils.playGameFoundSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('reapplies pulses after homepage cards render after the lobby update event', () => {
+    document.body.innerHTML = `
+      <div id="page-play">
+        <game-mode-selector></game-mode-selector>
+      </div>
+      <join-lobby-modal></join-lobby-modal>
+      <host-lobby-modal></host-lobby-modal>
+    `;
+    const joinLobbyModal = document.querySelector('join-lobby-modal') as any;
+    joinLobbyModal.currentLobbyId = '';
+
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const lobbies = [
+      {
+        gameID: 'ffa-late',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+    expect(document.querySelector('.of-discovery-card-active')).toBeFalsy();
+
+    const selector = document.querySelector('game-mode-selector') as HTMLElement;
+    selector.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
+        <div class="hidden sm:block">
+          <button id="ffa-card" class="queue-card">FFA</button>
+        </div>
+        <div class="hidden sm:flex sm:flex-col sm:gap-4">
+          <div class="flex-1 min-h-0">
+            <button id="special-card" class="queue-card">Special</button>
+          </div>
+          <div class="flex-1 min-h-0">
+            <button id="team-card" class="queue-card">Team</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    vi.advanceTimersByTime(32);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+  });
+
+  it('pulses on the real 0.30 homepage structure without requiring a public-lobby element', () => {
+    mountHomepageCards(false);
+    document.querySelector('public-lobby')?.remove();
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    ui.receiveLobbyUpdate([
+      {
+        gameID: 'ffa-real-homepage',
+        publicGameType: 'ffa',
+        numClients: 12,
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+  });
+
+  it('removes the animated active state when a queue stops matching', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const matchingLobbies = [
+      {
+        gameID: 'ffa-404',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(matchingLobbies);
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+
+    ui.receiveLobbyUpdate([]);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      false
+    );
+  });
+
+  it('supports FFA capacity filters up to 125 slots', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const maxSlider = document.getElementById('discovery-ffa-max-slider') as HTMLInputElement;
+    const maxInput = document.getElementById('discovery-ffa-max') as HTMLInputElement;
+
+    expect(maxSlider.max).toBe('125');
+    expect(maxInput.max).toBe('125');
+  });
+
+  it('caps Team capacity filters to 62 players per team', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
+    const maxInput = document.getElementById('discovery-team-max') as HTMLInputElement;
+
+    expect(maxSlider.max).toBe('62');
+    expect(maxInput.max).toBe('62');
+  });
+
+  it('does not collapse the team max slider to exactly 2x min when the 2x toggle is enabled', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+    const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
+    const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement;
+
+    minSlider.value = '8';
+    minSlider.dispatchEvent(new Event('input'));
+    maxSlider.value = '20';
+    maxSlider.dispatchEvent(new Event('input'));
+
+    twoTimesCheckbox.checked = true;
+    twoTimesCheckbox.dispatchEvent(new Event('change'));
+
+    expect(maxSlider.value).toBe('20');
+  });
+
+  it('renders without the old player-list discovery slot and exposes FFA and 2x controls', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    expect(document.getElementById('openfront-discovery-panel')).toBeTruthy();
+    expect(document.getElementById('discovery-ffa')).toBeTruthy();
+    expect(document.getElementById('discovery-team-hvn')).toBeTruthy();
+    expect(document.getElementById('discovery-team-two-times')).toBeTruthy();
+    expect(document.getElementById('discovery-desktop-toggle')).toBeTruthy();
+    expect(document.getElementById('discovery-modes-rail')).toBeFalsy();
+  });
+
+  it('restores and persists the desktop notification toggle independently from sound', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const soundToggle = document.getElementById('discovery-sound-toggle') as HTMLInputElement;
+    const desktopToggle = document.getElementById('discovery-desktop-toggle') as HTMLInputElement;
+
+    expect(soundToggle.checked).toBe(false);
+    expect(desktopToggle.checked).toBe(true);
+
+    desktopToggle.checked = false;
+    desktopToggle.dispatchEvent(new Event('change'));
+
+    expect(store.get(STORAGE_KEYS.lobbyDiscoverySettings)).toEqual({
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+  });
+
+  it('requests permission when enabling desktop notifications and reverts on denial', async () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+    vi.mocked(BrowserNotificationUtils.ensurePermission).mockResolvedValue(false);
+
+    ui = new LobbyDiscoveryUI();
+
+    const desktopToggle = document.getElementById('discovery-desktop-toggle') as HTMLInputElement;
+    desktopToggle.checked = true;
+    desktopToggle.dispatchEvent(new Event('change'));
+    await vi.waitFor(() => {
+      expect(BrowserNotificationUtils.ensurePermission).toHaveBeenCalledTimes(1);
+      expect(store.get(STORAGE_KEYS.lobbyDiscoverySettings)).toEqual({
+        criteria: [],
+        discoveryEnabled: true,
+        soundEnabled: true,
+        desktopNotificationsEnabled: false,
+        isTeamTwoTimesMinEnabled: false,
+      });
+    });
+
+    ui.cleanup();
+    ui = new LobbyDiscoveryUI();
+
+    expect((document.getElementById('discovery-desktop-toggle') as HTMLInputElement).checked).toBe(
+      false
+    );
+  });
+
+  it('ignores stale permission results if the desktop toggle is turned off before resolve', async () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    let resolvePermission!: (value: boolean) => void;
+    const permissionPromise = new Promise<boolean>((resolve) => {
+      resolvePermission = resolve;
+    });
+    vi.mocked(BrowserNotificationUtils.ensurePermission).mockImplementation(() => permissionPromise);
+
+    ui = new LobbyDiscoveryUI();
+
+    const desktopToggle = document.getElementById('discovery-desktop-toggle') as HTMLInputElement;
+    desktopToggle.checked = true;
+    desktopToggle.dispatchEvent(new Event('change'));
+
+    desktopToggle.checked = false;
+    desktopToggle.dispatchEvent(new Event('change'));
+    resolvePermission(true);
+
+    await vi.waitFor(() => {
+      expect(store.get(STORAGE_KEYS.lobbyDiscoverySettings)).toEqual({
+        criteria: [],
+        discoveryEnabled: true,
+        soundEnabled: true,
+        desktopNotificationsEnabled: false,
+        isTeamTwoTimesMinEnabled: false,
+      });
+    });
+    expect(desktopToggle.checked).toBe(false);
+  });
+
+  it('sends one browser notification for a new match and deduplicates repeated updates', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const lobbies = [
+      {
+        gameID: 'ffa-desktop-1',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(1);
+    const [notificationPayload] = vi.mocked(BrowserNotificationUtils.show).mock.calls[0] ?? [];
+    expect(notificationPayload).toBeTruthy();
+    if (!notificationPayload) {
+      throw new Error('Expected a browser notification payload');
+    }
+    expect(notificationPayload.title).toBe('FFA');
+    expect(notificationPayload.body).toBe('25 slots');
+    expect(typeof notificationPayload.tag).toBe('string');
+    expect(SoundUtils.playGameFoundSound).not.toHaveBeenCalled();
+  });
+
+  it('delivers a desktop notification when a still-matching lobby moves from foreground to background', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+    vi.mocked(BrowserNotificationUtils.show).mockReturnValueOnce(false).mockReturnValueOnce(true);
+
+    const lobbies = [
+      {
+        gameID: 'ffa-desktop-late',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(2);
+  });
+
+  it('evaluates every lobby instead of only the first displayed lobby per source', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 30, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const lobbies = [
+      {
+        gameID: 'ffa-too-small',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+      {
+        gameID: 'ffa-match',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 40,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(1);
+    const [notificationPayload] = vi.mocked(BrowserNotificationUtils.show).mock.calls[0] ?? [];
+    expect(notificationPayload?.tag).toContain('ffa-match');
+  });
+
+  it('cleanup clears queue card pulses without scheduling another sync tick', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+    ui.receiveLobbyUpdate([
+      {
+        gameID: 'ffa-cleanup',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+
+    ui.cleanup();
+    ui = null;
+    vi.advanceTimersByTime(32);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      false
+    );
+  });
+
+  it('uses a compact desktop panel, persists width, and restores it on init', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoveryPanelSize, { width: 740 });
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const panel = document.getElementById('openfront-discovery-panel') as HTMLDivElement;
+    expect(panel.style.width).toBe('740px');
+    expect(panel.querySelector('.of-resize-handle')).toBeTruthy();
+  });
+
+  it('renders binary modifier button controls instead of radios and updates on click', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const control = document.getElementById('modifier-isCompact') as HTMLDivElement;
+    const allowed = document.getElementById(
+      'modifier-isCompact-allowed'
+    ) as HTMLButtonElement;
+    const blocked = document.getElementById(
+      'modifier-isCompact-blocked'
+    ) as HTMLButtonElement;
+
+    expect(control).toBeTruthy();
+    expect(document.querySelector('select.discovery-modifier-select')).toBeFalsy();
+    expect(document.querySelector('.discovery-tristate-knob')).toBeFalsy();
+    expect(document.querySelector('#modifier-isCompact input[type="radio"]')).toBeFalsy();
+    expect(allowed.tagName).toBe('BUTTON');
+    expect(blocked.tagName).toBe('BUTTON');
+    expect(control.dataset.state).toBe('allowed');
+    expect(allowed.getAttribute('aria-pressed')).toBe('true');
+    expect(blocked.getAttribute('aria-pressed')).toBe('false');
+
+    blocked.click();
+    expect(control.dataset.state).toBe('blocked');
+    expect(blocked.getAttribute('aria-pressed')).toBe('true');
+    expect(allowed.getAttribute('aria-pressed')).toBe('false');
+
+    allowed.click();
+    expect(control.dataset.state).toBe('allowed');
+    expect(allowed.getAttribute('aria-pressed')).toBe('true');
+    expect(blocked.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('keeps all filter sections visible and lets the body scroll when constrained', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const body = document.querySelector('.discovery-body') as HTMLDivElement;
+    const content = document.querySelector('.discovery-content') as HTMLDivElement;
+    const ffa = document.getElementById('discovery-ffa-config') as HTMLDivElement;
+    const team = document.getElementById('discovery-team-config') as HTMLDivElement;
+    const modifiers = document.querySelector('.discovery-modifier-grid') as HTMLDivElement;
+
+    expect(body).toBeTruthy();
+    expect(content).toBeTruthy();
+    expect(ffa.style.display).not.toBe('none');
+    expect(team.style.display).not.toBe('none');
+    expect(modifiers).toBeTruthy();
+    expect(getComputedStyle(content).overflowY).toBe('auto');
+  });
+
+  it('uses a smaller default width when no saved size exists', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const panel = document.getElementById('openfront-discovery-panel') as HTMLDivElement;
+    expect(panel.style.width).toBe('560px');
   });
 });
