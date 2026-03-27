@@ -487,6 +487,68 @@ describe('LobbyDiscoveryUI', () => {
     expect(SoundUtils.playGameFoundSound).not.toHaveBeenCalled();
   });
 
+  it('delivers a desktop notification when a still-matching lobby moves from foreground to background', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+    vi.mocked(BrowserNotificationUtils.show).mockReturnValueOnce(false).mockReturnValueOnce(true);
+
+    const lobbies = [
+      {
+        gameID: 'ffa-desktop-late',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(2);
+  });
+
+  it('cleanup clears queue card pulses without scheduling another sync tick', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+    ui.receiveLobbyUpdate([
+      {
+        gameID: 'ffa-cleanup',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      true
+    );
+
+    ui.cleanup();
+    ui = null;
+    vi.advanceTimersByTime(32);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      false
+    );
+  });
+
   it('uses a compact desktop panel, persists width, and restores it on init', () => {
     store.set(STORAGE_KEYS.lobbyDiscoveryPanelSize, { width: 740 });
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {

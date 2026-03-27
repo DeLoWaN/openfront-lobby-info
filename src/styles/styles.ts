@@ -865,8 +865,6 @@ export function getStyles(): string {
         box-shadow ${TIMING.fast},
         filter ${TIMING.fast},
         border-color ${TIMING.fast};
-    }
-    .of-discovery-card-active {
       animation: discoveryCardActiveBeacon 1.45s ease-in-out infinite;
     }
 

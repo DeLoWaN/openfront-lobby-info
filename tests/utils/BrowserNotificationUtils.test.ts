@@ -7,16 +7,10 @@ describe('BrowserNotificationUtils', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    Object.defineProperty(document, 'hidden', {
-      configurable: true,
-      get: () => false,
-    });
-    Object.defineProperty(document, 'visibilityState', {
-      configurable: true,
-      get: () => 'visible',
-    });
-    document.hasFocus = vi.fn(() => true);
-    window.focus = vi.fn();
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+    vi.spyOn(window, 'focus').mockImplementation(() => {});
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
     delete (globalThis as any).GM_notification;
   });
 
@@ -54,15 +48,9 @@ describe('BrowserNotificationUtils', () => {
     }) as any;
     NotificationMock.permission = 'granted';
     NotificationMock.requestPermission = vi.fn();
-    Object.defineProperty(document, 'hidden', {
-      configurable: true,
-      get: () => true,
-    });
-    Object.defineProperty(document, 'visibilityState', {
-      configurable: true,
-      get: () => 'hidden',
-    });
-    document.hasFocus = vi.fn(() => false);
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    vi.spyOn(document, 'hasFocus').mockReturnValue(false);
     Object.defineProperty(NotificationMock.prototype, 'onclick', {
       configurable: true,
       set(handler) {
@@ -105,11 +93,8 @@ describe('BrowserNotificationUtils', () => {
     NotificationMock.requestPermission = vi.fn();
     globalThis.Notification = NotificationMock;
     (globalThis as any).GM_notification = gmNotification;
-    Object.defineProperty(document, 'hidden', {
-      configurable: true,
-      get: () => true,
-    });
-    document.hasFocus = vi.fn(() => false);
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    vi.spyOn(document, 'hasFocus').mockReturnValue(false);
 
     expect(
       BrowserNotificationUtils.show({

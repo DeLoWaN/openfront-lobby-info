@@ -11,6 +11,7 @@ type LobbyCallback = (lobbies: Lobby[]) => void;
 interface LobbyDataManagerSingleton {
   subscribers: LobbyCallback[];
   fallbackInterval: ReturnType<typeof setInterval> | null;
+  fallbackStartTimeout: ReturnType<typeof setTimeout> | null;
   lastLobbies: Lobby[];
   pollingRate: number;
   started: boolean;
@@ -18,6 +19,7 @@ interface LobbyDataManagerSingleton {
   start(): void;
   stop(): void;
   subscribe(callback: LobbyCallback): void;
+  scheduleFallbackPolling(): void;
   startFallbackPolling(): void;
   stopFallbackPolling(): void;
   fetchData(): Promise<void>;
@@ -29,6 +31,7 @@ interface LobbyDataManagerSingleton {
 export const LobbyDataManager: LobbyDataManagerSingleton = {
   subscribers: [],
   fallbackInterval: null,
+  fallbackStartTimeout: null,
   lastLobbies: [],
   pollingRate: CONFIG.lobbyPollingRate,
   started: false,
@@ -42,7 +45,7 @@ export const LobbyDataManager: LobbyDataManagerSingleton = {
     this.started = true;
     this.publicLobbiesListener = (event) => this.handlePublicLobbiesUpdate(event);
     document.addEventListener('public-lobbies-update', this.publicLobbiesListener);
-    this.startFallbackPolling();
+    this.scheduleFallbackPolling();
   },
 
   stop() {
@@ -55,6 +58,10 @@ export const LobbyDataManager: LobbyDataManagerSingleton = {
       document.removeEventListener('public-lobbies-update', this.publicLobbiesListener);
       this.publicLobbiesListener = null;
     }
+    if (this.fallbackStartTimeout) {
+      clearTimeout(this.fallbackStartTimeout);
+      this.fallbackStartTimeout = null;
+    }
     this.stopFallbackPolling();
   },
 
@@ -65,11 +72,22 @@ export const LobbyDataManager: LobbyDataManagerSingleton = {
     }
   },
 
+  scheduleFallbackPolling() {
+    if (!this.started || this.fallbackInterval || this.fallbackStartTimeout) {
+      return;
+    }
+
+    this.fallbackStartTimeout = setTimeout(() => {
+      this.fallbackStartTimeout = null;
+      this.startFallbackPolling();
+    }, this.pollingRate * 2);
+  },
+
   startFallbackPolling() {
     if (this.fallbackInterval) return;
 
-    this.fetchData();
-    this.fallbackInterval = setInterval(() => this.fetchData(), this.pollingRate);
+    void this.fetchData();
+    this.fallbackInterval = setInterval(() => void this.fetchData(), this.pollingRate);
   },
 
   stopFallbackPolling() {
@@ -105,9 +123,15 @@ export const LobbyDataManager: LobbyDataManagerSingleton = {
   },
 
   handlePublicLobbiesUpdate(event: Event) {
+    if (this.fallbackStartTimeout) {
+      clearTimeout(this.fallbackStartTimeout);
+      this.fallbackStartTimeout = null;
+    }
+    this.stopFallbackPolling();
     const payload = (event as CustomEvent<{ payload?: unknown }>).detail?.payload;
     this.lastLobbies = this.extractLobbies(payload);
     this.notifySubscribers();
+    this.scheduleFallbackPolling();
   },
 
   extractLobbies(payload: unknown): Lobby[] {

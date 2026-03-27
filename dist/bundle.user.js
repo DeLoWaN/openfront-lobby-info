@@ -14,7 +14,7 @@
 // @license      UNLICENSED
 // ==/UserScript==
 
-"use strict";(()=>{var r={bgPrimary:"rgba(10, 14, 22, 0.92)",bgSecondary:"rgba(18, 26, 40, 0.75)",bgHover:"rgba(35, 48, 70, 0.6)",textPrimary:"#e7f1ff",textSecondary:"rgba(231, 241, 255, 0.7)",textMuted:"rgba(231, 241, 255, 0.5)",accent:"rgba(46, 211, 241, 0.95)",accentHover:"rgba(99, 224, 255, 0.95)",accentMuted:"rgba(46, 211, 241, 0.18)",accentAlt:"rgba(99, 110, 255, 0.9)",success:"rgba(20, 220, 170, 0.9)",successSolid:"#38d9a9",warning:"#f2c94c",error:"#ff7d87",highlight:"rgba(88, 211, 255, 0.2)",border:"rgba(120, 140, 180, 0.3)",borderAccent:"rgba(46, 211, 241, 0.55)"},m={display:"'Trebuchet MS', 'Segoe UI', Tahoma, Verdana, sans-serif",body:"'Segoe UI', Tahoma, Verdana, sans-serif",mono:"'Consolas', 'Courier New', monospace"},n={xs:"4px",sm:"8px",md:"12px",lg:"16px",xl:"20px",xxl:"24px"},p={sm:"4px",md:"6px",lg:"8px",xl:"12px"},k={sm:"0 2px 8px rgba(3, 8, 18, 0.35)",md:"0 10px 22px rgba(3, 8, 18, 0.45)",lg:"0 24px 40px rgba(2, 6, 16, 0.55), 0 0 24px rgba(46, 211, 241, 0.08)"},d={fast:"0.12s",normal:"0.2s",slow:"0.3s"};var O={threadCount:20,lobbyPollingRate:1e3},M={lobbyDiscoverySettings:"OF_LOBBY_DISCOVERY_SETTINGS",lobbyDiscoveryPanelSize:"OF_LOBBY_DISCOVERY_PANEL_SIZE",playerListPanelPosition:"OF_PLAYER_LIST_PANEL_POSITION",playerListPanelSize:"OF_PLAYER_LIST_PANEL_SIZE",playerListShowOnlyClans:"OF_PLAYER_LIST_SHOW_ONLY_CLANS",playerListCollapseStates:"OF_PLAYER_LIST_COLLAPSE_STATES",playerListRecentTags:"OF_PLAYER_LIST_RECENT_TAGS"},E={panel:9998,panelOverlay:9999,modal:1e4,notification:2e4};function V(){return`
+"use strict";(()=>{var a={bgPrimary:"rgba(10, 14, 22, 0.92)",bgSecondary:"rgba(18, 26, 40, 0.75)",bgHover:"rgba(35, 48, 70, 0.6)",textPrimary:"#e7f1ff",textSecondary:"rgba(231, 241, 255, 0.7)",textMuted:"rgba(231, 241, 255, 0.5)",accent:"rgba(46, 211, 241, 0.95)",accentHover:"rgba(99, 224, 255, 0.95)",accentMuted:"rgba(46, 211, 241, 0.18)",accentAlt:"rgba(99, 110, 255, 0.9)",success:"rgba(20, 220, 170, 0.9)",successSolid:"#38d9a9",warning:"#f2c94c",error:"#ff7d87",highlight:"rgba(88, 211, 255, 0.2)",border:"rgba(120, 140, 180, 0.3)",borderAccent:"rgba(46, 211, 241, 0.55)"},m={display:"'Trebuchet MS', 'Segoe UI', Tahoma, Verdana, sans-serif",body:"'Segoe UI', Tahoma, Verdana, sans-serif",mono:"'Consolas', 'Courier New', monospace"},n={xs:"4px",sm:"8px",md:"12px",lg:"16px",xl:"20px",xxl:"24px"},b={sm:"4px",md:"6px",lg:"8px",xl:"12px"},T={sm:"0 2px 8px rgba(3, 8, 18, 0.35)",md:"0 10px 22px rgba(3, 8, 18, 0.45)",lg:"0 24px 40px rgba(2, 6, 16, 0.55), 0 0 24px rgba(46, 211, 241, 0.08)"},d={fast:"0.12s",normal:"0.2s",slow:"0.3s"};var O={threadCount:20,lobbyPollingRate:1e3},k={lobbyDiscoverySettings:"OF_LOBBY_DISCOVERY_SETTINGS",lobbyDiscoveryPanelSize:"OF_LOBBY_DISCOVERY_PANEL_SIZE",playerListPanelPosition:"OF_PLAYER_LIST_PANEL_POSITION",playerListPanelSize:"OF_PLAYER_LIST_PANEL_SIZE",playerListShowOnlyClans:"OF_PLAYER_LIST_SHOW_ONLY_CLANS",playerListCollapseStates:"OF_PLAYER_LIST_COLLAPSE_STATES",playerListRecentTags:"OF_PLAYER_LIST_RECENT_TAGS"},E={panel:9998,panelOverlay:9999,modal:1e4,notification:2e4};function V(){return`
     /* Body layout wrapper for flexbox */
     #of-game-layout-wrapper {
       display: flex;
@@ -28,14 +28,14 @@
     }
 
     :root {
-      --of-hud-accent: ${r.accent};
-      --of-hud-accent-soft: ${r.accentMuted};
-      --of-hud-accent-alt: ${r.accentAlt};
-      --of-hud-border: ${r.border};
-      --of-hud-border-strong: ${r.borderAccent};
-      --of-hud-bg: ${r.bgPrimary};
-      --of-hud-bg-2: ${r.bgSecondary};
-      --of-hud-text: ${r.textPrimary};
+      --of-hud-accent: ${a.accent};
+      --of-hud-accent-soft: ${a.accentMuted};
+      --of-hud-accent-alt: ${a.accentAlt};
+      --of-hud-border: ${a.border};
+      --of-hud-border-strong: ${a.borderAccent};
+      --of-hud-bg: ${a.bgPrimary};
+      --of-hud-bg-2: ${a.bgSecondary};
+      --of-hud-text: ${a.textPrimary};
     }
 
     @keyframes ofPanelEnter {
@@ -46,11 +46,11 @@
     .of-panel {
       position: fixed;
       background: linear-gradient(145deg, rgba(12, 18, 30, 0.98) 0%, rgba(10, 16, 26, 0.94) 60%, rgba(8, 12, 20, 0.96) 100%);
-      border: 1px solid ${r.border};
-      border-radius: ${p.lg};
-      box-shadow: ${k.lg};
+      border: 1px solid ${a.border};
+      border-radius: ${b.lg};
+      box-shadow: ${T.lg};
       font-family: ${m.body};
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       user-select: none;
       z-index: ${E.panel};
       display: flex;
@@ -60,7 +60,7 @@
       -webkit-backdrop-filter: blur(10px);
       animation: ofPanelEnter ${d.slow} ease;
     }
-    .of-panel input[type="checkbox"] { accent-color: ${r.accent}; }
+    .of-panel input[type="checkbox"] { accent-color: ${a.accent}; }
     .of-panel.hidden { display: none; }
     .of-header {
       padding: ${n.md} ${n.lg};
@@ -71,7 +71,7 @@
       align-items: center;
       flex-shrink: 0;
       font-size: 0.85em;
-      border-bottom: 1px solid ${r.border};
+      border-bottom: 1px solid ${a.border};
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-family: ${m.display};
@@ -83,7 +83,7 @@
     }
     .of-player-list-title {
       font-size: 1em;
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
     }
     .of-player-list-header {
       position: relative;
@@ -106,7 +106,7 @@
       position: relative;
     }
     .discovery-header:hover {
-      background: ${r.bgHover};
+      background: ${a.bgHover};
     }
     .discovery-header::after {
       content: "";
@@ -124,12 +124,12 @@
       gap: 2px;
     }
     .discovery-title-text {
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       font-weight: 700;
     }
     .discovery-title-sub {
       font-size: 0.72em;
-      color: ${r.textMuted};
+      color: ${a.textMuted};
       letter-spacing: 0.2em;
     }
     .of-content { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(80,110,160,0.4) transparent; }
@@ -139,55 +139,55 @@
       padding: ${n.sm} ${n.lg};
       display: flex;
       justify-content: space-between;
-      background: ${r.bgSecondary};
+      background: ${a.bgSecondary};
       flex-shrink: 0;
-      border-top: 1px solid ${r.border};
+      border-top: 1px solid ${a.border};
     }
     .of-button {
-      background: ${r.bgHover};
-      border: 1px solid ${r.border};
-      color: ${r.textPrimary};
+      background: ${a.bgHover};
+      border: 1px solid ${a.border};
+      color: ${a.textPrimary};
       padding: ${n.sm} ${n.md};
-      border-radius: ${p.md};
+      border-radius: ${b.md};
       cursor: pointer;
       font-size: 0.95em;
       font-weight: 600;
       transition: background ${d.fast}, border-color ${d.fast}, color ${d.fast};
       outline: none;
     }
-    .of-button:hover { background: rgba(80,110,160,0.5); border-color: ${r.borderAccent}; }
-    .of-button.primary { background: ${r.accent}; color: #04131a; }
-    .of-button.primary:hover { background: ${r.accentHover}; }
+    .of-button:hover { background: rgba(80,110,160,0.5); border-color: ${a.borderAccent}; }
+    .of-button.primary { background: ${a.accent}; color: #04131a; }
+    .of-button.primary:hover { background: ${a.accentHover}; }
     .of-input {
       padding: ${n.sm};
       background: rgba(20, 30, 46, 0.7);
-      border: 1px solid ${r.border};
-      border-radius: ${p.md};
-      color: ${r.textPrimary};
+      border: 1px solid ${a.border};
+      border-radius: ${b.md};
+      color: ${a.textPrimary};
       font-size: 0.95em;
       outline: none;
       transition: border ${d.fast};
     }
-    .of-input:focus { border-color: ${r.accent}; }
+    .of-input:focus { border-color: ${a.accent}; }
     .of-badge {
-      background: ${r.accentMuted};
-      border: 1px solid ${r.borderAccent};
-      border-radius: ${p.xl};
+      background: ${a.accentMuted};
+      border: 1px solid ${a.borderAccent};
+      border-radius: ${b.xl};
       padding: 2px 10px;
       font-size: 0.75em;
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
     }
     .of-toggle {
       width: 34px;
       height: 18px;
       border-radius: 11px;
       background: rgba(35, 48, 70, 0.9);
-      border: 1px solid ${r.border};
+      border: 1px solid ${a.border};
       position: relative;
       transition: background ${d.fast}, border-color ${d.fast};
       cursor: pointer;
     }
-    .of-toggle.on { background: ${r.successSolid}; }
+    .of-toggle.on { background: ${a.successSolid}; }
     .of-toggle-ball {
       position: absolute; left: 2px; top: 2px; width: 14px; height: 14px;
       border-radius: 50%; background: #fff; transition: left ${d.fast};
@@ -202,12 +202,12 @@
       flex-shrink: 0;
       position: relative;
       background: linear-gradient(180deg, rgba(12, 18, 30, 0.98), rgba(8, 12, 20, 0.95));
-      border: 1px solid ${r.border};
-      border-left: 1px solid ${r.borderAccent};
+      border: 1px solid ${a.border};
+      border-left: 1px solid ${a.borderAccent};
       border-radius: 0;
-      box-shadow: ${k.lg};
+      box-shadow: ${T.lg};
       font-family: ${m.body};
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       user-select: none;
       z-index: ${E.panel};
       display: flex;
@@ -225,7 +225,7 @@
       top: 0;
       width: 4px;
       height: 100%;
-      background: linear-gradient(180deg, ${r.accent}, rgba(46, 211, 241, 0.1));
+      background: linear-gradient(180deg, ${a.accent}, rgba(46, 211, 241, 0.1));
       cursor: ew-resize;
       z-index: ${E.panel+1};
       opacity: 0.35;
@@ -244,7 +244,7 @@
     .of-quick-tag-switch {
       padding: ${n.md} ${n.lg};
       background: rgba(14, 22, 34, 0.75);
-      border-bottom: 1px solid ${r.border};
+      border-bottom: 1px solid ${a.border};
       display: flex;
       align-items: center;
       gap: ${n.sm};
@@ -256,7 +256,7 @@
     .of-quick-tag-switch::-webkit-scrollbar-thumb { background: rgba(80,110,160,0.45); border-radius: 4px; }
     .of-quick-tag-label {
       font-size: 0.75em;
-      color: ${r.textMuted};
+      color: ${a.textMuted};
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.14em;
@@ -270,9 +270,9 @@
       padding: 4px 12px;
       font-size: 0.8em;
       background: rgba(22, 34, 52, 0.9);
-      color: ${r.textPrimary};
-      border: 1px solid ${r.border};
-      border-radius: ${p.md};
+      color: ${a.textPrimary};
+      border: 1px solid ${a.border};
+      border-radius: ${b.md};
       cursor: pointer;
       transition: all ${d.fast};
       font-weight: 600;
@@ -281,8 +281,8 @@
       font-family: ${m.display};
     }
     .of-quick-tag-btn:hover {
-      background: ${r.accentMuted};
-      border-color: ${r.accent};
+      background: ${a.accentMuted};
+      border-color: ${a.accent};
     }
     .of-quick-tag-remove {
       width: 16px;
@@ -291,7 +291,7 @@
       font-size: 11px;
       line-height: 1;
       background: rgba(255, 125, 135, 0.15);
-      color: ${r.error};
+      color: ${a.error};
       border: 1px solid rgba(255, 125, 135, 0.6);
       border-radius: 50%;
       cursor: pointer;
@@ -303,14 +303,14 @@
     }
     .of-quick-tag-remove:hover {
       background: rgba(255, 117, 117, 0.25);
-      border-color: ${r.error};
+      border-color: ${a.error};
       transform: scale(1.05);
     }
 
     .of-clan-checkbox-filter {
       padding: ${n.md} ${n.lg};
       background: rgba(14, 22, 34, 0.75);
-      border-bottom: 1px solid ${r.border};
+      border-bottom: 1px solid ${a.border};
       display: flex;
       align-items: center;
       gap: ${n.sm};
@@ -324,7 +324,7 @@
     }
     .of-clan-checkbox-filter label {
       cursor: pointer;
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       font-size: 0.85em;
       user-select: none;
       flex: 1;
@@ -342,12 +342,12 @@
     }
     .of-team-group.current-player-team .of-team-band {
       border-left-width: 5px;
-      box-shadow: 0 0 12px var(--team-color, ${r.accent});
+      box-shadow: 0 0 12px var(--team-color, ${a.accent});
     }
     .of-team-band {
       position: absolute;
       inset: 0;
-      border-left: 3px solid var(--team-color, ${r.accent});
+      border-left: 3px solid var(--team-color, ${a.accent});
       background: transparent;
       pointer-events: none;
     }
@@ -358,19 +358,19 @@
       align-items: center;
       gap: ${n.xs};
       padding: 4px 10px;
-      border-radius: ${p.xl};
-      border: 1px solid var(--team-color, ${r.borderAccent});
+      border-radius: ${b.xl};
+      border: 1px solid var(--team-color, ${a.borderAccent});
       background: rgba(10, 16, 28, 0.7);
       font-size: 0.7em;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--team-color, ${r.textPrimary});
+      color: var(--team-color, ${a.textPrimary});
       font-family: ${m.display};
       margin-bottom: ${n.xs};
     }
     .of-team-group.current-player-team .of-team-header::before {
       content: "\u25C6";
-      color: var(--team-color, ${r.accent});
+      color: var(--team-color, ${a.accent});
       font-size: 0.85em;
       margin-right: 2px;
     }
@@ -378,7 +378,7 @@
       font-weight: 700;
     }
     .of-team-count {
-      color: ${r.textSecondary};
+      color: ${a.textSecondary};
       font-size: 0.85em;
       letter-spacing: 0.1em;
       font-family: ${m.mono};
@@ -388,11 +388,11 @@
     .of-clan-group {
       margin: 8px ${n.md};
       border: 1px solid rgba(90, 110, 150, 0.35);
-      border-radius: ${p.md};
+      border-radius: ${b.md};
       background: rgba(14, 20, 32, 0.78);
       overflow: hidden;
       box-shadow: 0 10px 18px rgba(2, 6, 16, 0.35);
-      --clan-color: ${r.accent};
+      --clan-color: ${a.accent};
       --clan-color-soft: rgba(46, 211, 241, 0.14);
       --clan-color-strong: rgba(46, 211, 241, 0.28);
       --clan-color-border: rgba(46, 211, 241, 0.6);
@@ -434,7 +434,7 @@
     }
     .of-clan-arrow {
       font-size: 0.8em;
-      color: ${r.textSecondary};
+      color: ${a.textSecondary};
       transition: transform ${d.fast};
       width: 16px;
       display: inline-block;
@@ -444,7 +444,7 @@
     }
     .of-clan-tag {
       font-weight: 700;
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       font-size: 0.85em;
       text-transform: uppercase;
       letter-spacing: 0.12em;
@@ -455,18 +455,18 @@
       text-transform: uppercase;
       letter-spacing: 0.14em;
       padding: 2px 6px;
-      border-radius: ${p.xl};
+      border-radius: ${b.xl};
       border: 1px solid var(--clan-color-border);
       background: var(--clan-color-soft);
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       font-family: ${m.mono};
     }
     .of-clan-count {
       font-size: 0.75em;
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       background: var(--clan-color-soft);
       padding: 2px 7px;
-      border-radius: ${p.xl};
+      border-radius: ${b.xl};
       border: 1px solid var(--clan-color-border);
       letter-spacing: 0.1em;
       font-family: ${m.mono};
@@ -482,7 +482,7 @@
       display: flex;
       gap: ${n.xs};
       font-size: 0.66em;
-      color: ${r.textSecondary};
+      color: ${a.textSecondary};
       flex-wrap: wrap;
       font-family: ${m.mono};
       line-height: 1.2;
@@ -494,9 +494,9 @@
       padding: 4px 10px;
       font-size: 0.75em;
       background: rgba(46, 211, 241, 0.15);
-      color: ${r.textPrimary};
-      border: 1px solid ${r.borderAccent};
-      border-radius: ${p.sm};
+      color: ${a.textPrimary};
+      border: 1px solid ${a.borderAccent};
+      border-radius: ${b.sm};
       cursor: pointer;
       transition: all ${d.fast};
       font-weight: 700;
@@ -506,8 +506,8 @@
       font-family: ${m.display};
     }
     .of-clan-use-btn:hover {
-      background: ${r.accent};
-      border-color: ${r.accent};
+      background: ${a.accent};
+      border-color: ${a.accent};
       color: #04131a;
     }
     .of-clan-group-players {
@@ -529,7 +529,7 @@
       display: inline-flex;
       padding: 4px 10px;
       border: 1px solid var(--clan-color-border);
-      border-radius: ${p.sm};
+      border-radius: ${b.sm};
       background: var(--clan-color-soft);
       cursor: default;
       transition: background ${d.fast}, border-color ${d.fast}, transform ${d.fast};
@@ -551,7 +551,7 @@
       display: inline-flex;
       padding: 4px 10px;
       border: 1px solid var(--player-accent-border, rgba(120, 135, 170, 0.5));
-      border-radius: ${p.sm};
+      border-radius: ${b.sm};
       background: var(--player-accent-soft, rgba(90, 105, 130, 0.18));
       cursor: default;
       transition: background ${d.fast}, border-color ${d.fast}, transform ${d.fast};
@@ -585,14 +585,14 @@
       background: var(--player-accent-soft, rgba(120, 135, 170, 0.18));
     }
     .of-clan-group-players .of-player-item.of-player-item-clanmate {
-      border-left: 4px solid var(--clan-color, ${r.accent});
+      border-left: 4px solid var(--clan-color, ${a.accent});
       background: var(--clan-color);
       box-shadow: 0 0 0 1px var(--clan-color-border) inset, 0 0 12px rgba(46, 211, 241, 0.3);
       color: #fff;
       text-shadow: 0 1px 2px rgba(6, 10, 18, 0.8);
     }
-    .of-player-name { color: ${r.textPrimary}; white-space: nowrap; overflow: visible; font-weight: 400; flex: 1; }
-    .of-player-highlighted { background: linear-gradient(90deg, ${r.highlight} 40%, rgba(46, 211, 241, 0.05)); border-left: 3px solid ${r.accent}; }
+    .of-player-name { color: ${a.textPrimary}; white-space: nowrap; overflow: visible; font-weight: 400; flex: 1; }
+    .of-player-highlighted { background: linear-gradient(90deg, ${a.highlight} 40%, rgba(46, 211, 241, 0.05)); border-left: 3px solid ${a.accent}; }
     .of-player-enter { animation: playerEnter ${d.slow} cubic-bezier(.27,.82,.48,1.06) forwards; }
     .of-player-enter-stagger-1 { animation-delay: 30ms; }
     .of-player-enter-stagger-2 { animation-delay: 60ms; }
@@ -603,9 +603,9 @@
     .of-player-exit { animation: playerExit 0.25s cubic-bezier(.51,.01,1,1.01) forwards; }
     @keyframes playerEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes playerExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
-    .of-player-list-footer { padding: ${n.sm} ${n.lg}; display: flex; justify-content: space-between; background: ${r.bgSecondary}; font-size: 0.95em; flex-shrink: 0; border-top: 1px solid ${r.border}; }
-    .of-player-list-button { background: ${r.bgHover}; border: 1px solid ${r.border}; color: ${r.textPrimary}; padding: 6px 13px; border-radius: ${p.md}; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: background ${d.fast}, border-color ${d.fast}; outline: none; }
-    .of-player-list-button:hover { background: rgba(80,110,160,0.5); border-color: ${r.borderAccent}; }
+    .of-player-list-footer { padding: ${n.sm} ${n.lg}; display: flex; justify-content: space-between; background: ${a.bgSecondary}; font-size: 0.95em; flex-shrink: 0; border-top: 1px solid ${a.border}; }
+    .of-player-list-button { background: ${a.bgHover}; border: 1px solid ${a.border}; color: ${a.textPrimary}; padding: 6px 13px; border-radius: ${b.md}; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: background ${d.fast}, border-color ${d.fast}; outline: none; }
+    .of-player-list-button:hover { background: rgba(80,110,160,0.5); border-color: ${a.borderAccent}; }
 
     .discovery-panel {
       position: fixed;
@@ -614,9 +614,9 @@
       width: min(560px, calc(100vw - 32px));
       max-height: calc(100vh - 48px);
       margin: 0;
-      border: 1px solid ${r.border};
-      border-radius: ${p.lg};
-      box-shadow: ${k.lg};
+      border: 1px solid ${a.border};
+      border-radius: ${b.lg};
+      box-shadow: ${T.lg};
       transition: opacity ${d.slow}, transform ${d.slow};
       cursor: default;
       overflow: hidden;
@@ -633,8 +633,8 @@
       flex-wrap: wrap;
       padding: ${n.sm} ${n.md};
       background: rgba(18, 26, 40, 0.75);
-      border: 1px solid ${r.border};
-      border-radius: ${p.md};
+      border: 1px solid ${a.border};
+      border-radius: ${b.md};
     }
     .discovery-action-row {
       display: grid;
@@ -645,10 +645,10 @@
     .discovery-clanmate-button {
       width: 100%;
       background: rgba(22, 34, 52, 0.9);
-      border: 1px solid ${r.border};
-      color: ${r.textPrimary};
+      border: 1px solid ${a.border};
+      color: ${a.textPrimary};
       padding: ${n.sm} ${n.md};
-      border-radius: ${p.md};
+      border-radius: ${b.md};
       font-size: 0.8em;
       font-weight: 700;
       cursor: pointer;
@@ -658,11 +658,11 @@
       letter-spacing: 0.08em;
       font-family: ${m.display};
     }
-    .discovery-clanmate-button:hover { background: rgba(30, 44, 66, 0.95); border-color: ${r.borderAccent}; }
-    .discovery-clanmate-button.armed { background: ${r.accent}; border-color: ${r.accentHover}; color: #04131a; box-shadow: 0 0 12px rgba(46, 211, 241, 0.35); }
+    .discovery-clanmate-button:hover { background: rgba(30, 44, 66, 0.95); border-color: ${a.borderAccent}; }
+    .discovery-clanmate-button.armed { background: ${a.accent}; border-color: ${a.accentHover}; color: #04131a; box-shadow: 0 0 12px rgba(46, 211, 241, 0.35); }
     .discovery-clanmate-button:disabled { opacity: 0.6; cursor: not-allowed; }
     .discovery-config-grid { display: flex; flex-direction: column; gap: ${n.sm}; }
-    .discovery-config-card { flex: 1 1 auto; min-width: 0; width: 100%; background: rgba(14, 22, 34, 0.7); border: 1px solid ${r.border}; border-radius: ${p.md}; }
+    .discovery-config-card { flex: 1 1 auto; min-width: 0; width: 100%; background: rgba(14, 22, 34, 0.7); border: 1px solid ${a.border}; border-radius: ${b.md}; }
     .discovery-mode-inner {
       display: flex;
       flex-direction: column;
@@ -679,19 +679,19 @@
     }
     .discovery-section-title {
       font-size: 0.72em;
-      color: ${r.textMuted};
+      color: ${a.textMuted};
       text-transform: uppercase;
       letter-spacing: 0.16em;
       font-family: ${m.display};
       margin-top: ${n.xs};
     }
-    .discovery-footer { align-items: center; justify-content: flex-start; gap: ${n.sm}; flex-wrap: wrap; padding: ${n.sm} ${n.md}; background: rgba(14, 22, 34, 0.75); border-top: 1px solid ${r.border}; }
+    .discovery-footer { align-items: center; justify-content: flex-start; gap: ${n.sm}; flex-wrap: wrap; padding: ${n.sm} ${n.md}; background: rgba(14, 22, 34, 0.75); border-top: 1px solid ${a.border}; }
     .discovery-main-button {
       width: auto;
       flex: 1 1 160px;
       padding: ${n.sm} ${n.md};
-      border: 1px solid ${r.border};
-      border-radius: ${p.md};
+      border: 1px solid ${a.border};
+      border-radius: ${b.md};
       font-size: 0.8em;
       font-weight: 700;
       cursor: pointer;
@@ -701,9 +701,9 @@
       letter-spacing: 0.08em;
       font-family: ${m.display};
     }
-    .discovery-main-button.active { background: ${r.accent}; color: #04131a; border-color: ${r.accentHover}; box-shadow: 0 0 14px rgba(46, 211, 241, 0.35); }
-    .discovery-main-button.inactive { background: rgba(28, 38, 58, 0.9); color: ${r.textSecondary}; }
-    .discovery-mode-config { margin-bottom: ${n.xs}; padding: ${n.sm}; background: rgba(18, 26, 40, 0.8); border-radius: ${p.md}; border: 1px solid rgba(90, 110, 150, 0.35); }
+    .discovery-main-button.active { background: ${a.accent}; color: #04131a; border-color: ${a.accentHover}; box-shadow: 0 0 14px rgba(46, 211, 241, 0.35); }
+    .discovery-main-button.inactive { background: rgba(28, 38, 58, 0.9); color: ${a.textSecondary}; }
+    .discovery-mode-config { margin-bottom: ${n.xs}; padding: ${n.sm}; background: rgba(18, 26, 40, 0.8); border-radius: ${b.md}; border: 1px solid rgba(90, 110, 150, 0.35); }
     .mode-checkbox-label {
       display: flex;
       align-items: center;
@@ -712,27 +712,27 @@
       cursor: pointer;
       margin-bottom: 6px;
       font-size: 0.8em;
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       text-transform: uppercase;
       letter-spacing: 0.12em;
       font-family: ${m.display};
     }
     .mode-checkbox-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
     .player-filter-info { margin-bottom: 4px; padding: 2px 0; }
-    .player-filter-info small { color: ${r.textSecondary}; font-size: 0.8em; }
+    .player-filter-info small { color: ${a.textSecondary}; font-size: 0.8em; }
     .capacity-range-wrapper { margin-top: 4px; }
     .capacity-range-visual { position: relative; padding: 8px 0 4px 0; }
     .capacity-track { position: relative; height: 6px; background: rgba(46, 211, 241, 0.2); border-radius: 3px; margin-bottom: ${n.sm}; }
     .team-count-options-centered { display: flex; justify-content: space-between; gap: 10px; margin: ${n.xs} 0; }
-    .team-count-column { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; background: rgba(12, 18, 30, 0.6); padding: 5px; border-radius: ${p.sm}; border: 1px solid rgba(90, 110, 150, 0.25); }
-    .team-count-column label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.78em; color: ${r.textPrimary}; white-space: nowrap; user-select: none; }
+    .team-count-column { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; background: rgba(12, 18, 30, 0.6); padding: 5px; border-radius: ${b.sm}; border: 1px solid rgba(90, 110, 150, 0.25); }
+    .team-count-column label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.78em; color: ${a.textPrimary}; white-space: nowrap; user-select: none; }
     .team-count-column input[type="checkbox"] { width: 16px; height: 16px; margin: 0; }
-    .select-all-btn { background: rgba(46, 211, 241, 0.15); color: ${r.textPrimary}; border: 1px solid ${r.borderAccent}; border-radius: ${p.sm}; padding: ${n.xs} ${n.sm}; font-size: 0.75em; cursor: pointer; flex: 1; text-align: center; margin: 0 2px; text-transform: uppercase; letter-spacing: 0.1em; font-family: ${m.display}; }
+    .select-all-btn { background: rgba(46, 211, 241, 0.15); color: ${a.textPrimary}; border: 1px solid ${a.borderAccent}; border-radius: ${b.sm}; padding: ${n.xs} ${n.sm}; font-size: 0.75em; cursor: pointer; flex: 1; text-align: center; margin: 0 2px; text-transform: uppercase; letter-spacing: 0.1em; font-family: ${m.display}; }
     .select-all-btn:hover { background: rgba(46, 211, 241, 0.25); }
     .team-count-section > div:first-of-type { display: flex; gap: 5px; margin-bottom: ${n.xs}; }
-    .team-count-section > label { font-size: 0.8em; color: ${r.textPrimary}; font-weight: 600; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.08em; font-family: ${m.display}; }
+    .team-count-section > label { font-size: 0.8em; color: ${a.textPrimary}; font-weight: 600; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.08em; font-family: ${m.display}; }
     .capacity-labels { display: flex; justify-content: space-between; align-items: center; margin-top: ${n.sm}; }
-    .three-times-checkbox { display: flex; align-items: center; gap: ${n.xs}; font-size: 0.78em; color: ${r.textPrimary}; margin: 0 5px; }
+    .three-times-checkbox { display: flex; align-items: center; gap: ${n.xs}; font-size: 0.78em; color: ${a.textPrimary}; margin: 0 5px; }
     .three-times-checkbox input[type="checkbox"] { width: 15px; height: 15px; }
     .capacity-range-fill { position: absolute; height: 100%; background: rgba(46, 211, 241, 0.5); border-radius: 3px; pointer-events: none; opacity: 0.7; transition: left 0.1s ease, width 0.1s ease; }
     .discovery-modifier-grid {
@@ -746,13 +746,13 @@
       justify-content: space-between;
       gap: ${n.sm};
       font-size: 0.82em;
-      color: ${r.textSecondary};
+      color: ${a.textSecondary};
       min-width: 0;
     }
     .discovery-modifier-grid label > span:first-child {
       flex: 1 1 auto;
       min-width: 0;
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       white-space: nowrap;
     }
     .discovery-binary-toggle {
@@ -762,7 +762,7 @@
       flex: 0 0 144px;
       min-width: 144px;
       padding: 2px;
-      border: 1px solid ${r.border};
+      border: 1px solid ${a.border};
       border-radius: 999px;
       background: rgba(20, 30, 46, 0.78);
     }
@@ -792,7 +792,7 @@
       min-height: 24px;
       padding: 0 8px;
       border-radius: 999px;
-      color: ${r.textMuted};
+      color: ${a.textMuted};
       font-size: 0.66em;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -803,7 +803,7 @@
       white-space: nowrap;
     }
     .discovery-binary-option[aria-pressed="true"] .discovery-binary-label {
-      color: ${r.textPrimary};
+      color: ${a.textPrimary};
       background: rgba(46, 211, 241, 0.18);
       box-shadow: inset 0 0 0 1px rgba(46, 211, 241, 0.24);
     }
@@ -819,11 +819,11 @@
       box-shadow: inset 0 0 0 1px rgba(46, 211, 241, 0.55), 0 0 20px rgba(46, 211, 241, 0.15);
     }
     .capacity-slider { position: absolute; width: 100%; height: 6px; top: 0; left: 0; background: transparent; outline: none; -webkit-appearance: none; pointer-events: none; margin: 0; }
-    .capacity-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: ${r.accent}; cursor: pointer; pointer-events: all; border: 2px solid rgba(5, 20, 26, 0.9); box-shadow: ${k.sm}; }
+    .capacity-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: ${a.accent}; cursor: pointer; pointer-events: all; border: 2px solid rgba(5, 20, 26, 0.9); box-shadow: ${T.sm}; }
     .capacity-slider-min { z-index: 2; }
     .capacity-slider-max { z-index: 1; }
     .capacity-label-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .capacity-label-group label { font-size: 0.8em; color: ${r.textSecondary}; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-family: ${m.display}; }
+    .capacity-label-group label { font-size: 0.8em; color: ${a.textSecondary}; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-family: ${m.display}; }
     .capacity-value { font-size: 0.85em; color: #FFFFFF; font-weight: 600; min-width: 40px; text-align: center; }
     .capacity-inputs-hidden { display: none; }
     .discovery-status { display: flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; flex-wrap: wrap; }
@@ -832,16 +832,16 @@
       70% { box-shadow: 0 0 0 8px rgba(20, 220, 170, 0); }
       100% { box-shadow: 0 0 0 0 rgba(20, 220, 170, 0); }
     }
-    .status-indicator { width: 8px; height: 8px; border-radius: 50%; background: ${r.success}; box-shadow: 0 0 10px rgba(20, 220, 170, 0.4); }
+    .status-indicator { width: 8px; height: 8px; border-radius: 50%; background: ${a.success}; box-shadow: 0 0 10px rgba(20, 220, 170, 0.4); }
     .status-indicator.active { animation: statusPulse 2s infinite; }
     .status-indicator.inactive { animation: none; box-shadow: none; }
-    .status-text { font-size: 0.8em; color: ${r.textPrimary}; text-transform: uppercase; letter-spacing: 0.12em; font-family: ${m.display}; }
+    .status-text { font-size: 0.8em; color: ${a.textPrimary}; text-transform: uppercase; letter-spacing: 0.12em; font-family: ${m.display}; }
     .search-timer { font-size: 0.8em; color: rgba(147, 197, 253, 0.9); font-weight: 500; font-family: ${m.mono}; }
     .discovery-settings { display: flex; align-items: center; gap: ${n.sm}; flex-wrap: wrap; }
-    .discovery-toggle-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8em; color: ${r.textPrimary}; font-family: ${m.display}; text-transform: uppercase; letter-spacing: 0.08em; }
+    .discovery-toggle-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8em; color: ${a.textPrimary}; font-family: ${m.display}; text-transform: uppercase; letter-spacing: 0.08em; }
     .discovery-toggle-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-    .current-game-info { margin: 6px 0; padding: 6px ${n.sm}; background: rgba(46, 211, 241, 0.1); border-radius: ${p.sm}; font-size: 0.8em; color: rgba(147, 197, 253, 0.9); text-align: center; border: 1px solid rgba(46, 211, 241, 0.25); }
-    .current-game-info.not-applicable { background: rgba(100, 100, 100, 0.1); color: ${r.textMuted}; border-color: rgba(100, 100, 100, 0.2); font-style: italic; }
+    .current-game-info { margin: 6px 0; padding: 6px ${n.sm}; background: rgba(46, 211, 241, 0.1); border-radius: ${b.sm}; font-size: 0.8em; color: rgba(147, 197, 253, 0.9); text-align: center; border: 1px solid rgba(46, 211, 241, 0.25); }
+    .current-game-info.not-applicable { background: rgba(100, 100, 100, 0.1); color: ${a.textMuted}; border-color: rgba(100, 100, 100, 0.2); font-style: italic; }
     @keyframes discoveryCardActiveBeacon {
       0% {
         box-shadow:
@@ -869,12 +869,10 @@
         box-shadow ${d.fast},
         filter ${d.fast},
         border-color ${d.fast};
-    }
-    .of-discovery-card-active {
       animation: discoveryCardActiveBeacon 1.45s ease-in-out infinite;
     }
 
-  `}var C={gameFoundAudio:null,gameStartAudio:null,audioUnlocked:!1,preloadSounds(){try{this.gameFoundAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/new-notification-014-363678.mp3"),this.gameFoundAudio.volume=.5,this.gameFoundAudio.preload="auto",this.gameStartAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/opening-bell-421471.mp3"),this.gameStartAudio.volume=.5,this.gameStartAudio.preload="auto",this.setupAudioUnlock()}catch(i){console.warn("[SoundUtils] Could not preload audio:",i)}},setupAudioUnlock(){let i=()=>{if(this.audioUnlocked)return;let e=[];this.gameFoundAudio&&(this.gameFoundAudio.volume=.01,e.push(this.gameFoundAudio.play().then(()=>{this.gameFoundAudio&&(this.gameFoundAudio.pause(),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.volume=.5)}).catch(()=>{}))),this.gameStartAudio&&(this.gameStartAudio.volume=.01,e.push(this.gameStartAudio.play().then(()=>{this.gameStartAudio&&(this.gameStartAudio.pause(),this.gameStartAudio.currentTime=0,this.gameStartAudio.volume=.5)}).catch(()=>{}))),Promise.all(e).then(()=>{this.audioUnlocked=!0,console.log("[SoundUtils] Audio unlocked successfully"),document.removeEventListener("click",i),document.removeEventListener("keydown",i),document.removeEventListener("touchstart",i)})};document.addEventListener("click",i,{once:!0}),document.addEventListener("keydown",i,{once:!0}),document.addEventListener("touchstart",i,{once:!0})},playGameFoundSound(){this.gameFoundAudio?(console.log("[SoundUtils] Attempting to play game found sound"),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game found sound:",i)})):console.warn("[SoundUtils] Game found audio not initialized")},playGameStartSound(){this.gameStartAudio?(console.log("[SoundUtils] Attempting to play game start sound"),this.gameStartAudio.currentTime=0,this.gameStartAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game start sound:",i)})):console.warn("[SoundUtils] Game start audio not initialized")}};var I={callbacks:[],lastUrl:location.href,initialized:!1,init(){if(this.initialized)return;this.initialized=!0;let i=()=>{location.href!==this.lastUrl&&(this.lastUrl=location.href,this.notify())};window.addEventListener("popstate",i),window.addEventListener("hashchange",i);let e=history.pushState,t=history.replaceState;history.pushState=function(...o){e.apply(history,o),setTimeout(i,0)},history.replaceState=function(...o){t.apply(history,o),setTimeout(i,0)},setInterval(i,200)},subscribe(i){this.callbacks.push(i),this.init()},notify(){this.callbacks.forEach(i=>i(location.href))}};var R={subscribers:[],fallbackInterval:null,lastLobbies:[],pollingRate:O.lobbyPollingRate,started:!1,publicLobbiesListener:null,start(){this.started||(this.started=!0,this.publicLobbiesListener=i=>this.handlePublicLobbiesUpdate(i),document.addEventListener("public-lobbies-update",this.publicLobbiesListener),this.startFallbackPolling())},stop(){this.started&&(this.started=!1,this.publicLobbiesListener&&(document.removeEventListener("public-lobbies-update",this.publicLobbiesListener),this.publicLobbiesListener=null),this.stopFallbackPolling())},subscribe(i){this.subscribers.push(i),this.lastLobbies.length>0&&i(this.lastLobbies)},startFallbackPolling(){this.fallbackInterval||(this.fetchData(),this.fallbackInterval=setInterval(()=>this.fetchData(),this.pollingRate))},stopFallbackPolling(){this.fallbackInterval&&(clearInterval(this.fallbackInterval),this.fallbackInterval=null)},async fetchData(){if(!(location.pathname!=="/"&&!location.pathname.startsWith("/public-lobby")))try{let i=await fetch("/api/public_lobbies");if(i.status===429){console.warn("[Bundle] Rate limited.");return}let e=await i.json();this.lastLobbies=this.extractLobbies(e),this.notifySubscribers()}catch(i){console.error("[Bundle] API Error:",i)}},notifySubscribers(){this.subscribers.forEach(i=>i(this.lastLobbies))},handlePublicLobbiesUpdate(i){let e=i.detail?.payload;this.lastLobbies=this.extractLobbies(e),this.notifySubscribers()},extractLobbies(i){if(!i||typeof i!="object")return[];if(Array.isArray(i.lobbies))return i.lobbies;let e=i.games;return e?["ffa","team","special"].flatMap(t=>(e[t]??[]).map(o=>({...o,publicGameType:o.publicGameType??t}))):[]}};var P={lastActionTime:0,debounceDelay:800,getLobbyButton(){return document.querySelector("public-lobby")?.querySelector("button.group.relative.isolate")},canJoinLobby(){let i=document.querySelector("public-lobby");if(!i)return!1;let e=this.getLobbyButton();return!!(e&&!i.isLobbyHighlighted&&i.lobbies&&i.lobbies.length>0&&!e.disabled&&e.offsetParent!==null)},verifyState(i){let e=document.querySelector("public-lobby");if(!e)return!1;let t=this.getLobbyButton();return!t||t.disabled||t.offsetParent===null?!1:i==="in"?e.isLobbyHighlighted===!0:i==="out"?!!(!e.isLobbyHighlighted&&e.lobbies&&e.lobbies.length>0):!1},tryJoinLobby(){let i=Date.now();if(i-this.lastActionTime<this.debounceDelay)return!1;let e=this.getLobbyButton(),t=document.querySelector("public-lobby");return e&&t&&!t.isLobbyHighlighted&&t.lobbies&&t.lobbies.length>0&&!e.disabled&&e.offsetParent!==null?(this.lastActionTime=i,e.click(),setTimeout(()=>{this.verifyState("in")||console.warn("[LobbyUtils] Join may have failed, state not updated")},100),!0):!1},isOnLobbyPage(){let i=document.getElementById("page-game");if(i&&!i.classList.contains("hidden"))return!1;let e=document.querySelector("canvas");if(e&&e.offsetParent!==null){let s=e.getBoundingClientRect();if(s.width>100&&s.height>100)return!1}let t=document.querySelector("public-lobby");if(t&&t.offsetParent!==null)return!0;if(t&&t.offsetParent===null)return!1;let o=document.getElementById("page-play");if(o&&!o.classList.contains("hidden")&&t)return!0;let a=window.location.pathname.replace(/\/+$/,"")||"/";return a==="/"||a==="/public-lobby"}};var z={isSupported(){return typeof Notification<"u"},isBackgrounded(){let i=document.visibilityState==="hidden"||document.hidden,e=typeof document.hasFocus=="function"?document.hasFocus():!0;return i||!e},async ensurePermission(){if(typeof Notification>"u")return!1;if(Notification.permission==="granted")return!0;if(Notification.permission==="denied")return!1;try{return await Notification.requestPermission()==="granted"}catch(i){return console.warn("[BrowserNotificationUtils] Permission request failed:",i),!1}},show(i){if(!this.isSupported()||!this.isBackgrounded())return!1;if(typeof Notification<"u"&&Notification.permission==="granted"){let e=new Notification(i.title,{body:i.body});return e.onclick=()=>{this.focusWindow(),e.close()},!0}return!1},focusWindow(){window.focus()}};var A=class{constructor(e,t,o=null,a=200,s=50){this.isDragging=!1;this.startX=0;this.startWidth=0;this.el=e,this.onResize=t,this.storageKey=o,this.minWidth=a,this.maxWidthVw=s,this.handleMouseDown=this._handleMouseDown.bind(this),this.handleMouseMove=this._handleMouseMove.bind(this),this.handleMouseUp=this._handleMouseUp.bind(this),this.handle=this.createHandle(),e.appendChild(this.handle),o&&this.loadWidth()}createHandle(){let e=document.createElement("div");return e.className="of-resize-handle",e.addEventListener("mousedown",this.handleMouseDown),e}loadWidth(){if(!this.storageKey)return;let e=GM_getValue(this.storageKey,null);if(e&&e.width){let t=this.clampWidth(e.width);this.el.style.width=t+"px",this.onResize(t)}}saveWidth(){this.storageKey&&GM_setValue(this.storageKey,{width:this.el.offsetWidth})}clampWidth(e){let t=window.innerWidth*(this.maxWidthVw/100);return Math.max(this.minWidth,Math.min(e,t))}_handleMouseDown(e){e.preventDefault(),e.stopPropagation(),this.isDragging=!0,this.startX=e.clientX,this.startWidth=this.el.offsetWidth,this.handle.classList.add("dragging"),document.addEventListener("mousemove",this.handleMouseMove),document.addEventListener("mouseup",this.handleMouseUp)}_handleMouseMove(e){if(!this.isDragging)return;let t=this.startX-e.clientX,o=this.clampWidth(this.startWidth+t);this.el.style.width=o+"px",this.onResize(o)}_handleMouseUp(){this.isDragging&&(this.isDragging=!1,this.handle.classList.remove("dragging"),document.removeEventListener("mousemove",this.handleMouseMove),document.removeEventListener("mouseup",this.handleMouseUp),this.saveWidth())}destroy(){this.handle.removeEventListener("mousedown",this.handleMouseDown),document.removeEventListener("mousemove",this.handleMouseMove),document.removeEventListener("mouseup",this.handleMouseUp),this.handle.parentNode&&this.handle.parentNode.removeChild(this.handle)}};var ee="allowed";function j(i){if(!i)return null;let e=i.toLowerCase().trim();return e==="free for all"||e==="ffa"||e==="free-for-all"?"FFA":e==="team"||e==="teams"?"Team":null}function T(i){return j(i.gameConfig?.gameMode)}function Y(i){let e=i.publicGameType?.toLowerCase().trim();return e==="ffa"||e==="team"||e==="special"?e:null}function U(i){if(i==="Duos"||i==="Trios"||i==="Quads"||i==="Humans Vs Nations"||typeof i=="number"&&Number.isFinite(i)&&i>0)return i;if(typeof i=="string"){let e=parseInt(i,10);if(!Number.isNaN(e)&&e>0)return e}return null}function $(i){let e=i.gameConfig;if(!e||T(i)!=="Team")return null;let t=U(e.playerTeams??null);return t!==null?t:U(e.teamCount??e.teams??null)}function D(i){let e=i.gameConfig;return e?e.maxPlayers??e.maxClients??e.maxPlayersPerGame??i.maxClients??null:null}function N(i,e){return!i||!e?null:i==="Duos"?2:i==="Trios"?3:i==="Quads"?4:i==="Humans Vs Nations"?e:typeof i=="number"&&i>0?Math.floor(e/i):null}function H(i,e){let t=i.gameConfig?.publicGameModifiers;if(t)switch(e){case"isCompact":return t.isCompact;case"isRandomSpawn":return t.isRandomSpawn;case"isCrowded":return t.isCrowded;case"isHardNations":return t.isHardNations;case"isAlliancesDisabled":return t.isAlliancesDisabled;case"isPortsDisabled":return t.isPortsDisabled;case"isNukesDisabled":return t.isNukesDisabled;case"isSAMsDisabled":return t.isSAMsDisabled;case"isPeaceTime":return t.isPeaceTime;case"startingGold":return t.startingGold;case"goldMultiplier":return t.goldMultiplier;default:return}}function K(i){let e=T(i),t=$(i),o=D(i);if(e==="FFA")return o!==null?`FFA \u2022 ${o} slots`:"FFA";if(e!=="Team")return"Unsupported mode";if(t==="Humans Vs Nations")return o!==null?`Humans Vs Nations (${o})`:"Humans Vs Nations";if(t==="Duos")return"Duos";if(t==="Trios")return"Trios";if(t==="Quads")return"Quads";if(typeof t=="number"&&o!==null){let a=N(t,o);return a!==null?`${t} teams (${a} per team)`:`${t} teams`}return"Team"}function te(i){let e=T(i),t=$(i);return e==="FFA"?"FFA":e!=="Team"?"Unsupported mode":t==="Humans Vs Nations"?"Humans Vs Nations":t==="Duos"||t==="Trios"||t==="Quads"?t:typeof t=="number"?`${t} teams`:"Team"}function ie(i){return i>=1e6&&i%1e6===0?`${i/1e6}M`:i>=1e3&&i%1e3===0?`${i/1e3}K`:String(i)}function oe(i){let e=i.gameConfig?.publicGameModifiers;if(!e)return[];let t=[];return e.isCompact&&t.push("Compact"),e.isRandomSpawn&&t.push("Random"),e.isCrowded&&t.push("Crowded"),e.isHardNations&&t.push("Hard"),typeof e.startingGold=="number"&&t.push(ie(e.startingGold)),typeof e.goldMultiplier=="number"&&t.push(`x${e.goldMultiplier}`),e.isAlliancesDisabled&&t.push("No Alliances"),e.isPortsDisabled&&t.push("No Ports"),e.isNukesDisabled&&t.push("No Nukes"),e.isSAMsDisabled&&t.push("No SAMs"),e.isPeaceTime&&t.push("Peace"),t}function J(i){let e=[],t=i.gameConfig?.gameMap?.trim(),o=D(i),a=$(i),s=te(i);if(t&&e.push(t),T(i)==="Team"&&a!=="Humans Vs Nations"){e.push(s);let u=N(a,o);u!==null&&e.push(`${u}/team`)}else e.push(s);let l=[];o!==null&&l.push(`${o} slots`);let f=oe(i);return f.length>0&&l.push(f.join(", ")),{title:e.join(" \u2022 "),body:l.join(" \u2022 ")}}function q(i){return typeof i=="number"&&Number.isFinite(i)?i:null}function v(i){return i==="blocked"||i==="rejected"?"blocked":i==="allowed"||i==="required"||i==="indifferent"?"allowed":ee}function Q(i){if(!i||typeof i!="object")return;let e={};for(let[t,o]of Object.entries(i)){let a=Number(t);Number.isFinite(a)&&(e[a]=v(o))}return Object.keys(e).length>0?e:void 0}function re(i){if(!i||typeof i!="object")return;let e=i;return{isCompact:v(e.isCompact),isRandomSpawn:v(e.isRandomSpawn),isCrowded:v(e.isCrowded),isHardNations:v(e.isHardNations),isAlliancesDisabled:v(e.isAlliancesDisabled),isPortsDisabled:v(e.isPortsDisabled),isNukesDisabled:v(e.isNukesDisabled),isSAMsDisabled:v(e.isSAMsDisabled),isPeaceTime:v(e.isPeaceTime),startingGold:Q(e.startingGold),goldMultiplier:Q(e.goldMultiplier)}}function W(i){if(!Array.isArray(i))return[];let e=[];for(let t of i){let o=t,a=j(o.gameMode??null);a&&e.push({gameMode:a,teamCount:a==="Team"?U(o.teamCount??null):null,minPlayers:q(o.minPlayers),maxPlayers:q(o.maxPlayers),modifiers:re(o.modifiers)})}return e}function X(i,e){return e?{criteria:W(e.criteria),discoveryEnabled:typeof e.discoveryEnabled=="boolean"?e.discoveryEnabled:!0,soundEnabled:typeof e.soundEnabled=="boolean"?e.soundEnabled:!0,desktopNotificationsEnabled:typeof e.desktopNotificationsEnabled=="boolean"?e.desktopNotificationsEnabled:!1,isTeamTwoTimesMinEnabled:typeof e.isTeamTwoTimesMinEnabled=="boolean"?e.isTeamTwoTimesMinEnabled:!!e.isTeamThreeTimesMinEnabled}:{criteria:W(i?.criteria),discoveryEnabled:typeof i?.autoJoinEnabled=="boolean"?i.autoJoinEnabled:!0,soundEnabled:typeof i?.soundEnabled=="boolean"?i.soundEnabled:!0,desktopNotificationsEnabled:!1,isTeamTwoTimesMinEnabled:typeof i?.isTeamTwoTimesMinEnabled=="boolean"?i.isTeamTwoTimesMinEnabled:!!i?.isTeamThreeTimesMinEnabled}}var ae=["isCompact","isRandomSpawn","isCrowded","isHardNations","isAlliancesDisabled","isPortsDisabled","isNukesDisabled","isSAMsDisabled","isPeaceTime"],F=class{matchesCriteria(e,t,o={}){if(!e||!e.gameConfig||!t||t.length===0)return!1;let a=T(e),s=D(e);if(!a||s===null)return!1;let l=$(e),f=a==="Team"?N(l,s):null;for(let u of t){if(u.gameMode!==a||a==="Team"&&(u.teamCount!==null&&u.teamCount!==void 0&&u.teamCount!==l||o.isTeamTwoTimesMinEnabled&&u.minPlayers!==null&&s<u.minPlayers*2||f===null))continue;let b=a==="Team"?f:s;if(b!==null&&!(u.minPlayers!==null&&b<u.minPlayers)&&!(u.maxPlayers!==null&&b>u.maxPlayers)&&this.matchesModifiers(e,u.modifiers))return!0}return!1}matchesModifiers(e,t){if(!t)return!0;for(let o of ae){let a=t[o];if(!a||a==="allowed")continue;let s=!!H(e,o);if(a==="blocked"&&s)return!1}return!(!this.matchesNumericModifier(H(e,"startingGold"),t.startingGold)||!this.matchesNumericModifier(H(e,"goldMultiplier"),t.goldMultiplier))}matchesNumericModifier(e,t){if(!t)return!0;let o=typeof e=="number"&&Number.isFinite(e)?e:null,a=Object.entries(t);if(a.length===0)return!0;let s=a.filter(([,l])=>l==="blocked").map(([l])=>Number(l));return!(o!==null&&s.includes(o))}};var ne=[1e6,5e6,25e6],se=[2],B=class{constructor(){this.discoveryEnabled=!0;this.criteriaList=[];this.searchStartTime=null;this.gameFoundTime=null;this.soundEnabled=!0;this.desktopNotificationsEnabled=!1;this.activeMatchSources=new Set;this.notifiedLobbies=new Set;this.isTeamTwoTimesMinEnabled=!1;this.sleeping=!1;this.timerInterval=null;this.gameInfoInterval=null;this.pulseSyncTimeout=null;this.resizeHandler=null;this.engine=new F,this.loadSettings(),this.createUI(),this.updateSleepState(),I.subscribe(()=>this.updateSleepState())}receiveLobbyUpdate(e){this.processLobbies(e)}migrateSettings(){let e=GM_getValue("autoJoinSettings",null),t=GM_getValue(M.lobbyDiscoverySettings,null),o=X(e,t);GM_setValue(M.lobbyDiscoverySettings,o)}loadSettings(){this.migrateSettings();let e=GM_getValue(M.lobbyDiscoverySettings,null);e&&(this.criteriaList=e.criteria||[],this.soundEnabled=e.soundEnabled!==void 0?e.soundEnabled:!0,this.desktopNotificationsEnabled=e.desktopNotificationsEnabled!==void 0?e.desktopNotificationsEnabled:!1,this.discoveryEnabled=e.discoveryEnabled!==void 0?e.discoveryEnabled:!0,this.isTeamTwoTimesMinEnabled=e.isTeamTwoTimesMinEnabled||!1)}saveSettings(){GM_setValue(M.lobbyDiscoverySettings,{criteria:this.criteriaList,discoveryEnabled:this.discoveryEnabled,soundEnabled:this.soundEnabled,desktopNotificationsEnabled:this.desktopNotificationsEnabled,isTeamTwoTimesMinEnabled:this.isTeamTwoTimesMinEnabled})}updateSearchTimer(){let e=document.getElementById("discovery-search-timer");if(!e)return;if(!this.discoveryEnabled||this.criteriaList.length===0||this.searchStartTime===null||!this.isDiscoveryFeedbackAllowed()){e.style.display="none";return}let t=this.gameFoundTime??Date.now(),o=Math.floor((t-this.searchStartTime)/1e3);e.textContent=this.gameFoundTime?`Match found (${Math.floor(o/60)}m ${o%60}s)`:`Scanning ${Math.floor(o/60)}m ${o%60}s`,e.style.display="inline"}updateCurrentGameInfo(){let e=document.getElementById("discovery-current-game-info");if(!e||!P.isOnLobbyPage()){e&&(e.style.display="none");return}let t=document.querySelector("public-lobby");if(!t||!Array.isArray(t.lobbies)||t.lobbies.length===0){e.style.display="none";return}let o=t.lobbies[0];if(!o||!o.gameConfig){e.style.display="none";return}e.style.display="block",e.textContent=`Current game: ${K(o)}`,e.classList.remove("not-applicable")}processLobbies(e){try{if(this.updateCurrentGameInfo(),this.syncSearchTimer(),!this.discoveryEnabled||this.criteriaList.length===0||!this.isDiscoveryFeedbackAllowed()){this.notifiedLobbies.clear(),this.updateQueueCardPulses(new Set),this.gameFoundTime=null,this.updateSearchTimer();return}let t=this.getDisplayedLobbiesBySource(e),o=new Set,a=new Set,s=[],l=!1;for(let[f,u]of Object.entries(t)){if(!u||!this.engine.matchesCriteria(u,this.criteriaList,{isTeamTwoTimesMinEnabled:this.isTeamTwoTimesMinEnabled}))continue;o.add(f);let b=this.getNotificationKey(u);a.add(b),this.notifiedLobbies.has(b)||(l=!0,s.push(u))}if(this.updateQueueCardPulses(o),l&&this.soundEnabled&&C.playGameFoundSound(),this.desktopNotificationsEnabled)for(let f of s){let u=J(f);z.show({title:u.title,body:u.body,tag:this.getNotificationKey(f)})}this.notifiedLobbies=a,this.gameFoundTime=a.size>0?this.gameFoundTime??Date.now():null,this.updateSearchTimer()}catch(t){console.error("[LobbyDiscovery] Error processing lobbies:",t)}}getNotificationKey(e){return JSON.stringify({gameID:e.gameID,mode:e.gameConfig?.gameMode??null,playerTeams:e.gameConfig?.playerTeams??e.gameConfig?.teamCount??null,capacity:e.gameConfig?.maxPlayers??e.maxClients??null,modifiers:e.gameConfig?.publicGameModifiers??{}})}isDiscoveryFeedbackAllowed(){return!(!P.isOnLobbyPage()||document.getElementById("page-play")?.classList.contains("hidden")||document.querySelector("public-lobby")?.isLobbyHighlighted===!0||document.querySelector("join-lobby-modal")?.currentLobbyId||document.querySelector("host-lobby-modal")?.lobbyId)}getDisplayedLobbiesBySource(e){let t={};for(let o of e){let a=Y(o);!a||t[a]||(t[a]=o)}return t}getQueueCardElements(){let e=document.querySelector("game-mode-selector");if(!e)return{};let t=Array.from(e.querySelectorAll("div")).find(l=>l.className.includes("sm:grid-cols-[2fr_1fr]"));if(!(t instanceof HTMLElement))return{};let[o,a]=Array.from(t.children),s=a?Array.from(a.children):[];return{ffa:o?.querySelector("button"),special:s[0]?.querySelector("button"),team:s[1]?.querySelector("button")}}updateQueueCardPulses(e){this.activeMatchSources=new Set(e),this.applyQueueCardPulses(),this.scheduleQueueCardPulseSync()}applyQueueCardPulses(){let e=this.getQueueCardElements();for(let t of["ffa","special","team"]){let o=e[t];if(!o)continue;let a=this.activeMatchSources.has(t);o.classList.toggle("of-discovery-card-active",a),o.classList.remove("of-discovery-card-burst");let s=o.querySelector(".of-discovery-card-badge");s&&s.remove()}}scheduleQueueCardPulseSync(){this.pulseSyncTimeout&&clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=setTimeout(()=>{this.pulseSyncTimeout=null,this.applyQueueCardPulses()},16)}stopTimer(){this.timerInterval&&(clearInterval(this.timerInterval),this.timerInterval=null)}startGameInfoUpdates(){this.stopGameInfoUpdates(),this.updateCurrentGameInfo(),this.gameInfoInterval=setInterval(()=>this.updateCurrentGameInfo(),1e3)}stopGameInfoUpdates(){this.gameInfoInterval&&(clearInterval(this.gameInfoInterval),this.gameInfoInterval=null)}syncSearchTimer(e={}){let{resetStart:t=!1}=e;this.stopTimer(),t&&(this.searchStartTime=null,this.gameFoundTime=null,this.notifiedLobbies.clear()),this.discoveryEnabled&&this.criteriaList.length>0&&this.isDiscoveryFeedbackAllowed()?(this.searchStartTime===null&&(this.searchStartTime=Date.now()),this.timerInterval=setInterval(()=>this.updateSearchTimer(),1e3)):(this.searchStartTime=null,this.gameFoundTime=null),this.updateSearchTimer()}setDiscoveryEnabled(e,t={}){this.discoveryEnabled=e,this.saveSettings(),this.updateUI(),this.syncSearchTimer({resetStart:t.resetTimer??!1})}getNumberValue(e){let t=document.getElementById(e);if(!t)return null;let o=parseInt(t.value,10);return Number.isNaN(o)?null:o}getModifierFilterValue(e){let t=document.getElementById(`${e}-allowed`);return document.getElementById(`${e}-blocked`)?.getAttribute("aria-pressed")==="true"||t?.getAttribute("aria-pressed")==="false"?"blocked":"allowed"}getNumericModifierState(e){let t={};for(let[o,a]of Object.entries(e))t[Number(o)]=this.getModifierFilterValue(a);return t}getModifierFiltersFromUI(){return{isCompact:this.getModifierFilterValue("modifier-isCompact"),isRandomSpawn:this.getModifierFilterValue("modifier-isRandomSpawn"),isCrowded:this.getModifierFilterValue("modifier-isCrowded"),isHardNations:this.getModifierFilterValue("modifier-isHardNations"),isAlliancesDisabled:this.getModifierFilterValue("modifier-isAlliancesDisabled"),isPortsDisabled:this.getModifierFilterValue("modifier-isPortsDisabled"),isNukesDisabled:this.getModifierFilterValue("modifier-isNukesDisabled"),isSAMsDisabled:this.getModifierFilterValue("modifier-isSAMsDisabled"),isPeaceTime:this.getModifierFilterValue("modifier-isPeaceTime"),startingGold:this.getNumericModifierState({1e6:"modifier-startingGold-1000000",5e6:"modifier-startingGold-5000000",25e6:"modifier-startingGold-25000000"}),goldMultiplier:this.getNumericModifierState({2:"modifier-goldMultiplier-2"})}}getAllTeamCountValues(){let e=[],t=["discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7"];for(let o of t){let a=document.getElementById(o);if(a?.checked)if(a.value==="Duos"||a.value==="Trios"||a.value==="Quads"||a.value==="Humans Vs Nations")e.push(a.value);else{let s=parseInt(a.value,10);Number.isNaN(s)||e.push(s)}}return e}setAllTeamCounts(e){let t=["discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7"];for(let o of t){let a=document.getElementById(o);a&&(a.checked=e)}}buildCriteriaFromUI(){let e=this.getModifierFiltersFromUI(),t=[];if(document.getElementById("discovery-ffa")?.checked&&t.push({gameMode:"FFA",teamCount:null,minPlayers:this.getNumberValue("discovery-ffa-min"),maxPlayers:this.getNumberValue("discovery-ffa-max"),modifiers:e}),!document.getElementById("discovery-team")?.checked)return t;let s=this.getAllTeamCountValues();if(s.length===0)return t.push({gameMode:"Team",teamCount:null,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e}),t;for(let l of s)t.push({gameMode:"Team",teamCount:l,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e});return t}updateUI(){let e=document.querySelector(".status-text"),t=document.querySelector(".status-indicator");!e||!t||(this.discoveryEnabled?(e.textContent="Discovery Active",t.style.background="#38d9a9",t.classList.add("active"),t.classList.remove("inactive")):(e.textContent="Discovery Paused",t.style.background="#888",t.classList.remove("active"),t.classList.add("inactive")))}applyModeVisibility(e,t){let o=document.getElementById(e);o&&o.classList.toggle("is-disabled",!t)}setTeamCountSelections(e){for(let t of e){let o=null;t==="Duos"?o=document.getElementById("discovery-team-duos"):t==="Trios"?o=document.getElementById("discovery-team-trios"):t==="Quads"?o=document.getElementById("discovery-team-quads"):t==="Humans Vs Nations"?o=document.getElementById("discovery-team-hvn"):typeof t=="number"&&(o=document.getElementById(`discovery-team-${t}`)),o&&(o.checked=!0)}}setModifierControl(e,t){let o=t??"allowed",a=document.getElementById(e),s=document.getElementById(`${e}-allowed`),l=document.getElementById(`${e}-blocked`);!a||!s||!l||(a.dataset.state=o,a.setAttribute("aria-valuetext",o),s.setAttribute("aria-pressed",String(o==="allowed")),l.setAttribute("aria-pressed",String(o==="blocked")))}loadUIFromSettings(){let e=this.criteriaList.find(c=>c.gameMode==="FFA"),t=this.criteriaList.filter(c=>c.gameMode==="Team"),o=document.getElementById("discovery-ffa"),a=document.getElementById("discovery-team");if(o&&(o.checked=!!e,this.applyModeVisibility("discovery-ffa-config",!!e)),a&&(a.checked=t.length>0,this.applyModeVisibility("discovery-team-config",t.length>0)),e){let c=document.getElementById("discovery-ffa-min"),y=document.getElementById("discovery-ffa-max");c&&e.minPlayers!==null&&(c.value=String(e.minPlayers)),y&&e.maxPlayers!==null&&(y.value=String(e.maxPlayers))}if(t[0]){let c=document.getElementById("discovery-team-min"),y=document.getElementById("discovery-team-max");c&&t[0].minPlayers!==null&&(c.value=String(t[0].minPlayers)),y&&t[0].maxPlayers!==null&&(y.value=String(t[0].maxPlayers)),this.setTeamCountSelections(t.map(w=>w.teamCount))}let l=(e??t[0])?.modifiers;if(l){this.setModifierControl("modifier-isCompact",l.isCompact),this.setModifierControl("modifier-isRandomSpawn",l.isRandomSpawn),this.setModifierControl("modifier-isCrowded",l.isCrowded),this.setModifierControl("modifier-isHardNations",l.isHardNations),this.setModifierControl("modifier-isAlliancesDisabled",l.isAlliancesDisabled),this.setModifierControl("modifier-isPortsDisabled",l.isPortsDisabled),this.setModifierControl("modifier-isNukesDisabled",l.isNukesDisabled),this.setModifierControl("modifier-isSAMsDisabled",l.isSAMsDisabled),this.setModifierControl("modifier-isPeaceTime",l.isPeaceTime);for(let c of ne)this.setModifierControl(`modifier-startingGold-${c}`,l.startingGold?.[c]);for(let c of se)this.setModifierControl(`modifier-goldMultiplier-${c}`,l.goldMultiplier?.[c])}else for(let c of["modifier-isCompact","modifier-isRandomSpawn","modifier-isCrowded","modifier-isHardNations","modifier-isAlliancesDisabled","modifier-isPortsDisabled","modifier-isNukesDisabled","modifier-isSAMsDisabled","modifier-isPeaceTime","modifier-startingGold-1000000","modifier-startingGold-5000000","modifier-startingGold-25000000","modifier-goldMultiplier-2"])this.setModifierControl(c,"allowed");let f=document.getElementById("discovery-sound-toggle");f&&(f.checked=this.soundEnabled);let u=document.getElementById("discovery-desktop-toggle");u&&(u.checked=this.desktopNotificationsEnabled);let b=document.getElementById("discovery-team-two-times");b&&(b.checked=this.isTeamTwoTimesMinEnabled)}initializeSlider(e,t,o,a,s,l,f,u=!1){let b=document.getElementById(e),c=document.getElementById(t),y=document.getElementById(o),w=document.getElementById(a);if(!b||!c||!y||!w)return;let h=parseInt(y.value,10),g=parseInt(w.value,10);Number.isNaN(h)||(b.value=String(h)),Number.isNaN(g)||(c.value=String(g));let x=()=>{this.updateSliderRange(e,t,o,a,s,l,f,u),this.refreshCriteria()};b.addEventListener("input",x),c.addEventListener("input",x),this.updateSliderRange(e,t,o,a,s,l,f,u)}updateSliderRange(e,t,o,a,s,l,f,u){let b=document.getElementById(e),c=document.getElementById(t),y=document.getElementById(o),w=document.getElementById(a),h=document.getElementById(s),g=document.getElementById(l),x=document.getElementById(f);if(!b||!c||!y||!w)return;let L=parseInt(b.value,10),S=parseInt(c.value,10);if(u&&this.isTeamTwoTimesMinEnabled&&(S=Math.min(parseInt(c.max,10),Math.max(1,2*L)),c.value=String(S)),L>S&&(L=S,b.value=String(L)),y.value=String(L),w.value=String(S),g&&(g.textContent=L===1?"Any":String(L)),x&&(x.textContent=S===parseInt(c.max,10)?"Any":String(S)),h){let _=(L-parseInt(b.min,10))/(parseInt(b.max,10)-parseInt(b.min,10))*100,Z=(S-parseInt(b.min,10))/(parseInt(c.max,10)-parseInt(c.min,10))*100;h.style.left=`${_}%`,h.style.width=`${Z-_}%`}}refreshCriteria(){this.criteriaList=this.buildCriteriaFromUI(),this.saveSettings(),this.syncSearchTimer({resetStart:!0})}async handleDesktopNotificationToggleChange(e){if(!e.checked){this.desktopNotificationsEnabled=!1,this.saveSettings();return}let t=await z.ensurePermission();this.desktopNotificationsEnabled=t,e.checked=t,e.toggleAttribute("checked",t),this.saveSettings()}setupEventListeners(){document.getElementById("discovery-status")?.addEventListener("click",()=>{this.setDiscoveryEnabled(!this.discoveryEnabled,{resetTimer:!0})});for(let[t,o]of[["discovery-ffa","discovery-ffa-config"],["discovery-team","discovery-team-config"]]){let a=document.getElementById(t);a?.addEventListener("change",()=>{this.applyModeVisibility(o,a.checked),this.refreshCriteria()})}let e=document.getElementById("discovery-team-two-times");e?.addEventListener("change",()=>{this.isTeamTwoTimesMinEnabled=e.checked,this.updateSliderRange("discovery-team-min-slider","discovery-team-max-slider","discovery-team-min","discovery-team-max","discovery-team-range-fill","discovery-team-min-value","discovery-team-max-value",!0),this.refreshCriteria()}),document.getElementById("discovery-team-select-all")?.addEventListener("click",()=>{this.setAllTeamCounts(!0),this.refreshCriteria()}),document.getElementById("discovery-team-deselect-all")?.addEventListener("click",()=>{this.setAllTeamCounts(!1),this.refreshCriteria()});for(let t of["discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7","discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-sound-toggle","discovery-desktop-toggle"]){let o=document.getElementById(t);o&&o.addEventListener("change",()=>{if(t==="discovery-sound-toggle"&&o instanceof HTMLInputElement){this.soundEnabled=o.checked,this.saveSettings();return}if(t==="discovery-desktop-toggle"&&o instanceof HTMLInputElement){this.handleDesktopNotificationToggleChange(o);return}this.refreshCriteria()})}for(let t of["modifier-isCompact","modifier-isRandomSpawn","modifier-isCrowded","modifier-isHardNations","modifier-isAlliancesDisabled","modifier-isPortsDisabled","modifier-isNukesDisabled","modifier-isSAMsDisabled","modifier-isPeaceTime","modifier-startingGold-1000000","modifier-startingGold-5000000","modifier-startingGold-25000000","modifier-goldMultiplier-2"]){let o=document.getElementById(`${t}-allowed`),a=document.getElementById(`${t}-blocked`);for(let s of[o,a])s?.addEventListener("click",()=>{this.setModifierControl(t,s.dataset.value),this.refreshCriteria()})}}createModifierControl(e){return`
+  `}var C={gameFoundAudio:null,gameStartAudio:null,audioUnlocked:!1,preloadSounds(){try{this.gameFoundAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/new-notification-014-363678.mp3"),this.gameFoundAudio.volume=.5,this.gameFoundAudio.preload="auto",this.gameStartAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/opening-bell-421471.mp3"),this.gameStartAudio.volume=.5,this.gameStartAudio.preload="auto",this.setupAudioUnlock()}catch(i){console.warn("[SoundUtils] Could not preload audio:",i)}},setupAudioUnlock(){let i=()=>{if(this.audioUnlocked)return;let e=[];this.gameFoundAudio&&(this.gameFoundAudio.volume=.01,e.push(this.gameFoundAudio.play().then(()=>{this.gameFoundAudio&&(this.gameFoundAudio.pause(),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.volume=.5)}).catch(()=>{}))),this.gameStartAudio&&(this.gameStartAudio.volume=.01,e.push(this.gameStartAudio.play().then(()=>{this.gameStartAudio&&(this.gameStartAudio.pause(),this.gameStartAudio.currentTime=0,this.gameStartAudio.volume=.5)}).catch(()=>{}))),Promise.all(e).then(()=>{this.audioUnlocked=!0,console.log("[SoundUtils] Audio unlocked successfully"),document.removeEventListener("click",i),document.removeEventListener("keydown",i),document.removeEventListener("touchstart",i)})};document.addEventListener("click",i,{once:!0}),document.addEventListener("keydown",i,{once:!0}),document.addEventListener("touchstart",i,{once:!0})},playGameFoundSound(){this.gameFoundAudio?(console.log("[SoundUtils] Attempting to play game found sound"),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game found sound:",i)})):console.warn("[SoundUtils] Game found audio not initialized")},playGameStartSound(){this.gameStartAudio?(console.log("[SoundUtils] Attempting to play game start sound"),this.gameStartAudio.currentTime=0,this.gameStartAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game start sound:",i)})):console.warn("[SoundUtils] Game start audio not initialized")}};var P={callbacks:[],lastUrl:location.href,initialized:!1,init(){if(this.initialized)return;this.initialized=!0;let i=()=>{location.href!==this.lastUrl&&(this.lastUrl=location.href,this.notify())};window.addEventListener("popstate",i),window.addEventListener("hashchange",i);let e=history.pushState,t=history.replaceState;history.pushState=function(...o){e.apply(history,o),setTimeout(i,0)},history.replaceState=function(...o){t.apply(history,o),setTimeout(i,0)},setInterval(i,200)},subscribe(i){this.callbacks.push(i),this.init()},notify(){this.callbacks.forEach(i=>i(location.href))}};var R={subscribers:[],fallbackInterval:null,fallbackStartTimeout:null,lastLobbies:[],pollingRate:O.lobbyPollingRate,started:!1,publicLobbiesListener:null,start(){this.started||(this.started=!0,this.publicLobbiesListener=i=>this.handlePublicLobbiesUpdate(i),document.addEventListener("public-lobbies-update",this.publicLobbiesListener),this.scheduleFallbackPolling())},stop(){this.started&&(this.started=!1,this.publicLobbiesListener&&(document.removeEventListener("public-lobbies-update",this.publicLobbiesListener),this.publicLobbiesListener=null),this.fallbackStartTimeout&&(clearTimeout(this.fallbackStartTimeout),this.fallbackStartTimeout=null),this.stopFallbackPolling())},subscribe(i){this.subscribers.push(i),this.lastLobbies.length>0&&i(this.lastLobbies)},scheduleFallbackPolling(){!this.started||this.fallbackInterval||this.fallbackStartTimeout||(this.fallbackStartTimeout=setTimeout(()=>{this.fallbackStartTimeout=null,this.startFallbackPolling()},this.pollingRate*2))},startFallbackPolling(){this.fallbackInterval||(this.fetchData(),this.fallbackInterval=setInterval(()=>void this.fetchData(),this.pollingRate))},stopFallbackPolling(){this.fallbackInterval&&(clearInterval(this.fallbackInterval),this.fallbackInterval=null)},async fetchData(){if(!(location.pathname!=="/"&&!location.pathname.startsWith("/public-lobby")))try{let i=await fetch("/api/public_lobbies");if(i.status===429){console.warn("[Bundle] Rate limited.");return}let e=await i.json();this.lastLobbies=this.extractLobbies(e),this.notifySubscribers()}catch(i){console.error("[Bundle] API Error:",i)}},notifySubscribers(){this.subscribers.forEach(i=>i(this.lastLobbies))},handlePublicLobbiesUpdate(i){this.fallbackStartTimeout&&(clearTimeout(this.fallbackStartTimeout),this.fallbackStartTimeout=null),this.stopFallbackPolling();let e=i.detail?.payload;this.lastLobbies=this.extractLobbies(e),this.notifySubscribers(),this.scheduleFallbackPolling()},extractLobbies(i){if(!i||typeof i!="object")return[];if(Array.isArray(i.lobbies))return i.lobbies;let e=i.games;return e?["ffa","team","special"].flatMap(t=>(e[t]??[]).map(o=>({...o,publicGameType:o.publicGameType??t}))):[]}};var I={lastActionTime:0,debounceDelay:800,getLobbyButton(){return document.querySelector("public-lobby")?.querySelector("button.group.relative.isolate")},canJoinLobby(){let i=document.querySelector("public-lobby");if(!i)return!1;let e=this.getLobbyButton();return!!(e&&!i.isLobbyHighlighted&&i.lobbies&&i.lobbies.length>0&&!e.disabled&&e.offsetParent!==null)},verifyState(i){let e=document.querySelector("public-lobby");if(!e)return!1;let t=this.getLobbyButton();return!t||t.disabled||t.offsetParent===null?!1:i==="in"?e.isLobbyHighlighted===!0:i==="out"?!!(!e.isLobbyHighlighted&&e.lobbies&&e.lobbies.length>0):!1},tryJoinLobby(){let i=Date.now();if(i-this.lastActionTime<this.debounceDelay)return!1;let e=this.getLobbyButton(),t=document.querySelector("public-lobby");return e&&t&&!t.isLobbyHighlighted&&t.lobbies&&t.lobbies.length>0&&!e.disabled&&e.offsetParent!==null?(this.lastActionTime=i,e.click(),setTimeout(()=>{this.verifyState("in")||console.warn("[LobbyUtils] Join may have failed, state not updated")},100),!0):!1},isOnLobbyPage(){let i=document.getElementById("page-game");if(i&&!i.classList.contains("hidden"))return!1;let e=document.querySelector("canvas");if(e&&e.offsetParent!==null){let s=e.getBoundingClientRect();if(s.width>100&&s.height>100)return!1}let t=document.querySelector("public-lobby");if(t&&t.offsetParent!==null)return!0;if(t&&t.offsetParent===null)return!1;let o=document.getElementById("page-play");if(o&&!o.classList.contains("hidden")&&t)return!0;let r=window.location.pathname.replace(/\/+$/,"")||"/";return r==="/"||r==="/public-lobby"}};var z={isSupported(){return typeof Notification<"u"},isBackgrounded(){let i=document.visibilityState==="hidden"||document.hidden,e=typeof document.hasFocus=="function"?document.hasFocus():!0;return i||!e},async ensurePermission(){if(typeof Notification>"u")return!1;if(Notification.permission==="granted")return!0;if(Notification.permission==="denied")return!1;try{return await Notification.requestPermission()==="granted"}catch(i){return console.warn("[BrowserNotificationUtils] Permission request failed:",i),!1}},show(i){if(!this.isSupported()||!this.isBackgrounded())return!1;if(typeof Notification<"u"&&Notification.permission==="granted"){let e=new Notification(i.title,{body:i.body});return e.onclick=()=>{this.focusWindow(),e.close()},!0}return!1},focusWindow(){window.focus()}};var A=class{constructor(e,t,o=null,r=200,s=50){this.isDragging=!1;this.startX=0;this.startWidth=0;this.el=e,this.onResize=t,this.storageKey=o,this.minWidth=r,this.maxWidthVw=s,this.handleMouseDown=this._handleMouseDown.bind(this),this.handleMouseMove=this._handleMouseMove.bind(this),this.handleMouseUp=this._handleMouseUp.bind(this),this.handle=this.createHandle(),e.appendChild(this.handle),o&&this.loadWidth()}createHandle(){let e=document.createElement("div");return e.className="of-resize-handle",e.addEventListener("mousedown",this.handleMouseDown),e}loadWidth(){if(!this.storageKey)return;let e=GM_getValue(this.storageKey,null);if(e&&e.width){let t=this.clampWidth(e.width);this.el.style.width=t+"px",this.onResize(t)}}saveWidth(){this.storageKey&&GM_setValue(this.storageKey,{width:this.el.offsetWidth})}clampWidth(e){let t=window.innerWidth*(this.maxWidthVw/100);return Math.max(this.minWidth,Math.min(e,t))}_handleMouseDown(e){e.preventDefault(),e.stopPropagation(),this.isDragging=!0,this.startX=e.clientX,this.startWidth=this.el.offsetWidth,this.handle.classList.add("dragging"),document.addEventListener("mousemove",this.handleMouseMove),document.addEventListener("mouseup",this.handleMouseUp)}_handleMouseMove(e){if(!this.isDragging)return;let t=this.startX-e.clientX,o=this.clampWidth(this.startWidth+t);this.el.style.width=o+"px",this.onResize(o)}_handleMouseUp(){this.isDragging&&(this.isDragging=!1,this.handle.classList.remove("dragging"),document.removeEventListener("mousemove",this.handleMouseMove),document.removeEventListener("mouseup",this.handleMouseUp),this.saveWidth())}destroy(){this.handle.removeEventListener("mousedown",this.handleMouseDown),document.removeEventListener("mousemove",this.handleMouseMove),document.removeEventListener("mouseup",this.handleMouseUp),this.handle.parentNode&&this.handle.parentNode.removeChild(this.handle)}};var ee="allowed";function j(i){if(!i)return null;let e=i.toLowerCase().trim();return e==="free for all"||e==="ffa"||e==="free-for-all"?"FFA":e==="team"||e==="teams"?"Team":null}function M(i){return j(i.gameConfig?.gameMode)}function Y(i){let e=i.publicGameType?.toLowerCase().trim();return e==="ffa"||e==="team"||e==="special"?e:null}function U(i){if(i==="Duos"||i==="Trios"||i==="Quads"||i==="Humans Vs Nations"||typeof i=="number"&&Number.isFinite(i)&&i>0)return i;if(typeof i=="string"){let e=parseInt(i,10);if(!Number.isNaN(e)&&e>0)return e}return null}function $(i){let e=i.gameConfig;if(!e||M(i)!=="Team")return null;let t=U(e.playerTeams??null);return t!==null?t:U(e.teamCount??e.teams??null)}function N(i){let e=i.gameConfig;return e?e.maxPlayers??e.maxClients??e.maxPlayersPerGame??i.maxClients??null:null}function D(i,e){return!i||!e?null:i==="Duos"?2:i==="Trios"?3:i==="Quads"?4:i==="Humans Vs Nations"?e:typeof i=="number"&&i>0?Math.floor(e/i):null}function F(i,e){let t=i.gameConfig?.publicGameModifiers;if(t)switch(e){case"isCompact":return t.isCompact;case"isRandomSpawn":return t.isRandomSpawn;case"isCrowded":return t.isCrowded;case"isHardNations":return t.isHardNations;case"isAlliancesDisabled":return t.isAlliancesDisabled;case"isPortsDisabled":return t.isPortsDisabled;case"isNukesDisabled":return t.isNukesDisabled;case"isSAMsDisabled":return t.isSAMsDisabled;case"isPeaceTime":return t.isPeaceTime;case"startingGold":return t.startingGold;case"goldMultiplier":return t.goldMultiplier;default:return}}function K(i){let e=M(i),t=$(i),o=N(i);if(e==="FFA")return o!==null?`FFA \u2022 ${o} slots`:"FFA";if(e!=="Team")return"Unsupported mode";if(t==="Humans Vs Nations")return o!==null?`Humans Vs Nations (${o})`:"Humans Vs Nations";if(t==="Duos")return"Duos";if(t==="Trios")return"Trios";if(t==="Quads")return"Quads";if(typeof t=="number"&&o!==null){let r=D(t,o);return r!==null?`${t} teams (${r} per team)`:`${t} teams`}return"Team"}function te(i){let e=M(i),t=$(i);return e==="FFA"?"FFA":e!=="Team"?"Unsupported mode":t==="Humans Vs Nations"?"Humans Vs Nations":t==="Duos"||t==="Trios"||t==="Quads"?t:typeof t=="number"?`${t} teams`:"Team"}function ie(i){return i>=1e6&&i%1e6===0?`${i/1e6}M`:i>=1e3&&i%1e3===0?`${i/1e3}K`:String(i)}function oe(i){let e=i.gameConfig?.publicGameModifiers;if(!e)return[];let t=[];return e.isCompact&&t.push("Compact"),e.isRandomSpawn&&t.push("Random"),e.isCrowded&&t.push("Crowded"),e.isHardNations&&t.push("Hard"),typeof e.startingGold=="number"&&t.push(ie(e.startingGold)),typeof e.goldMultiplier=="number"&&t.push(`x${e.goldMultiplier}`),e.isAlliancesDisabled&&t.push("No Alliances"),e.isPortsDisabled&&t.push("No Ports"),e.isNukesDisabled&&t.push("No Nukes"),e.isSAMsDisabled&&t.push("No SAMs"),e.isPeaceTime&&t.push("Peace"),t}function J(i){let e=[],t=i.gameConfig?.gameMap?.trim(),o=N(i),r=$(i),s=te(i);if(t&&e.push(t),M(i)==="Team"&&r!=="Humans Vs Nations"){e.push(s);let u=D(r,o);u!==null&&e.push(`${u}/team`)}else e.push(s);let l=[];o!==null&&l.push(`${o} slots`);let f=oe(i);return f.length>0&&l.push(f.join(", ")),{title:e.join(" \u2022 "),body:l.join(" \u2022 ")}}function q(i){return typeof i=="number"&&Number.isFinite(i)?i:null}function v(i){return i==="blocked"||i==="rejected"?"blocked":i==="allowed"||i==="required"||i==="indifferent"?"allowed":ee}function Q(i){if(!i||typeof i!="object")return;let e={};for(let[t,o]of Object.entries(i)){let r=Number(t);Number.isFinite(r)&&(e[r]=v(o))}return Object.keys(e).length>0?e:void 0}function ae(i){if(!i||typeof i!="object")return;let e=i;return{isCompact:v(e.isCompact),isRandomSpawn:v(e.isRandomSpawn),isCrowded:v(e.isCrowded),isHardNations:v(e.isHardNations),isAlliancesDisabled:v(e.isAlliancesDisabled),isPortsDisabled:v(e.isPortsDisabled),isNukesDisabled:v(e.isNukesDisabled),isSAMsDisabled:v(e.isSAMsDisabled),isPeaceTime:v(e.isPeaceTime),startingGold:Q(e.startingGold),goldMultiplier:Q(e.goldMultiplier)}}function W(i){if(!Array.isArray(i))return[];let e=[];for(let t of i){let o=t,r=j(o.gameMode??null);r&&e.push({gameMode:r,teamCount:r==="Team"?U(o.teamCount??null):null,minPlayers:q(o.minPlayers),maxPlayers:q(o.maxPlayers),modifiers:ae(o.modifiers)})}return e}function X(i,e){return e?{criteria:W(e.criteria),discoveryEnabled:typeof e.discoveryEnabled=="boolean"?e.discoveryEnabled:!0,soundEnabled:typeof e.soundEnabled=="boolean"?e.soundEnabled:!0,desktopNotificationsEnabled:typeof e.desktopNotificationsEnabled=="boolean"?e.desktopNotificationsEnabled:!1,isTeamTwoTimesMinEnabled:typeof e.isTeamTwoTimesMinEnabled=="boolean"?e.isTeamTwoTimesMinEnabled:!!e.isTeamThreeTimesMinEnabled}:{criteria:W(i?.criteria),discoveryEnabled:typeof i?.autoJoinEnabled=="boolean"?i.autoJoinEnabled:!0,soundEnabled:typeof i?.soundEnabled=="boolean"?i.soundEnabled:!0,desktopNotificationsEnabled:!1,isTeamTwoTimesMinEnabled:typeof i?.isTeamTwoTimesMinEnabled=="boolean"?i.isTeamTwoTimesMinEnabled:!!i?.isTeamThreeTimesMinEnabled}}var re=["isCompact","isRandomSpawn","isCrowded","isHardNations","isAlliancesDisabled","isPortsDisabled","isNukesDisabled","isSAMsDisabled","isPeaceTime"],H=class{matchesCriteria(e,t,o={}){if(!e||!e.gameConfig||!t||t.length===0)return!1;let r=M(e),s=N(e);if(!r||s===null)return!1;let l=$(e),f=r==="Team"?D(l,s):null;for(let u of t){if(u.gameMode!==r||r==="Team"&&(u.teamCount!==null&&u.teamCount!==void 0&&u.teamCount!==l||o.isTeamTwoTimesMinEnabled&&u.minPlayers!==null&&l!=="Humans Vs Nations"&&s<u.minPlayers*2||f===null))continue;let p=r==="Team"?f:s;if(p!==null&&!(u.minPlayers!==null&&p<u.minPlayers)&&!(u.maxPlayers!==null&&p>u.maxPlayers)&&this.matchesModifiers(e,u.modifiers))return!0}return!1}matchesModifiers(e,t){if(!t)return!0;for(let o of re){let r=t[o];if(!r||r==="allowed")continue;let s=!!F(e,o);if(r==="blocked"&&s)return!1}return!(!this.matchesNumericModifier(F(e,"startingGold"),t.startingGold)||!this.matchesNumericModifier(F(e,"goldMultiplier"),t.goldMultiplier))}matchesNumericModifier(e,t){if(!t)return!0;let o=typeof e=="number"&&Number.isFinite(e)?e:null,r=Object.entries(t);if(r.length===0)return!0;let s=r.filter(([,l])=>l==="blocked").map(([l])=>Number(l));return!(o!==null&&s.includes(o))}};var ne=[1e6,5e6,25e6],se=[2],B=class{constructor(){this.discoveryEnabled=!0;this.criteriaList=[];this.searchStartTime=null;this.gameFoundTime=null;this.soundEnabled=!0;this.desktopNotificationsEnabled=!1;this.activeMatchSources=new Set;this.seenLobbies=new Set;this.desktopNotifiedLobbies=new Set;this.isTeamTwoTimesMinEnabled=!1;this.sleeping=!1;this.timerInterval=null;this.gameInfoInterval=null;this.pulseSyncTimeout=null;this.resizeHandler=null;this.engine=new H,this.loadSettings(),this.createUI(),this.updateSleepState(),P.subscribe(()=>this.updateSleepState())}receiveLobbyUpdate(e){this.processLobbies(e)}migrateSettings(){let e=GM_getValue("autoJoinSettings",null),t=GM_getValue(k.lobbyDiscoverySettings,null),o=X(e,t);GM_setValue(k.lobbyDiscoverySettings,o)}loadSettings(){this.migrateSettings();let e=GM_getValue(k.lobbyDiscoverySettings,null);e&&(this.criteriaList=e.criteria||[],this.soundEnabled=e.soundEnabled!==void 0?e.soundEnabled:!0,this.desktopNotificationsEnabled=e.desktopNotificationsEnabled!==void 0?e.desktopNotificationsEnabled:!1,this.discoveryEnabled=e.discoveryEnabled!==void 0?e.discoveryEnabled:!0,this.isTeamTwoTimesMinEnabled=e.isTeamTwoTimesMinEnabled||!1)}saveSettings(){GM_setValue(k.lobbyDiscoverySettings,{criteria:this.criteriaList,discoveryEnabled:this.discoveryEnabled,soundEnabled:this.soundEnabled,desktopNotificationsEnabled:this.desktopNotificationsEnabled,isTeamTwoTimesMinEnabled:this.isTeamTwoTimesMinEnabled})}updateSearchTimer(){let e=document.getElementById("discovery-search-timer");if(!e)return;if(!this.discoveryEnabled||this.criteriaList.length===0||this.searchStartTime===null||!this.isDiscoveryFeedbackAllowed()){e.style.display="none";return}let t=this.gameFoundTime??Date.now(),o=Math.floor((t-this.searchStartTime)/1e3);e.textContent=this.gameFoundTime?`Match found (${Math.floor(o/60)}m ${o%60}s)`:`Scanning ${Math.floor(o/60)}m ${o%60}s`,e.style.display="inline"}updateCurrentGameInfo(){let e=document.getElementById("discovery-current-game-info");if(!e||!I.isOnLobbyPage()){e&&(e.style.display="none");return}let t=document.querySelector("public-lobby");if(!t||!Array.isArray(t.lobbies)||t.lobbies.length===0){e.style.display="none";return}let o=t.lobbies[0];if(!o||!o.gameConfig){e.style.display="none";return}e.style.display="block",e.textContent=`Current game: ${K(o)}`,e.classList.remove("not-applicable")}processLobbies(e){try{if(this.updateCurrentGameInfo(),this.syncSearchTimer(),!this.discoveryEnabled||this.criteriaList.length===0||!this.isDiscoveryFeedbackAllowed()){this.seenLobbies.clear(),this.desktopNotifiedLobbies.clear(),this.updateQueueCardPulses(new Set),this.gameFoundTime=null,this.updateSearchTimer();return}let t=this.getDisplayedLobbiesBySource(e),o=new Set,r=new Set,s=[],l=!1;for(let[f,u]of Object.entries(t)){if(!u||!this.engine.matchesCriteria(u,this.criteriaList,{isTeamTwoTimesMinEnabled:this.isTeamTwoTimesMinEnabled}))continue;o.add(f);let p=this.getNotificationKey(u);r.add(p),this.seenLobbies.has(p)||(l=!0),this.desktopNotifiedLobbies.has(p)||s.push(u)}if(this.updateQueueCardPulses(o),l&&this.soundEnabled&&C.playGameFoundSound(),this.desktopNotificationsEnabled){let f=new Set;for(let u of s){let p=J(u),c=this.getNotificationKey(u);z.show({title:p.title,body:p.body,tag:c})&&f.add(c)}this.desktopNotifiedLobbies=new Set([...[...this.desktopNotifiedLobbies].filter(u=>r.has(u)),...f])}else this.desktopNotifiedLobbies.clear();this.seenLobbies=r,this.gameFoundTime=r.size>0?this.gameFoundTime??Date.now():null,this.updateSearchTimer()}catch(t){console.error("[LobbyDiscovery] Error processing lobbies:",t)}}getNotificationKey(e){return JSON.stringify({gameID:e.gameID,mode:e.gameConfig?.gameMode??null,playerTeams:e.gameConfig?.playerTeams??e.gameConfig?.teamCount??null,capacity:e.gameConfig?.maxPlayers??e.maxClients??null,modifiers:e.gameConfig?.publicGameModifiers??{}})}isDiscoveryFeedbackAllowed(){return!(!I.isOnLobbyPage()||document.getElementById("page-play")?.classList.contains("hidden")||document.querySelector("public-lobby")?.isLobbyHighlighted===!0||document.querySelector("join-lobby-modal")?.currentLobbyId||document.querySelector("host-lobby-modal")?.lobbyId)}getDisplayedLobbiesBySource(e){let t={};for(let o of e){let r=Y(o);!r||t[r]||(t[r]=o)}return t}getQueueCardElements(){let e=document.querySelector("game-mode-selector");if(!e)return{};let t=Array.from(e.querySelectorAll("div")).find(l=>l.className.includes("sm:grid-cols-[2fr_1fr]"));if(!(t instanceof HTMLElement))return{};let[o,r]=Array.from(t.children),s=r?Array.from(r.children):[];return{ffa:o?.querySelector("button"),special:s[0]?.querySelector("button"),team:s[1]?.querySelector("button")}}updateQueueCardPulses(e){this.activeMatchSources=new Set(e),this.applyQueueCardPulses(),this.scheduleQueueCardPulseSync()}applyQueueCardPulses(){let e=this.getQueueCardElements();for(let t of["ffa","special","team"]){let o=e[t];if(!o)continue;let r=this.activeMatchSources.has(t);o.classList.toggle("of-discovery-card-active",r),o.classList.remove("of-discovery-card-burst");let s=o.querySelector(".of-discovery-card-badge");s&&s.remove()}}scheduleQueueCardPulseSync(){this.pulseSyncTimeout&&clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=setTimeout(()=>{this.pulseSyncTimeout=null,this.applyQueueCardPulses()},16)}stopTimer(){this.timerInterval&&(clearInterval(this.timerInterval),this.timerInterval=null)}startGameInfoUpdates(){this.stopGameInfoUpdates(),this.updateCurrentGameInfo(),this.gameInfoInterval=setInterval(()=>this.updateCurrentGameInfo(),1e3)}stopGameInfoUpdates(){this.gameInfoInterval&&(clearInterval(this.gameInfoInterval),this.gameInfoInterval=null)}syncSearchTimer(e={}){let{resetStart:t=!1}=e;this.stopTimer(),t&&(this.searchStartTime=null,this.gameFoundTime=null,this.seenLobbies.clear(),this.desktopNotifiedLobbies.clear()),this.discoveryEnabled&&this.criteriaList.length>0&&this.isDiscoveryFeedbackAllowed()?(this.searchStartTime===null&&(this.searchStartTime=Date.now()),this.timerInterval=setInterval(()=>this.updateSearchTimer(),1e3)):(this.searchStartTime=null,this.gameFoundTime=null),this.updateSearchTimer()}setDiscoveryEnabled(e,t={}){this.discoveryEnabled=e,this.saveSettings(),this.updateUI(),this.syncSearchTimer({resetStart:t.resetTimer??!1})}getNumberValue(e){let t=document.getElementById(e);if(!t)return null;let o=parseInt(t.value,10);return Number.isNaN(o)?null:o}getModifierFilterValue(e){let t=document.getElementById(`${e}-allowed`);return document.getElementById(`${e}-blocked`)?.getAttribute("aria-pressed")==="true"||t?.getAttribute("aria-pressed")==="false"?"blocked":"allowed"}getNumericModifierState(e){let t={};for(let[o,r]of Object.entries(e))t[Number(o)]=this.getModifierFilterValue(r);return t}getModifierFiltersFromUI(){return{isCompact:this.getModifierFilterValue("modifier-isCompact"),isRandomSpawn:this.getModifierFilterValue("modifier-isRandomSpawn"),isCrowded:this.getModifierFilterValue("modifier-isCrowded"),isHardNations:this.getModifierFilterValue("modifier-isHardNations"),isAlliancesDisabled:this.getModifierFilterValue("modifier-isAlliancesDisabled"),isPortsDisabled:this.getModifierFilterValue("modifier-isPortsDisabled"),isNukesDisabled:this.getModifierFilterValue("modifier-isNukesDisabled"),isSAMsDisabled:this.getModifierFilterValue("modifier-isSAMsDisabled"),isPeaceTime:this.getModifierFilterValue("modifier-isPeaceTime"),startingGold:this.getNumericModifierState({1e6:"modifier-startingGold-1000000",5e6:"modifier-startingGold-5000000",25e6:"modifier-startingGold-25000000"}),goldMultiplier:this.getNumericModifierState({2:"modifier-goldMultiplier-2"})}}getAllTeamCountValues(){let e=[],t=["discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7"];for(let o of t){let r=document.getElementById(o);if(r?.checked)if(r.value==="Duos"||r.value==="Trios"||r.value==="Quads"||r.value==="Humans Vs Nations")e.push(r.value);else{let s=parseInt(r.value,10);Number.isNaN(s)||e.push(s)}}return e}setAllTeamCounts(e){let t=["discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7"];for(let o of t){let r=document.getElementById(o);r&&(r.checked=e)}}buildCriteriaFromUI(){let e=this.getModifierFiltersFromUI(),t=[];if(document.getElementById("discovery-ffa")?.checked&&t.push({gameMode:"FFA",teamCount:null,minPlayers:this.getNumberValue("discovery-ffa-min"),maxPlayers:this.getNumberValue("discovery-ffa-max"),modifiers:e}),!document.getElementById("discovery-team")?.checked)return t;let s=this.getAllTeamCountValues();if(s.length===0)return t.push({gameMode:"Team",teamCount:null,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e}),t;for(let l of s)t.push({gameMode:"Team",teamCount:l,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e});return t}updateUI(){let e=document.querySelector(".status-text"),t=document.querySelector(".status-indicator");!e||!t||(this.discoveryEnabled?(e.textContent="Discovery Active",t.style.background="#38d9a9",t.classList.add("active"),t.classList.remove("inactive")):(e.textContent="Discovery Paused",t.style.background="#888",t.classList.remove("active"),t.classList.add("inactive")))}applyModeVisibility(e,t){let o=document.getElementById(e);o&&o.classList.toggle("is-disabled",!t)}setTeamCountSelections(e){for(let t of e){let o=null;t==="Duos"?o=document.getElementById("discovery-team-duos"):t==="Trios"?o=document.getElementById("discovery-team-trios"):t==="Quads"?o=document.getElementById("discovery-team-quads"):t==="Humans Vs Nations"?o=document.getElementById("discovery-team-hvn"):typeof t=="number"&&(o=document.getElementById(`discovery-team-${t}`)),o&&(o.checked=!0)}}setModifierControl(e,t){let o=t??"allowed",r=document.getElementById(e),s=document.getElementById(`${e}-allowed`),l=document.getElementById(`${e}-blocked`);!r||!s||!l||(r.dataset.state=o,r.setAttribute("aria-valuetext",o),s.setAttribute("aria-pressed",String(o==="allowed")),l.setAttribute("aria-pressed",String(o==="blocked")))}loadUIFromSettings(){let e=this.criteriaList.find(c=>c.gameMode==="FFA"),t=this.criteriaList.filter(c=>c.gameMode==="Team"),o=document.getElementById("discovery-ffa"),r=document.getElementById("discovery-team");if(o&&(o.checked=!!e,this.applyModeVisibility("discovery-ffa-config",!!e)),r&&(r.checked=t.length>0,this.applyModeVisibility("discovery-team-config",t.length>0)),e){let c=document.getElementById("discovery-ffa-min"),y=document.getElementById("discovery-ffa-max");c&&e.minPlayers!==null&&(c.value=String(e.minPlayers)),y&&e.maxPlayers!==null&&(y.value=String(e.maxPlayers))}if(t[0]){let c=document.getElementById("discovery-team-min"),y=document.getElementById("discovery-team-max");c&&t[0].minPlayers!==null&&(c.value=String(t[0].minPlayers)),y&&t[0].maxPlayers!==null&&(y.value=String(t[0].maxPlayers)),this.setTeamCountSelections(t.map(w=>w.teamCount))}let l=(e??t[0])?.modifiers;if(l){this.setModifierControl("modifier-isCompact",l.isCompact),this.setModifierControl("modifier-isRandomSpawn",l.isRandomSpawn),this.setModifierControl("modifier-isCrowded",l.isCrowded),this.setModifierControl("modifier-isHardNations",l.isHardNations),this.setModifierControl("modifier-isAlliancesDisabled",l.isAlliancesDisabled),this.setModifierControl("modifier-isPortsDisabled",l.isPortsDisabled),this.setModifierControl("modifier-isNukesDisabled",l.isNukesDisabled),this.setModifierControl("modifier-isSAMsDisabled",l.isSAMsDisabled),this.setModifierControl("modifier-isPeaceTime",l.isPeaceTime);for(let c of ne)this.setModifierControl(`modifier-startingGold-${c}`,l.startingGold?.[c]);for(let c of se)this.setModifierControl(`modifier-goldMultiplier-${c}`,l.goldMultiplier?.[c])}else for(let c of["modifier-isCompact","modifier-isRandomSpawn","modifier-isCrowded","modifier-isHardNations","modifier-isAlliancesDisabled","modifier-isPortsDisabled","modifier-isNukesDisabled","modifier-isSAMsDisabled","modifier-isPeaceTime","modifier-startingGold-1000000","modifier-startingGold-5000000","modifier-startingGold-25000000","modifier-goldMultiplier-2"])this.setModifierControl(c,"allowed");let f=document.getElementById("discovery-sound-toggle");f&&(f.checked=this.soundEnabled);let u=document.getElementById("discovery-desktop-toggle");u&&(u.checked=this.desktopNotificationsEnabled);let p=document.getElementById("discovery-team-two-times");p&&(p.checked=this.isTeamTwoTimesMinEnabled)}initializeSlider(e,t,o,r,s,l,f,u=!1){let p=document.getElementById(e),c=document.getElementById(t),y=document.getElementById(o),w=document.getElementById(r);if(!p||!c||!y||!w)return;let h=parseInt(y.value,10),g=parseInt(w.value,10);Number.isNaN(h)||(p.value=String(h)),Number.isNaN(g)||(c.value=String(g));let x=()=>{this.updateSliderRange(e,t,o,r,s,l,f,u),this.refreshCriteria()};p.addEventListener("input",x),c.addEventListener("input",x),this.updateSliderRange(e,t,o,r,s,l,f,u)}updateSliderRange(e,t,o,r,s,l,f,u){let p=document.getElementById(e),c=document.getElementById(t),y=document.getElementById(o),w=document.getElementById(r),h=document.getElementById(s),g=document.getElementById(l),x=document.getElementById(f);if(!p||!c||!y||!w)return;let L=parseInt(p.value,10),S=parseInt(c.value,10);if(u&&this.isTeamTwoTimesMinEnabled&&(S=Math.min(parseInt(c.max,10),Math.max(1,2*L)),c.value=String(S)),L>S&&(L=S,p.value=String(L)),y.value=String(L),w.value=String(S),g&&(g.textContent=L===1?"Any":String(L)),x&&(x.textContent=S===parseInt(c.max,10)?"Any":String(S)),h){let _=(L-parseInt(p.min,10))/(parseInt(p.max,10)-parseInt(p.min,10))*100,Z=(S-parseInt(p.min,10))/(parseInt(c.max,10)-parseInt(c.min,10))*100;h.style.left=`${_}%`,h.style.width=`${Z-_}%`}}refreshCriteria(){this.criteriaList=this.buildCriteriaFromUI(),this.saveSettings(),this.syncSearchTimer({resetStart:!0})}async handleDesktopNotificationToggleChange(e){if(!e.checked){this.desktopNotificationsEnabled=!1,this.saveSettings();return}let t=await z.ensurePermission();this.desktopNotificationsEnabled=t,e.checked=t,e.toggleAttribute("checked",t),this.saveSettings()}setupEventListeners(){document.getElementById("discovery-status")?.addEventListener("click",()=>{this.setDiscoveryEnabled(!this.discoveryEnabled,{resetTimer:!0})});for(let[t,o]of[["discovery-ffa","discovery-ffa-config"],["discovery-team","discovery-team-config"]]){let r=document.getElementById(t);r?.addEventListener("change",()=>{this.applyModeVisibility(o,r.checked),this.refreshCriteria()})}let e=document.getElementById("discovery-team-two-times");e?.addEventListener("change",()=>{this.isTeamTwoTimesMinEnabled=e.checked,this.updateSliderRange("discovery-team-min-slider","discovery-team-max-slider","discovery-team-min","discovery-team-max","discovery-team-range-fill","discovery-team-min-value","discovery-team-max-value",!0),this.refreshCriteria()}),document.getElementById("discovery-team-select-all")?.addEventListener("click",()=>{this.setAllTeamCounts(!0),this.refreshCriteria()}),document.getElementById("discovery-team-deselect-all")?.addEventListener("click",()=>{this.setAllTeamCounts(!1),this.refreshCriteria()});for(let t of["discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7","discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-sound-toggle","discovery-desktop-toggle"]){let o=document.getElementById(t);o&&o.addEventListener("change",()=>{if(t==="discovery-sound-toggle"&&o instanceof HTMLInputElement){this.soundEnabled=o.checked,this.saveSettings();return}if(t==="discovery-desktop-toggle"&&o instanceof HTMLInputElement){this.handleDesktopNotificationToggleChange(o);return}this.refreshCriteria()})}for(let t of["modifier-isCompact","modifier-isRandomSpawn","modifier-isCrowded","modifier-isHardNations","modifier-isAlliancesDisabled","modifier-isPortsDisabled","modifier-isNukesDisabled","modifier-isSAMsDisabled","modifier-isPeaceTime","modifier-startingGold-1000000","modifier-startingGold-5000000","modifier-startingGold-25000000","modifier-goldMultiplier-2"]){let o=document.getElementById(`${t}-allowed`),r=document.getElementById(`${t}-blocked`);for(let s of[o,r])s?.addEventListener("click",()=>{this.setModifierControl(t,s.dataset.value),this.refreshCriteria()})}}createModifierControl(e){return`
       <div
         id="${e}"
         class="discovery-binary-toggle"
@@ -1031,4 +1029,4 @@
           </div>
         </div>
       </div>
-    `,document.body.appendChild(this.panel),this.resizeHandler=new A(this.panel,e=>{this.panel.style.width=`${e}px`},M.lobbyDiscoveryPanelSize,460,88),this.setupEventListeners(),this.loadUIFromSettings(),this.initializeSlider("discovery-ffa-min-slider","discovery-ffa-max-slider","discovery-ffa-min","discovery-ffa-max","discovery-ffa-range-fill","discovery-ffa-min-value","discovery-ffa-max-value"),this.initializeSlider("discovery-team-min-slider","discovery-team-max-slider","discovery-team-min","discovery-team-max","discovery-team-range-fill","discovery-team-min-value","discovery-team-max-value",!0),this.updateUI(),this.syncSearchTimer(),this.startGameInfoUpdates())}updateSleepState(){let e=P.isOnLobbyPage();this.sleeping=!e,this.sleeping?(this.panel.classList.add("hidden"),this.stopTimer(),this.stopGameInfoUpdates(),this.updateQueueCardPulses(new Set)):(this.panel.classList.remove("hidden"),this.syncSearchTimer(),this.startGameInfoUpdates())}cleanup(){this.stopTimer(),this.stopGameInfoUpdates(),this.pulseSyncTimeout&&(clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=null),this.activeMatchSources.clear(),this.resizeHandler?.destroy(),this.resizeHandler=null,this.updateQueueCardPulses(new Set),this.panel.parentNode?.removeChild(this.panel)}};var G=class{constructor(){this.observer=null;this.animationFrameId=null}start(){this.observer||(this.observer=new MutationObserver(()=>this.scheduleApplyHighlights()),this.observer.observe(document.body,{childList:!0,subtree:!0}),this.applyHighlights())}stop(){this.observer?.disconnect(),this.observer=null,this.animationFrameId!==null&&(cancelAnimationFrame(this.animationFrameId),this.animationFrameId=null)}scheduleApplyHighlights(){this.animationFrameId===null&&(this.animationFrameId=requestAnimationFrame(()=>{this.animationFrameId=null,this.applyHighlights()}))}applyHighlights(){for(let e of Array.from(document.querySelectorAll("lobby-player-view")))this.applyHighlightToView(e)}applyHighlightToView(e){this.clearHighlights(e);let t=Array.from(e.querySelectorAll(".player-tag.current-player"));if(t.length>0){t.forEach(s=>s.classList.add("of-current-player-boost"));return}let o=this.getNativeTeamRows(e);o.forEach(s=>s.classList.add("of-current-player-boost"));let a=this.getNativeTeamCards(e);a.forEach(s=>s.classList.add("of-current-player-team-boost")),!(o.length>0||a.length>0)&&this.applyFallbackHighlight(e)}clearHighlights(e){e.querySelectorAll(".of-current-player-boost").forEach(t=>{t.classList.remove("of-current-player-boost")}),e.querySelectorAll(".of-current-player-team-boost").forEach(t=>{t.classList.remove("of-current-player-team-boost")})}getNativeTeamRows(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let o=t.classList;return o.contains("bg-sky-600/20")&&o.contains("border-sky-500/40")})}getNativeTeamCards(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let o=t.classList;return o.contains("rounded-xl")&&o.contains("border-sky-500/60")})}applyFallbackHighlight(e){let t=e.currentClientID,o=Array.isArray(e.clients)?e.clients:[];if(!t||o.length===0)return;let a=o.findIndex(g=>g?.clientID===t);if(a<0)return;let s=o[a],l=this.formatDisplayName(s),f=Array.from(e.querySelectorAll(".player-tag"));if(f[a]){f[a].classList.add("of-current-player-boost");return}Array.from(e.querySelectorAll("[data-client-id]")).filter(g=>g.dataset.clientId===t).forEach(g=>g.classList.add("of-current-player-boost")),this.findRowsByDisplayName(e,l).forEach(g=>g.classList.add("of-current-player-boost"));let c=Array.from(e.querySelectorAll(".rounded-xl")),h=(Array.isArray(e.teamPreview)?e.teamPreview:[]).filter(g=>Array.isArray(g.players)&&g.players.length>0).findIndex(g=>Array.isArray(g.players)&&g.players.some(x=>x?.clientID===t));h>=0&&c[h]&&(c[h].classList.add("of-current-player-team-boost"),this.findRowsByDisplayName(c[h],l).forEach(x=>x.classList.add("of-current-player-boost")))}formatDisplayName(e){return e?.username?e.clanTag?`[${e.clanTag}] ${e.username}`:e.username:""}findRowsByDisplayName(e,t){if(!t)return[];let o=[];for(let a of Array.from(e.querySelectorAll("span, div"))){let s=a.textContent?.trim();if(!s||s!==t)continue;let l=a.closest("[data-client-id]")??a.closest(".player-tag")??a.closest(".team-player-row")??a.closest("div");l&&!o.includes(l)&&o.push(l)}return o}};(function(){"use strict";console.log("[OpenFront Bundle] Initializing adaptation for OpenFront 0.30..."),GM_addStyle(V()),C.preloadSounds(),I.init(),R.start();let i=new B,e=new G;R.subscribe(t=>{i.receiveLobbyUpdate(t)}),e.start(),console.log("[OpenFront Bundle] Ready! \u{1F680}")})();})();
+    `,document.body.appendChild(this.panel),this.resizeHandler=new A(this.panel,e=>{this.panel.style.width=`${e}px`},k.lobbyDiscoveryPanelSize,460,88),this.setupEventListeners(),this.loadUIFromSettings(),this.initializeSlider("discovery-ffa-min-slider","discovery-ffa-max-slider","discovery-ffa-min","discovery-ffa-max","discovery-ffa-range-fill","discovery-ffa-min-value","discovery-ffa-max-value"),this.initializeSlider("discovery-team-min-slider","discovery-team-max-slider","discovery-team-min","discovery-team-max","discovery-team-range-fill","discovery-team-min-value","discovery-team-max-value",!0),this.updateUI(),this.syncSearchTimer(),this.startGameInfoUpdates())}updateSleepState(){let e=I.isOnLobbyPage();this.sleeping=!e,this.sleeping?(this.panel.classList.add("hidden"),this.stopTimer(),this.stopGameInfoUpdates(),this.updateQueueCardPulses(new Set)):(this.panel.classList.remove("hidden"),this.syncSearchTimer(),this.startGameInfoUpdates())}cleanup(){this.stopTimer(),this.stopGameInfoUpdates(),this.pulseSyncTimeout&&(clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=null),this.activeMatchSources.clear(),this.resizeHandler?.destroy(),this.resizeHandler=null,this.applyQueueCardPulses(),this.panel.parentNode?.removeChild(this.panel)}};var G=class{constructor(){this.observer=null;this.animationFrameId=null}start(){this.observer||(this.observer=new MutationObserver(()=>this.scheduleApplyHighlights()),this.observer.observe(document.body,{childList:!0,subtree:!0}),this.applyHighlights())}stop(){this.observer?.disconnect(),this.observer=null,this.animationFrameId!==null&&(cancelAnimationFrame(this.animationFrameId),this.animationFrameId=null)}scheduleApplyHighlights(){this.animationFrameId===null&&(this.animationFrameId=requestAnimationFrame(()=>{this.animationFrameId=null,this.applyHighlights()}))}applyHighlights(){for(let e of Array.from(document.querySelectorAll("lobby-player-view")))this.applyHighlightToView(e)}applyHighlightToView(e){this.clearHighlights(e);let t=Array.from(e.querySelectorAll(".player-tag.current-player"));if(t.length>0){t.forEach(s=>s.classList.add("of-current-player-boost"));return}let o=this.getNativeTeamRows(e);o.forEach(s=>s.classList.add("of-current-player-boost"));let r=this.getNativeTeamCards(e);r.forEach(s=>s.classList.add("of-current-player-team-boost")),!(o.length>0||r.length>0)&&this.applyFallbackHighlight(e)}clearHighlights(e){e.querySelectorAll(".of-current-player-boost").forEach(t=>{t.classList.remove("of-current-player-boost")}),e.querySelectorAll(".of-current-player-team-boost").forEach(t=>{t.classList.remove("of-current-player-team-boost")})}getNativeTeamRows(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let o=t.classList;return o.contains("bg-sky-600/20")&&o.contains("border-sky-500/40")})}getNativeTeamCards(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let o=t.classList;return o.contains("rounded-xl")&&o.contains("border-sky-500/60")})}applyFallbackHighlight(e){let t=e.currentClientID,o=Array.isArray(e.clients)?e.clients:[];if(!t||o.length===0)return;let r=o.findIndex(g=>g?.clientID===t);if(r<0)return;let s=o[r],l=this.formatDisplayName(s),f=Array.from(e.querySelectorAll(".player-tag"));if(f[r]){f[r].classList.add("of-current-player-boost");return}Array.from(e.querySelectorAll("[data-client-id]")).filter(g=>g.dataset.clientId===t).forEach(g=>g.classList.add("of-current-player-boost")),this.findRowsByDisplayName(e,l).forEach(g=>g.classList.add("of-current-player-boost"));let c=Array.from(e.querySelectorAll(".rounded-xl")),h=(Array.isArray(e.teamPreview)?e.teamPreview:[]).filter(g=>Array.isArray(g.players)&&g.players.length>0).findIndex(g=>Array.isArray(g.players)&&g.players.some(x=>x?.clientID===t));h>=0&&c[h]&&(c[h].classList.add("of-current-player-team-boost"),this.findRowsByDisplayName(c[h],l).forEach(x=>x.classList.add("of-current-player-boost")))}formatDisplayName(e){return e?.username?e.clanTag?`[${e.clanTag}] ${e.username}`:e.username:""}findRowsByDisplayName(e,t){if(!t)return[];let o=[];for(let r of Array.from(e.querySelectorAll("span, div"))){let s=r.textContent?.trim();if(!s||s!==t)continue;let l=r.closest("[data-client-id]")??r.closest(".player-tag")??r.closest(".team-player-row")??r.closest("div");l&&!o.includes(l)&&o.push(l)}return o}};(function(){"use strict";console.log("[OpenFront Bundle] Initializing adaptation for OpenFront 0.30..."),GM_addStyle(V()),C.preloadSounds(),P.init(),R.start();let i=new B,e=new G;R.subscribe(t=>{i.receiveLobbyUpdate(t)}),e.start(),console.log("[OpenFront Bundle] Ready! \u{1F680}")})();})();

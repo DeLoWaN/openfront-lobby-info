@@ -36,7 +36,8 @@ export class LobbyDiscoveryUI {
   private soundEnabled = true;
   private desktopNotificationsEnabled = false;
   private activeMatchSources: Set<QueueSource> = new Set();
-  private notifiedLobbies: Set<string> = new Set();
+  private seenLobbies: Set<string> = new Set();
+  private desktopNotifiedLobbies: Set<string> = new Set();
   private isTeamTwoTimesMinEnabled = false;
   private sleeping = false;
 
@@ -159,7 +160,8 @@ export class LobbyDiscoveryUI {
         this.criteriaList.length === 0 ||
         !this.isDiscoveryFeedbackAllowed()
       ) {
-        this.notifiedLobbies.clear();
+        this.seenLobbies.clear();
+        this.desktopNotifiedLobbies.clear();
         this.updateQueueCardPulses(new Set());
         this.gameFoundTime = null;
         this.updateSearchTimer();
@@ -187,8 +189,10 @@ export class LobbyDiscoveryUI {
         matchedSources.add(source);
         const notificationKey = this.getNotificationKey(lobby);
         matchedKeys.add(notificationKey);
-        if (!this.notifiedLobbies.has(notificationKey)) {
+        if (!this.seenLobbies.has(notificationKey)) {
           hasNewMatch = true;
+        }
+        if (!this.desktopNotifiedLobbies.has(notificationKey)) {
           newMatches.push(lobby);
         }
       }
@@ -198,17 +202,28 @@ export class LobbyDiscoveryUI {
         SoundUtils.playGameFoundSound();
       }
       if (this.desktopNotificationsEnabled) {
+        const deliveredNotificationKeys = new Set<string>();
         for (const lobby of newMatches) {
           const notificationContent = getBrowserNotificationContent(lobby);
-          BrowserNotificationUtils.show({
+          const notificationKey = this.getNotificationKey(lobby);
+          const delivered = BrowserNotificationUtils.show({
             title: notificationContent.title,
             body: notificationContent.body,
-            tag: this.getNotificationKey(lobby),
+            tag: notificationKey,
           });
+          if (delivered) {
+            deliveredNotificationKeys.add(notificationKey);
+          }
         }
+        this.desktopNotifiedLobbies = new Set([
+          ...[...this.desktopNotifiedLobbies].filter((key) => matchedKeys.has(key)),
+          ...deliveredNotificationKeys,
+        ]);
+      } else {
+        this.desktopNotifiedLobbies.clear();
       }
 
-      this.notifiedLobbies = matchedKeys;
+      this.seenLobbies = matchedKeys;
       this.gameFoundTime = matchedKeys.size > 0 ? this.gameFoundTime ?? Date.now() : null;
       this.updateSearchTimer();
     } catch (error) {
@@ -363,7 +378,8 @@ export class LobbyDiscoveryUI {
     if (resetStart) {
       this.searchStartTime = null;
       this.gameFoundTime = null;
-      this.notifiedLobbies.clear();
+      this.seenLobbies.clear();
+      this.desktopNotifiedLobbies.clear();
     }
 
     if (
@@ -1172,7 +1188,7 @@ export class LobbyDiscoveryUI {
     this.activeMatchSources.clear();
     this.resizeHandler?.destroy();
     this.resizeHandler = null;
-    this.updateQueueCardPulses(new Set());
+    this.applyQueueCardPulses();
     this.panel.parentNode?.removeChild(this.panel);
   }
 }

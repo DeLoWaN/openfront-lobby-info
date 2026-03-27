@@ -99,6 +99,25 @@ describe('LobbyDiscoveryEngine', () => {
     expect(engine.matchesCriteria(lobby, criteria, { isTeamTwoTimesMinEnabled: true })).toBe(false);
   });
 
+  it('does not reject Humans Vs Nations with the 2x min helper before the normal capacity check', () => {
+    const lobby = {
+      gameID: 'hvn-2x',
+      publicGameType: 'special',
+      gameConfig: {
+        gameMode: 'Team',
+        playerTeams: 'Humans Vs Nations',
+        maxClients: 62,
+      },
+      maxClients: 62,
+    } as any;
+
+    const criteria = [
+      { gameMode: 'Team', teamCount: 'Humans Vs Nations', minPlayers: 40, maxPlayers: 70 },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria, { isTeamTwoTimesMinEnabled: true })).toBe(true);
+  });
+
   it('applies blocked boolean and numeric modifier filters as an exclusion list', () => {
     const lobby = {
       gameID: 'spec-2',

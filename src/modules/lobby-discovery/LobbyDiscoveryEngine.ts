@@ -71,6 +71,7 @@ export class LobbyDiscoveryEngine {
         if (
           options.isTeamTwoTimesMinEnabled &&
           criteria.minPlayers !== null &&
+          lobbyTeamConfig !== 'Humans Vs Nations' &&
           lobbyCapacity < criteria.minPlayers * 2
         ) {
           continue;
