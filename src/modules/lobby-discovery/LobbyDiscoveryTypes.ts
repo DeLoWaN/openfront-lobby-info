@@ -37,6 +37,7 @@ export interface LobbyDiscoverySettings {
   criteria: DiscoveryCriteria[];
   discoveryEnabled: boolean;
   soundEnabled: boolean;
+  desktopNotificationsEnabled: boolean;
   isTeamTwoTimesMinEnabled: boolean;
   isTeamThreeTimesMinEnabled?: boolean;
 }

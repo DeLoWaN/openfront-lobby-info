@@ -4,6 +4,7 @@
 
 import { STORAGE_KEYS } from '@/config/constants';
 import { LobbyUtils } from '@/utils/LobbyUtils';
+import { BrowserNotificationUtils } from '@/utils/BrowserNotificationUtils';
 import { ResizeHandler } from '@/utils/ResizeHandler';
 import { SoundUtils } from '@/utils/SoundUtils';
 import { URLObserver } from '@/utils/URLObserver';
@@ -19,6 +20,7 @@ import type {
 } from './LobbyDiscoveryTypes';
 import { LobbyDiscoveryEngine } from './LobbyDiscoveryEngine';
 import {
+  getBrowserNotificationContent,
   getGameDetailsText,
   getLobbyQueueSource,
   migrateLegacySettings,
@@ -32,6 +34,7 @@ export class LobbyDiscoveryUI {
   private searchStartTime: number | null = null;
   private gameFoundTime: number | null = null;
   private soundEnabled = true;
+  private desktopNotificationsEnabled = false;
   private activeMatchSources: Set<QueueSource> = new Set();
   private notifiedLobbies: Set<string> = new Set();
   private isTeamTwoTimesMinEnabled = false;
@@ -82,6 +85,8 @@ export class LobbyDiscoveryUI {
 
     this.criteriaList = saved.criteria || [];
     this.soundEnabled = saved.soundEnabled !== undefined ? saved.soundEnabled : true;
+    this.desktopNotificationsEnabled =
+      saved.desktopNotificationsEnabled !== undefined ? saved.desktopNotificationsEnabled : false;
     this.discoveryEnabled = saved.discoveryEnabled !== undefined ? saved.discoveryEnabled : true;
     this.isTeamTwoTimesMinEnabled = saved.isTeamTwoTimesMinEnabled || false;
   }
@@ -91,6 +96,7 @@ export class LobbyDiscoveryUI {
       criteria: this.criteriaList,
       discoveryEnabled: this.discoveryEnabled,
       soundEnabled: this.soundEnabled,
+      desktopNotificationsEnabled: this.desktopNotificationsEnabled,
       isTeamTwoTimesMinEnabled: this.isTeamTwoTimesMinEnabled,
     } satisfies LobbyDiscoverySettings);
   }
@@ -163,6 +169,7 @@ export class LobbyDiscoveryUI {
       const displayedLobbies = this.getDisplayedLobbiesBySource(lobbies);
       const matchedSources = new Set<QueueSource>();
       const matchedKeys = new Set<string>();
+      const newMatches: Lobby[] = [];
       let hasNewMatch = false;
 
       for (const [source, lobby] of Object.entries(displayedLobbies) as Array<
@@ -182,12 +189,23 @@ export class LobbyDiscoveryUI {
         matchedKeys.add(notificationKey);
         if (!this.notifiedLobbies.has(notificationKey)) {
           hasNewMatch = true;
+          newMatches.push(lobby);
         }
       }
 
       this.updateQueueCardPulses(matchedSources);
       if (hasNewMatch && this.soundEnabled) {
         SoundUtils.playGameFoundSound();
+      }
+      if (this.desktopNotificationsEnabled) {
+        for (const lobby of newMatches) {
+          const notificationContent = getBrowserNotificationContent(lobby);
+          BrowserNotificationUtils.show({
+            title: notificationContent.title,
+            body: notificationContent.body,
+            tag: this.getNotificationKey(lobby),
+          });
+        }
       }
 
       this.notifiedLobbies = matchedKeys;
@@ -671,6 +689,13 @@ export class LobbyDiscoveryUI {
       soundCheckbox.checked = this.soundEnabled;
     }
 
+    const desktopCheckbox = document.getElementById(
+      'discovery-desktop-toggle'
+    ) as HTMLInputElement | null;
+    if (desktopCheckbox) {
+      desktopCheckbox.checked = this.desktopNotificationsEnabled;
+    }
+
     const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement | null;
     if (twoTimesCheckbox) {
       twoTimesCheckbox.checked = this.isTeamTwoTimesMinEnabled;
@@ -791,6 +816,24 @@ export class LobbyDiscoveryUI {
     this.syncSearchTimer({ resetStart: true });
   }
 
+  private async handleDesktopNotificationToggleChange(
+    desktopToggle: HTMLInputElement
+  ): Promise<void> {
+    if (!desktopToggle.checked) {
+      this.desktopNotificationsEnabled = false;
+      this.saveSettings();
+      return;
+    }
+
+    const permissionGranted = await BrowserNotificationUtils.ensurePermission();
+    this.desktopNotificationsEnabled = permissionGranted;
+
+    desktopToggle.checked = permissionGranted;
+    desktopToggle.toggleAttribute('checked', permissionGranted);
+
+    this.saveSettings();
+  }
+
   private setupEventListeners(): void {
     document.getElementById('discovery-status')?.addEventListener('click', () => {
       this.setDiscoveryEnabled(!this.discoveryEnabled, { resetTimer: true });
@@ -845,6 +888,7 @@ export class LobbyDiscoveryUI {
       'discovery-team-quads',
       'discovery-team-hvn',
       'discovery-sound-toggle',
+      'discovery-desktop-toggle',
     ]) {
       const element = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
       if (!element) continue;
@@ -852,6 +896,10 @@ export class LobbyDiscoveryUI {
         if (id === 'discovery-sound-toggle' && element instanceof HTMLInputElement) {
           this.soundEnabled = element.checked;
           this.saveSettings();
+          return;
+        }
+        if (id === 'discovery-desktop-toggle' && element instanceof HTMLInputElement) {
+          void this.handleDesktopNotificationToggleChange(element);
           return;
         }
         this.refreshCriteria();
@@ -947,6 +995,10 @@ export class LobbyDiscoveryUI {
             <label class="discovery-toggle-label">
               <input type="checkbox" id="discovery-sound-toggle">
               <span>Sound</span>
+            </label>
+            <label class="discovery-toggle-label">
+              <input type="checkbox" id="discovery-desktop-toggle">
+              <span>Desktop</span>
             </label>
           </div>
           <div class="discovery-modes" id="discovery-modes">

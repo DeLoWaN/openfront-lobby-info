@@ -9,6 +9,7 @@ import {
   getLobbyModifiers,
   getLobbyQueueSource,
   getGameDetailsText,
+  getBrowserNotificationContent,
 } from '@/modules/lobby-discovery/LobbyDiscoveryHelpers';
 
 describe('LobbyDiscoveryHelpers', () => {
@@ -55,13 +56,38 @@ describe('LobbyDiscoveryHelpers', () => {
 
     expect(migrated).toEqual({
       criteria: [
-        { gameMode: 'FFA', teamCount: null, minPlayers: 10, maxPlayers: 30 },
-        { gameMode: 'Team', teamCount: 'Quads', minPlayers: 2, maxPlayers: 4 },
+        {
+          gameMode: 'FFA',
+          teamCount: null,
+          minPlayers: 10,
+          maxPlayers: 30,
+          modifiers: undefined,
+        },
+        {
+          gameMode: 'Team',
+          teamCount: 'Quads',
+          minPlayers: 2,
+          maxPlayers: 4,
+          modifiers: undefined,
+        },
       ],
       discoveryEnabled: false,
       soundEnabled: false,
+      desktopNotificationsEnabled: false,
       isTeamTwoTimesMinEnabled: true,
     });
+  });
+
+  it('preserves persisted desktop notification preference when current settings exist', () => {
+    const migrated = migrateLegacySettings(null, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 5, maxPlayers: 25 }],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    expect(migrated.desktopNotificationsEnabled).toBe(true);
   });
 
   it('collapses legacy modifier states into the new allowed or blocked model', () => {
@@ -169,5 +195,51 @@ describe('LobbyDiscoveryHelpers', () => {
     } as any;
 
     expect(getGameDetailsText(lobby)).toBe('FFA • 25 slots');
+  });
+
+  it('builds compact browser notification content for team lobbies with map and modifiers', () => {
+    const lobby = {
+      gameID: 'team-notif',
+      publicGameType: 'team',
+      gameConfig: {
+        gameMode: 'Team',
+        playerTeams: 4,
+        maxPlayers: 32,
+        gameMap: 'Europe',
+        publicGameModifiers: {
+          isCompact: true,
+          isRandomSpawn: true,
+          startingGold: 5000000,
+          goldMultiplier: 2,
+          isAlliancesDisabled: true,
+        },
+      },
+    } as any;
+
+    expect(getBrowserNotificationContent(lobby)).toEqual({
+      title: 'Europe • 4 teams • 8/team',
+      body: '32 slots • Compact, Random, 5M, x2, No Alliances',
+    });
+  });
+
+  it('builds compact browser notification content for ffa lobbies', () => {
+    const lobby = {
+      gameID: 'ffa-notif',
+      publicGameType: 'ffa',
+      gameConfig: {
+        gameMode: 'Free For All',
+        maxPlayers: 25,
+        gameMap: 'Black Sea',
+        publicGameModifiers: {
+          isCrowded: true,
+          isPortsDisabled: true,
+        },
+      },
+    } as any;
+
+    expect(getBrowserNotificationContent(lobby)).toEqual({
+      title: 'Black Sea • FFA',
+      body: '25 slots • Crowded, No Ports',
+    });
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LobbyDiscoveryUI } from '@/modules/lobby-discovery/LobbyDiscoveryUI';
 import { STORAGE_KEYS } from '@/config/constants';
 import { SoundUtils } from '@/utils/SoundUtils';
+import { BrowserNotificationUtils } from '@/utils/BrowserNotificationUtils';
 
 vi.mock('@/utils/LobbyUtils', () => ({
   LobbyUtils: {
@@ -19,6 +20,16 @@ vi.mock('@/utils/SoundUtils', () => ({
   SoundUtils: {
     playGameFoundSound: vi.fn(),
     preloadSounds: vi.fn(),
+  },
+}));
+
+vi.mock('@/utils/BrowserNotificationUtils', () => ({
+  BrowserNotificationUtils: {
+    isSupported: vi.fn(() => true),
+    isBackgrounded: vi.fn(() => true),
+    ensurePermission: vi.fn(async () => true),
+    show: vi.fn(() => true),
+    focusWindow: vi.fn(),
   },
 }));
 
@@ -67,6 +78,10 @@ describe('LobbyDiscoveryUI', () => {
 
     mountHomepageCards();
     vi.clearAllMocks();
+    vi.mocked(BrowserNotificationUtils.isSupported).mockReturnValue(true);
+    vi.mocked(BrowserNotificationUtils.isBackgrounded).mockReturnValue(true);
+    vi.mocked(BrowserNotificationUtils.ensurePermission).mockResolvedValue(true);
+    vi.mocked(BrowserNotificationUtils.show).mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -358,6 +373,7 @@ describe('LobbyDiscoveryUI', () => {
       criteria: [],
       discoveryEnabled: true,
       soundEnabled: true,
+      desktopNotificationsEnabled: false,
       isTeamTwoTimesMinEnabled: false,
     });
 
@@ -367,7 +383,108 @@ describe('LobbyDiscoveryUI', () => {
     expect(document.getElementById('discovery-ffa')).toBeTruthy();
     expect(document.getElementById('discovery-team-hvn')).toBeTruthy();
     expect(document.getElementById('discovery-team-two-times')).toBeTruthy();
+    expect(document.getElementById('discovery-desktop-toggle')).toBeTruthy();
     expect(document.getElementById('discovery-modes-rail')).toBeFalsy();
+  });
+
+  it('restores and persists the desktop notification toggle independently from sound', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const soundToggle = document.getElementById('discovery-sound-toggle') as HTMLInputElement;
+    const desktopToggle = document.getElementById('discovery-desktop-toggle') as HTMLInputElement;
+
+    expect(soundToggle.checked).toBe(false);
+    expect(desktopToggle.checked).toBe(true);
+
+    desktopToggle.checked = false;
+    desktopToggle.dispatchEvent(new Event('change'));
+
+    expect(store.get(STORAGE_KEYS.lobbyDiscoverySettings)).toEqual({
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+  });
+
+  it('requests permission when enabling desktop notifications and reverts on denial', async () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+    vi.mocked(BrowserNotificationUtils.ensurePermission).mockResolvedValue(false);
+
+    ui = new LobbyDiscoveryUI();
+
+    const desktopToggle = document.getElementById('discovery-desktop-toggle') as HTMLInputElement;
+    desktopToggle.checked = true;
+    desktopToggle.dispatchEvent(new Event('change'));
+    await vi.waitFor(() => {
+      expect(BrowserNotificationUtils.ensurePermission).toHaveBeenCalledTimes(1);
+      expect(store.get(STORAGE_KEYS.lobbyDiscoverySettings)).toEqual({
+        criteria: [],
+        discoveryEnabled: true,
+        soundEnabled: true,
+        desktopNotificationsEnabled: false,
+        isTeamTwoTimesMinEnabled: false,
+      });
+    });
+
+    ui.cleanup();
+    ui = new LobbyDiscoveryUI();
+
+    expect((document.getElementById('discovery-desktop-toggle') as HTMLInputElement).checked).toBe(
+      false
+    );
+  });
+
+  it('sends one browser notification for a new match and deduplicates repeated updates', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: false,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const lobbies = [
+      {
+        gameID: 'ffa-desktop-1',
+        publicGameType: 'ffa',
+        gameConfig: {
+          gameMode: 'Free For All',
+          maxPlayers: 25,
+        },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(1);
+    const [notificationPayload] = vi.mocked(BrowserNotificationUtils.show).mock.calls[0] ?? [];
+    expect(notificationPayload).toBeTruthy();
+    if (!notificationPayload) {
+      throw new Error('Expected a browser notification payload');
+    }
+    expect(notificationPayload.title).toBe('FFA');
+    expect(notificationPayload.body).toBe('25 slots');
+    expect(typeof notificationPayload.tag).toBe('string');
+    expect(SoundUtils.playGameFoundSound).not.toHaveBeenCalled();
   });
 
   it('uses a compact desktop panel, persists width, and restores it on init', () => {

@@ -197,6 +197,114 @@ export function getGameDetailsText(lobby: Lobby): string {
   return 'Team';
 }
 
+export interface BrowserNotificationContent {
+  title: string;
+  body: string;
+}
+
+function getLobbyModeLabel(lobby: Lobby): string {
+  const gameMode = getLobbyGameMode(lobby);
+  const teamConfig = getLobbyTeamConfig(lobby);
+
+  if (gameMode === 'FFA') {
+    return 'FFA';
+  }
+
+  if (gameMode !== 'Team') {
+    return 'Unsupported mode';
+  }
+
+  if (teamConfig === 'Humans Vs Nations') {
+    return 'Humans Vs Nations';
+  }
+
+  if (teamConfig === 'Duos' || teamConfig === 'Trios' || teamConfig === 'Quads') {
+    return teamConfig;
+  }
+
+  if (typeof teamConfig === 'number') {
+    return `${teamConfig} teams`;
+  }
+
+  return 'Team';
+}
+
+function formatStartingGold(value: number): string {
+  if (value >= 1_000_000 && value % 1_000_000 === 0) {
+    return `${value / 1_000_000}M`;
+  }
+
+  if (value >= 1_000 && value % 1_000 === 0) {
+    return `${value / 1_000}K`;
+  }
+
+  return String(value);
+}
+
+export function getActiveModifierLabels(lobby: Lobby): string[] {
+  const modifiers = lobby.gameConfig?.publicGameModifiers;
+  if (!modifiers) {
+    return [];
+  }
+
+  const labels: string[] = [];
+
+  if (modifiers.isCompact) labels.push('Compact');
+  if (modifiers.isRandomSpawn) labels.push('Random');
+  if (modifiers.isCrowded) labels.push('Crowded');
+  if (modifiers.isHardNations) labels.push('Hard');
+  if (typeof modifiers.startingGold === 'number') {
+    labels.push(formatStartingGold(modifiers.startingGold));
+  }
+  if (typeof modifiers.goldMultiplier === 'number') {
+    labels.push(`x${modifiers.goldMultiplier}`);
+  }
+  if (modifiers.isAlliancesDisabled) labels.push('No Alliances');
+  if (modifiers.isPortsDisabled) labels.push('No Ports');
+  if (modifiers.isNukesDisabled) labels.push('No Nukes');
+  if (modifiers.isSAMsDisabled) labels.push('No SAMs');
+  if (modifiers.isPeaceTime) labels.push('Peace');
+
+  return labels;
+}
+
+export function getBrowserNotificationContent(lobby: Lobby): BrowserNotificationContent {
+  const titleParts: string[] = [];
+  const mapName = lobby.gameConfig?.gameMap?.trim();
+  const capacity = getLobbyCapacity(lobby);
+  const teamConfig = getLobbyTeamConfig(lobby);
+  const modeLabel = getLobbyModeLabel(lobby);
+
+  if (mapName) {
+    titleParts.push(mapName);
+  }
+
+  if (getLobbyGameMode(lobby) === 'Team' && teamConfig !== 'Humans Vs Nations') {
+    titleParts.push(modeLabel);
+    const playersPerTeam = getPlayersPerTeam(teamConfig, capacity);
+    if (playersPerTeam !== null) {
+      titleParts.push(`${playersPerTeam}/team`);
+    }
+  } else {
+    titleParts.push(modeLabel);
+  }
+
+  const bodyParts: string[] = [];
+  if (capacity !== null) {
+    bodyParts.push(`${capacity} slots`);
+  }
+
+  const activeModifiers = getActiveModifierLabels(lobby);
+  if (activeModifiers.length > 0) {
+    bodyParts.push(activeModifiers.join(', '));
+  }
+
+  return {
+    title: titleParts.join(' • '),
+    body: bodyParts.join(' • '),
+  };
+}
+
 function sanitizeNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
@@ -295,6 +403,10 @@ export function migrateLegacySettings(
       discoveryEnabled:
         typeof current.discoveryEnabled === 'boolean' ? current.discoveryEnabled : true,
       soundEnabled: typeof current.soundEnabled === 'boolean' ? current.soundEnabled : true,
+      desktopNotificationsEnabled:
+        typeof current.desktopNotificationsEnabled === 'boolean'
+          ? current.desktopNotificationsEnabled
+          : false,
       isTeamTwoTimesMinEnabled:
         typeof current.isTeamTwoTimesMinEnabled === 'boolean'
           ? current.isTeamTwoTimesMinEnabled
@@ -307,6 +419,7 @@ export function migrateLegacySettings(
     discoveryEnabled:
       typeof legacy?.autoJoinEnabled === 'boolean' ? legacy.autoJoinEnabled : true,
     soundEnabled: typeof legacy?.soundEnabled === 'boolean' ? legacy.soundEnabled : true,
+    desktopNotificationsEnabled: false,
     isTeamTwoTimesMinEnabled:
       typeof legacy?.isTeamTwoTimesMinEnabled === 'boolean'
         ? legacy.isTeamTwoTimesMinEnabled
