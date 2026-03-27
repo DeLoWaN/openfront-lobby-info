@@ -127,7 +127,7 @@ describe('CurrentPlayerHighlighter', () => {
       childList: true,
       subtree: true,
     });
-    expect(observe.mock.calls[0][1]).not.toHaveProperty('attributes', true);
+    expect(observe.mock.calls[0][1].attributes).toBe(false);
 
     isolatedHighlighter.stop();
     globalThis.MutationObserver = OriginalMutationObserver;

@@ -109,6 +109,10 @@ export const LobbyDataManager: LobbyDataManagerSingleton = {
         console.warn('[Bundle] Rate limited.');
         return;
       }
+      if (!response.ok) {
+        console.warn(`[Bundle] API error: ${response.status}`);
+        return;
+      }
 
       const data = (await response.json()) as PublicGamesResponse;
       this.lastLobbies = this.extractLobbies(data);

@@ -29,6 +29,7 @@ export class CurrentPlayerHighlighter {
 
     this.observer = new MutationObserver(() => this.scheduleApplyHighlights());
     this.observer.observe(document.body, {
+      attributes: false,
       childList: true,
       subtree: true,
     });

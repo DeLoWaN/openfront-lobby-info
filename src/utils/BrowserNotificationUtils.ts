@@ -53,7 +53,7 @@ export const BrowserNotificationUtils: BrowserNotificationUtilsSingleton = {
       return false;
     }
 
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    if (Notification.permission === 'granted') {
       const notification = new Notification(payload.title, {
         body: payload.body,
       });

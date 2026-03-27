@@ -450,6 +450,43 @@ describe('LobbyDiscoveryUI', () => {
     );
   });
 
+  it('ignores stale permission results if the desktop toggle is turned off before resolve', async () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: false,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    let resolvePermission!: (value: boolean) => void;
+    const permissionPromise = new Promise<boolean>((resolve) => {
+      resolvePermission = resolve;
+    });
+    vi.mocked(BrowserNotificationUtils.ensurePermission).mockImplementation(() => permissionPromise);
+
+    ui = new LobbyDiscoveryUI();
+
+    const desktopToggle = document.getElementById('discovery-desktop-toggle') as HTMLInputElement;
+    desktopToggle.checked = true;
+    desktopToggle.dispatchEvent(new Event('change'));
+
+    desktopToggle.checked = false;
+    desktopToggle.dispatchEvent(new Event('change'));
+    resolvePermission(true);
+
+    await vi.waitFor(() => {
+      expect(store.get(STORAGE_KEYS.lobbyDiscoverySettings)).toEqual({
+        criteria: [],
+        discoveryEnabled: true,
+        soundEnabled: true,
+        desktopNotificationsEnabled: false,
+        isTeamTwoTimesMinEnabled: false,
+      });
+    });
+    expect(desktopToggle.checked).toBe(false);
+  });
+
   it('sends one browser notification for a new match and deduplicates repeated updates', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: null, maxPlayers: null }],

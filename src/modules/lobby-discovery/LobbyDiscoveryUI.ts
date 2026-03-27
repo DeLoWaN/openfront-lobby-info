@@ -35,11 +35,13 @@ export class LobbyDiscoveryUI {
   private gameFoundTime: number | null = null;
   private soundEnabled = true;
   private desktopNotificationsEnabled = false;
+  private desktopNotificationRequestId = 0;
   private activeMatchSources: Set<QueueSource> = new Set();
   private seenLobbies: Set<string> = new Set();
   private desktopNotifiedLobbies: Set<string> = new Set();
   private isTeamTwoTimesMinEnabled = false;
   private sleeping = false;
+  private isDisposed = false;
 
   private timerInterval: ReturnType<typeof setInterval> | null = null;
   private gameInfoInterval: ReturnType<typeof setInterval> | null = null;
@@ -835,6 +837,8 @@ export class LobbyDiscoveryUI {
   private async handleDesktopNotificationToggleChange(
     desktopToggle: HTMLInputElement
   ): Promise<void> {
+    const requestId = ++this.desktopNotificationRequestId;
+
     if (!desktopToggle.checked) {
       this.desktopNotificationsEnabled = false;
       this.saveSettings();
@@ -842,6 +846,15 @@ export class LobbyDiscoveryUI {
     }
 
     const permissionGranted = await BrowserNotificationUtils.ensurePermission();
+    if (
+      requestId !== this.desktopNotificationRequestId ||
+      this.isDisposed ||
+      !desktopToggle.isConnected ||
+      !desktopToggle.checked
+    ) {
+      return;
+    }
+
     this.desktopNotificationsEnabled = permissionGranted;
 
     desktopToggle.checked = permissionGranted;
@@ -1179,6 +1192,7 @@ export class LobbyDiscoveryUI {
   }
 
   cleanup(): void {
+    this.isDisposed = true;
     this.stopTimer();
     this.stopGameInfoUpdates();
     if (this.pulseSyncTimeout) {

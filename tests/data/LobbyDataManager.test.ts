@@ -11,6 +11,7 @@ describe('LobbyDataManager', () => {
     LobbyDataManager.subscribers = [];
     LobbyDataManager.lastLobbies = [];
     globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
       status: 200,
       json: vi.fn().mockResolvedValue({ games: { ffa: [], team: [], special: [] } }),
     }) as any;
@@ -56,5 +57,22 @@ describe('LobbyDataManager', () => {
     await vi.advanceTimersByTimeAsync(LobbyDataManager.pollingRate * 2);
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps stale lobbies when polling returns a non-ok response', async () => {
+    LobbyDataManager.lastLobbies = [
+      { gameID: 'stale-lobby', publicGameType: 'ffa', gameConfig: { gameMode: 'Free For All' } } as any,
+    ];
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: vi.fn(),
+    }) as any;
+
+    await LobbyDataManager.fetchData();
+
+    expect(LobbyDataManager.lastLobbies).toEqual([
+      { gameID: 'stale-lobby', publicGameType: 'ffa', gameConfig: { gameMode: 'Free For All' } },
+    ]);
   });
 });
