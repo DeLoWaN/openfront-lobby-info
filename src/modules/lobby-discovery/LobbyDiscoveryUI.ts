@@ -79,6 +79,7 @@ export class LobbyDiscoveryUI {
   private seenLobbies: Set<string> = new Set();
   private desktopNotifiedLobbies: Set<string> = new Set();
   private isTeamTwoTimesMinEnabled = false;
+  private lastTeamManualMax: number | null = null;
   private sleeping = false;
   private isDisposed = false;
 
@@ -203,13 +204,23 @@ export class LobbyDiscoveryUI {
       for (const lobby of lobbies) {
         const source = getLobbyQueueSource(lobby);
         if (!source) continue;
-        if (
-          !this.engine.matchesCriteria(lobby, this.criteriaList, {
-            isTeamTwoTimesMinEnabled: this.isTeamTwoTimesMinEnabled,
-          })
-        ) {
-          continue;
+        const matched = this.engine.matchesCriteria(lobby, this.criteriaList);
+        if ((globalThis as { __OF_DEBUG_DISCOVERY?: boolean }).__OF_DEBUG_DISCOVERY === true) {
+          console.debug('[OF Discovery]', {
+            lobbyId: lobby.gameID,
+            source,
+            mode: lobby.gameConfig?.gameMode,
+            playerTeams: lobby.gameConfig?.playerTeams,
+            modifiers: lobby.gameConfig?.publicGameModifiers,
+            hostGold: {
+              startingGold: lobby.gameConfig?.startingGold,
+              goldMultiplier: lobby.gameConfig?.goldMultiplier,
+            },
+            criteriaCount: this.criteriaList.length,
+            matched,
+          });
         }
+        if (!matched) continue;
 
         matchedSources.add(source);
         const notificationKey = this.getNotificationKey(lobby);
@@ -414,6 +425,11 @@ export class LobbyDiscoveryUI {
     if (!button) return;
     button.dataset.state = state;
     button.setAttribute('aria-pressed', String(state !== 'any'));
+    const baseLabel = button.dataset.modName ?? button.getAttribute('aria-label') ?? '';
+    const stateWord = state === 'blocked' ? 'excluded' : state;
+    if (baseLabel) {
+      button.setAttribute('aria-label', state === 'any' ? baseLabel : `${baseLabel} · ${stateWord}`);
+    }
     const ind = button.querySelector('.ld-mod-ind') as HTMLElement | null;
     if (ind) {
       if (state === 'required') ind.innerHTML = ICON_CHECK;
@@ -771,9 +787,11 @@ export class LobbyDiscoveryUI {
 
     let minVal = parseInt(minSlider.value, 10);
     let maxVal = parseInt(maxSlider.value, 10);
+    const sliderMax = parseInt(maxSlider.max, 10);
 
     if (applyTwoTimesConstraint && this.isTeamTwoTimesMinEnabled) {
-      maxVal = Math.min(parseInt(maxSlider.max, 10), Math.max(1, maxVal));
+      maxVal = Math.min(sliderMax, Math.max(1, minVal * 2));
+      maxSlider.value = String(maxVal);
     }
 
     if (minVal > maxVal) {
@@ -789,12 +807,18 @@ export class LobbyDiscoveryUI {
 
     if (range) {
       const sliderMin = parseInt(minSlider.min, 10);
-      const sliderMax = parseInt(minSlider.max, 10);
       const span = sliderMax - sliderMin || 1;
       const minPct = ((minVal - sliderMin) / span) * 100;
       const maxPct = ((maxVal - sliderMin) / span) * 100;
       range.style.setProperty('--lo', `${minPct}%`);
       range.style.setProperty('--hi', `${maxPct}%`);
+      if (applyTwoTimesConstraint) {
+        range.classList.toggle('is-locked', this.isTeamTwoTimesMinEnabled);
+      }
+    }
+
+    if (applyTwoTimesConstraint) {
+      maxSlider.disabled = this.isTeamTwoTimesMinEnabled;
     }
   }
 
@@ -916,6 +940,13 @@ export class LobbyDiscoveryUI {
 
     const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement | null;
     twoTimesCheckbox?.addEventListener('change', () => {
+      const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement | null;
+      if (twoTimesCheckbox.checked && maxSlider) {
+        this.lastTeamManualMax = parseInt(maxSlider.value, 10);
+      } else if (!twoTimesCheckbox.checked && maxSlider) {
+        const restored = this.lastTeamManualMax ?? parseInt(maxSlider.max, 10);
+        maxSlider.value = String(restored);
+      }
       this.isTeamTwoTimesMinEnabled = twoTimesCheckbox.checked;
       this.syncChipState('discovery-team-two-times');
       this.updateSliderRange(
@@ -1004,7 +1035,7 @@ export class LobbyDiscoveryUI {
 
   private renderModifierChip(id: string, name: string): string {
     return `
-      <button type="button" class="ld-mod" id="${id}" data-state="any" aria-pressed="false" aria-label="${name}">
+      <button type="button" class="ld-mod" id="${id}" data-state="any" data-mod-name="${name}" aria-pressed="false" aria-label="${name}">
         <span class="ld-mod-ind"></span>
         <span class="ld-mod-name">${name}</span>
       </button>
@@ -1123,10 +1154,7 @@ export class LobbyDiscoveryUI {
               <label class="ld-2x" aria-pressed="false">
                 <input type="checkbox" id="discovery-team-two-times">
                 <span class="check">${ICON_CHECK}</span>
-                <span class="lbl">
-                  <strong>2× lobby capacity</strong>
-                  <span class="hint">total seats ≥ 2 × per-team min</span>
-                </span>
+                <span class="lbl"><strong>Lock max-per-team to 2× the min</strong></span>
               </label>
               <div class="ld-current-game-info" id="discovery-current-game-info" style="display: none;"></div>
             </div>
@@ -1138,7 +1166,7 @@ export class LobbyDiscoveryUI {
               <div class="ld-mods-legend">
                 <span class="key"><span class="swatch"></span>Any</span>
                 <span class="key"><span class="swatch req"></span>Req</span>
-                <span class="key"><span class="swatch blk"></span>Block</span>
+                <span class="key"><span class="swatch blk"></span>Excl</span>
               </div>
             </div>
 
@@ -1175,7 +1203,7 @@ export class LobbyDiscoveryUI {
             </div>
 
             <div class="ld-mods-hint">
-              Click to cycle <strong>Any</strong> → <strong class="req">Required</strong> → <strong class="blk">Blocked</strong>.
+              Click to cycle <strong>Any</strong> → <strong class="req">Required</strong> → <strong class="blk">Excluded</strong>.
             </div>
           </div>
         </div>

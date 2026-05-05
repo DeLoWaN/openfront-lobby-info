@@ -154,6 +154,8 @@ export function getStyles(): string {
       stroke-linejoin: round;
     }
     .ld-icon-btn input { display: none; }
+    .ld-mode-btn input { display: none; }
+    .ld-chip input { display: none; }
 
     /* Header */
     .ld-head {
@@ -376,6 +378,13 @@ export function getStyles(): string {
       height: 22px;
       margin: 0 6px;
     }
+    .ld-range.is-locked {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .ld-range.is-locked .capacity-slider-max {
+      pointer-events: none;
+    }
     .ld-range .track {
       position: absolute;
       left: -6px;
@@ -540,7 +549,7 @@ export function getStyles(): string {
       appearance: none;
       cursor: pointer;
       background: transparent;
-      color: var(--of-hud-text-3);
+      color: var(--of-hud-text-2);
       padding: 7px 8px 7px 9px;
       border-radius: 7px;
       font: inherit;
@@ -552,6 +561,7 @@ export function getStyles(): string {
       text-align: left;
       border: 1px solid transparent;
     }
+    .ld-mod-name { font-weight: 500; }
     .ld-mod:hover {
       background: rgba(255,255,255,0.025);
       color: var(--of-hud-text-1);

@@ -135,33 +135,32 @@ export function getLobbyModifierValue(
   key: keyof ModifierFilters
 ): boolean | number | undefined {
   const modifiers = lobby.gameConfig?.publicGameModifiers;
-  if (!modifiers) return undefined;
 
   switch (key) {
     case 'isCompact':
-      return modifiers.isCompact;
+      return modifiers?.isCompact;
     case 'isRandomSpawn':
-      return modifiers.isRandomSpawn;
+      return modifiers?.isRandomSpawn;
     case 'isCrowded':
-      return modifiers.isCrowded;
+      return modifiers?.isCrowded;
     case 'isHardNations':
-      return modifiers.isHardNations;
+      return modifiers?.isHardNations;
     case 'isAlliancesDisabled':
-      return modifiers.isAlliancesDisabled;
+      return modifiers?.isAlliancesDisabled;
     case 'isPortsDisabled':
-      return modifiers.isPortsDisabled;
+      return modifiers?.isPortsDisabled;
     case 'isNukesDisabled':
-      return modifiers.isNukesDisabled;
+      return modifiers?.isNukesDisabled;
     case 'isSAMsDisabled':
-      return modifiers.isSAMsDisabled;
+      return modifiers?.isSAMsDisabled;
     case 'isPeaceTime':
-      return modifiers.isPeaceTime;
+      return modifiers?.isPeaceTime;
     case 'isWaterNukes':
-      return modifiers.isWaterNukes;
+      return modifiers?.isWaterNukes;
     case 'startingGold':
-      return modifiers.startingGold;
+      return modifiers?.startingGold ?? lobby.gameConfig?.startingGold ?? undefined;
     case 'goldMultiplier':
-      return modifiers.goldMultiplier;
+      return modifiers?.goldMultiplier ?? lobby.gameConfig?.goldMultiplier ?? undefined;
     default:
       return undefined;
   }
@@ -244,28 +243,29 @@ function formatStartingGold(value: number): string {
 
 export function getActiveModifierLabels(lobby: Lobby): string[] {
   const modifiers = lobby.gameConfig?.publicGameModifiers;
-  if (!modifiers) {
-    return [];
-  }
-
   const labels: string[] = [];
 
-  if (modifiers.isCompact) labels.push('Compact');
-  if (modifiers.isRandomSpawn) labels.push('Random');
-  if (modifiers.isCrowded) labels.push('Crowded');
-  if (modifiers.isHardNations) labels.push('Hard');
-  if (typeof modifiers.startingGold === 'number') {
-    labels.push(formatStartingGold(modifiers.startingGold));
+  if (modifiers?.isCompact) labels.push('Compact');
+  if (modifiers?.isRandomSpawn) labels.push('Random');
+  if (modifiers?.isCrowded) labels.push('Crowded');
+  if (modifiers?.isHardNations) labels.push('Hard');
+
+  const startingGold = modifiers?.startingGold ?? lobby.gameConfig?.startingGold;
+  if (typeof startingGold === 'number') {
+    labels.push(formatStartingGold(startingGold));
   }
-  if (typeof modifiers.goldMultiplier === 'number') {
-    labels.push(`x${modifiers.goldMultiplier}`);
+
+  const goldMultiplier = modifiers?.goldMultiplier ?? lobby.gameConfig?.goldMultiplier;
+  if (typeof goldMultiplier === 'number') {
+    labels.push(`x${goldMultiplier}`);
   }
-  if (modifiers.isAlliancesDisabled) labels.push('No Alliances');
-  if (modifiers.isPortsDisabled) labels.push('No Ports');
-  if (modifiers.isNukesDisabled) labels.push('No Nukes');
-  if (modifiers.isSAMsDisabled) labels.push('No SAMs');
-  if (modifiers.isPeaceTime) labels.push('Peace');
-  if (modifiers.isWaterNukes) labels.push('Water Nukes');
+
+  if (modifiers?.isAlliancesDisabled) labels.push('No Alliances');
+  if (modifiers?.isPortsDisabled) labels.push('No Ports');
+  if (modifiers?.isNukesDisabled) labels.push('No Nukes');
+  if (modifiers?.isSAMsDisabled) labels.push('No SAMs');
+  if (modifiers?.isPeaceTime) labels.push('Peace');
+  if (modifiers?.isWaterNukes) labels.push('Water Nukes');
 
   return labels;
 }

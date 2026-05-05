@@ -80,28 +80,28 @@ describe('LobbyDiscoveryEngine', () => {
     expect(engine.matchesCriteria(lobby, validRange)).toBe(true);
   });
 
-  it('applies the 2x min helper to team capacity', () => {
+  it('rejects a Team lobby whose per-team count is above the criterion max (2x-locked range)', () => {
+    // 2x-lock would be reflected in the criterion as maxPlayers = minPlayers * 2.
+    // Lobby has 5 per team; criterion is [2, 4].
     const lobby = {
-      gameID: 'team-3',
+      gameID: 'team-2x-locked',
       publicGameType: 'team',
       gameConfig: {
         gameMode: 'Team',
         teamCount: 4,
-        maxClients: 12,
+        maxClients: 20,
       },
-      maxClients: 12,
+      maxClients: 20,
     } as any;
 
-    const criteria = [
-      { gameMode: 'Team', teamCount: 4, minPlayers: 8, maxPlayers: 16 },
-    ] as any;
+    const criteria = [{ gameMode: 'Team', teamCount: 4, minPlayers: 2, maxPlayers: 4 }] as any;
 
-    expect(engine.matchesCriteria(lobby, criteria, { isTeamTwoTimesMinEnabled: true })).toBe(false);
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(false);
   });
 
-  it('does not reject Humans Vs Nations with the 2x min helper before the normal capacity check', () => {
+  it('matches Humans Vs Nations against criterion capacity bounds (no special 2x branch)', () => {
     const lobby = {
-      gameID: 'hvn-2x',
+      gameID: 'hvn-cap',
       publicGameType: 'special',
       gameConfig: {
         gameMode: 'Team',
@@ -115,7 +115,7 @@ describe('LobbyDiscoveryEngine', () => {
       { gameMode: 'Team', teamCount: 'Humans Vs Nations', minPlayers: 40, maxPlayers: 70 },
     ] as any;
 
-    expect(engine.matchesCriteria(lobby, criteria, { isTeamTwoTimesMinEnabled: true })).toBe(true);
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(true);
   });
 
   it('applies blocked boolean and numeric modifier filters as an exclusion list', () => {
@@ -278,6 +278,94 @@ describe('LobbyDiscoveryEngine', () => {
     ] as any;
 
     expect(engine.matchesCriteria(lobby, criteria)).toBe(false);
+  });
+
+  it('excludes a lobby with publicGameModifiers.startingGold=1M when 1M is excluded (regression)', () => {
+    const lobby = {
+      gameID: 'lisbon-pgm-1m',
+      publicGameType: 'team',
+      gameConfig: {
+        gameMode: 'Team',
+        playerTeams: 'Quads',
+        maxClients: 72,
+        publicGameModifiers: { startingGold: 1_000_000 },
+      },
+      maxClients: 72,
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'Team',
+        teamCount: 'Quads',
+        minPlayers: 1,
+        maxPlayers: 62,
+        modifiers: {
+          startingGold: { 1000000: 'blocked', 5000000: 'any', 25000000: 'any' },
+          goldMultiplier: { 2: 'any' },
+        },
+      },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(false);
+  });
+
+  it('excludes a lobby with host-set gameConfig.startingGold=1M when 1M is excluded', () => {
+    // No publicGameModifiers; gold lives directly on gameConfig (host-set custom lobby).
+    const lobby = {
+      gameID: 'host-set-1m',
+      publicGameType: 'team',
+      gameConfig: {
+        gameMode: 'Team',
+        playerTeams: 'Quads',
+        maxClients: 32,
+        startingGold: 1_000_000,
+      },
+      maxClients: 32,
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'Team',
+        teamCount: 'Quads',
+        minPlayers: 1,
+        maxPlayers: 62,
+        modifiers: {
+          startingGold: { 1000000: 'blocked', 5000000: 'any', 25000000: 'any' },
+        },
+      },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(false);
+  });
+
+  it('tolerates null host-set gold values', () => {
+    const lobby = {
+      gameID: 'null-gold',
+      publicGameType: 'team',
+      gameConfig: {
+        gameMode: 'Team',
+        playerTeams: 'Quads',
+        maxClients: 32,
+        startingGold: null,
+        goldMultiplier: null,
+      },
+      maxClients: 32,
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'Team',
+        teamCount: 'Quads',
+        minPlayers: 1,
+        maxPlayers: 62,
+        modifiers: {
+          startingGold: { 1000000: 'blocked' },
+        },
+      },
+    ] as any;
+
+    // No gold set → no exclusion firing → match (only blocked, no required).
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(true);
   });
 
   it('rejects when a required numeric modifier is absent from the lobby', () => {

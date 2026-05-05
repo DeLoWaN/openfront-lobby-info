@@ -16,10 +16,6 @@ import {
   getPlayersPerTeam,
 } from './LobbyDiscoveryHelpers';
 
-interface MatchOptions {
-  isTeamTwoTimesMinEnabled?: boolean;
-}
-
 const BOOLEAN_MODIFIER_KEYS: Array<keyof ModifierFilters> = [
   'isCompact',
   'isRandomSpawn',
@@ -36,8 +32,7 @@ const BOOLEAN_MODIFIER_KEYS: Array<keyof ModifierFilters> = [
 export class LobbyDiscoveryEngine {
   matchesCriteria(
     lobby: Lobby,
-    criteriaList: DiscoveryCriteria[],
-    options: MatchOptions = {}
+    criteriaList: DiscoveryCriteria[]
   ): boolean {
     if (!lobby || !lobby.gameConfig || !criteriaList || criteriaList.length === 0) {
       return false;
@@ -65,15 +60,6 @@ export class LobbyDiscoveryEngine {
           criteria.teamCount !== null &&
           criteria.teamCount !== undefined &&
           criteria.teamCount !== lobbyTeamConfig
-        ) {
-          continue;
-        }
-
-        if (
-          options.isTeamTwoTimesMinEnabled &&
-          criteria.minPlayers !== null &&
-          lobbyTeamConfig !== 'Humans Vs Nations' &&
-          lobbyCapacity < criteria.minPlayers * 2
         ) {
           continue;
         }

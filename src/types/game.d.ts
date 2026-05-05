@@ -30,6 +30,8 @@ export interface GameConfig {
   maxClients?: number;
   maxPlayers?: number;
   maxPlayersPerGame?: number;
+  startingGold?: number | null;
+  goldMultiplier?: number | null;
 }
 
 /**

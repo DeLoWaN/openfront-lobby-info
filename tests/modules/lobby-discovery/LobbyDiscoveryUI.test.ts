@@ -368,7 +368,7 @@ describe('LobbyDiscoveryUI', () => {
     expect(maxInput.max).toBe('62');
   });
 
-  it('does not collapse the team max slider to exactly 2x min when the 2x toggle is enabled', () => {
+  it('locks team max slider to 2x min and disables it when the 2x toggle is enabled', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -390,7 +390,40 @@ describe('LobbyDiscoveryUI', () => {
     twoTimesCheckbox.checked = true;
     twoTimesCheckbox.dispatchEvent(new Event('change'));
 
-    expect(maxSlider.value).toBe('20');
+    expect(maxSlider.value).toBe('16');
+    expect(maxSlider.disabled).toBe(true);
+    expect(maxSlider.closest('.ld-range')?.classList.contains('is-locked')).toBe(true);
+  });
+
+  it('restores the previous manual max when the 2x toggle is turned off', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+    const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
+    const twoTimes = document.getElementById('discovery-team-two-times') as HTMLInputElement;
+
+    minSlider.value = '5';
+    minSlider.dispatchEvent(new Event('input'));
+    maxSlider.value = '40';
+    maxSlider.dispatchEvent(new Event('input'));
+
+    twoTimes.checked = true;
+    twoTimes.dispatchEvent(new Event('change'));
+    expect(maxSlider.value).toBe('10');
+    expect(maxSlider.disabled).toBe(true);
+
+    twoTimes.checked = false;
+    twoTimes.dispatchEvent(new Event('change'));
+    expect(maxSlider.value).toBe('40');
+    expect(maxSlider.disabled).toBe(false);
+    expect(maxSlider.closest('.ld-range')?.classList.contains('is-locked')).toBe(false);
   });
 
   it('renders without the old player-list discovery slot and exposes FFA and 2x controls', () => {

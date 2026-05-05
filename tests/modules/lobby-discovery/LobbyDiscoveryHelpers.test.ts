@@ -11,6 +11,8 @@ import {
   getGameDetailsText,
   getBrowserNotificationContent,
   formatElapsedSince,
+  getLobbyModifierValue,
+  getActiveModifierLabels,
 } from '@/modules/lobby-discovery/LobbyDiscoveryHelpers';
 
 describe('LobbyDiscoveryHelpers', () => {
@@ -227,6 +229,60 @@ describe('LobbyDiscoveryHelpers', () => {
       title: 'Europe • 4 teams • 8/team',
       body: '32 slots • Compact, Random, 5M, x2, No Alliances',
     });
+  });
+
+  it('reads startingGold and goldMultiplier from publicGameModifiers when present', () => {
+    const lobby = {
+      gameID: 'pgm',
+      gameConfig: {
+        gameMode: 'Free For All',
+        publicGameModifiers: { startingGold: 5_000_000, goldMultiplier: 2 },
+      },
+    } as any;
+
+    expect(getLobbyModifierValue(lobby, 'startingGold')).toBe(5_000_000);
+    expect(getLobbyModifierValue(lobby, 'goldMultiplier')).toBe(2);
+  });
+
+  it('falls back to gameConfig.startingGold and gameConfig.goldMultiplier (host-set custom lobby)', () => {
+    const lobby = {
+      gameID: 'host',
+      gameConfig: {
+        gameMode: 'Team',
+        startingGold: 1_000_000,
+        goldMultiplier: 3,
+      },
+    } as any;
+
+    expect(getLobbyModifierValue(lobby, 'startingGold')).toBe(1_000_000);
+    expect(getLobbyModifierValue(lobby, 'goldMultiplier')).toBe(3);
+  });
+
+  it('treats null host-set gold as undefined', () => {
+    const lobby = {
+      gameID: 'null',
+      gameConfig: {
+        gameMode: 'Team',
+        startingGold: null,
+        goldMultiplier: null,
+      },
+    } as any;
+
+    expect(getLobbyModifierValue(lobby, 'startingGold')).toBeUndefined();
+    expect(getLobbyModifierValue(lobby, 'goldMultiplier')).toBeUndefined();
+  });
+
+  it('builds badge labels from the host-set fallback when publicGameModifiers is absent', () => {
+    const lobby = {
+      gameID: 'host-labels',
+      gameConfig: {
+        gameMode: 'Team',
+        startingGold: 25_000_000,
+        goldMultiplier: 2,
+      },
+    } as any;
+
+    expect(getActiveModifierLabels(lobby)).toEqual(['25M', 'x2']);
   });
 
   it('formats elapsed time since a timestamp as Xm Ys', () => {
