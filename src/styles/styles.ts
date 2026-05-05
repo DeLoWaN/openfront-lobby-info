@@ -378,11 +378,15 @@ export function getStyles(): string {
       height: 22px;
       margin: 0 6px;
     }
-    .ld-range.is-locked {
-      opacity: 0.55;
+    .capacity-slider.is-max-locked::-webkit-slider-thumb {
+      opacity: 0.45;
       cursor: not-allowed;
     }
-    .ld-range.is-locked .capacity-slider-max {
+    .capacity-slider.is-max-locked::-moz-range-thumb {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .capacity-slider.is-max-locked {
       pointer-events: none;
     }
     .ld-range .track {
@@ -441,6 +445,78 @@ export function getStyles(): string {
     }
     .capacity-slider-min { z-index: 2; }
     .capacity-slider-max { z-index: 1; }
+
+    /* Stepper (number input + - / + buttons) */
+    .ld-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--of-hud-line-1);
+      border-radius: 6px;
+      padding: 2px 4px;
+      font-family: ${FONTS.mono};
+    }
+    .ld-stepper input[type="number"] {
+      width: 2.5em;
+      background: transparent;
+      border: none;
+      color: var(--of-hud-text-1);
+      font: inherit;
+      text-align: center;
+      padding: 0 2px;
+      font-variant-numeric: tabular-nums;
+      -moz-appearance: textfield;
+    }
+    .ld-stepper input[type="number"]::-webkit-outer-spin-button,
+    .ld-stepper input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .ld-stepper input[type="number"]:focus { outline: none; color: var(--of-hud-accent); }
+    .ld-stepper input[type="number"]:disabled { opacity: 0.45; cursor: not-allowed; }
+    .ld-step-btn {
+      width: 18px; height: 18px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--of-hud-text-3);
+      cursor: pointer;
+      border-radius: 3px;
+      font: inherit;
+      line-height: 1;
+      padding: 0;
+    }
+    .ld-step-btn:hover:not(:disabled) {
+      background: var(--of-hud-bg-3);
+      color: var(--of-hud-text-1);
+    }
+    .ld-step-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Ticks under the slider track */
+    .ld-ticks {
+      position: relative;
+      height: 18px;
+      margin: 6px 6px 4px;
+      pointer-events: none;
+    }
+    .ld-tick {
+      position: absolute;
+      top: 0;
+      width: 1px;
+      height: 4px;
+      background: var(--of-hud-text-4);
+      transform: translateX(-0.5px);
+    }
+    .ld-tick-label {
+      position: absolute;
+      top: 6px;
+      transform: translateX(-50%);
+      font-family: ${FONTS.mono};
+      font-size: 10px;
+      color: var(--of-hud-text-3);
+      font-variant-numeric: tabular-nums;
+    }
 
     /* 2x card */
     .ld-2x {
