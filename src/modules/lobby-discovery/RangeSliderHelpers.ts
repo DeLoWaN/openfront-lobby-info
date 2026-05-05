@@ -38,3 +38,21 @@ export function valueToPosition(value: number, stops: readonly number[]): number
 
   return 1;
 }
+
+/**
+ * Inverse of `valueToPosition`. Maps a position in [0, 1] to an integer value
+ * by interpolating within the segment containing the position, then rounding.
+ */
+export function positionToValue(position: number, stops: readonly number[]): number {
+  if (stops.length < 2) return stops[0] ?? 0;
+  const lastIdx = stops.length - 1;
+  if (position <= 0) return stops[0];
+  if (position >= 1) return stops[lastIdx];
+
+  const t = position * lastIdx;
+  const i = Math.floor(t);
+  const frac = t - i;
+  // i can equal lastIdx only if position === 1, handled above.
+  const raw = stops[i] + frac * (stops[i + 1] - stops[i]);
+  return Math.round(raw);
+}
