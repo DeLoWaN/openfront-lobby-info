@@ -347,7 +347,7 @@ describe('LobbyDiscoveryUI', () => {
     const maxSlider = document.getElementById('discovery-ffa-max-slider') as HTMLInputElement;
     const maxInput = document.getElementById('discovery-ffa-max') as HTMLInputElement;
 
-    expect(maxSlider.max).toBe('125');
+    expect(maxSlider.max).toBe('1000');
     expect(maxInput.max).toBe('125');
   });
 
@@ -364,7 +364,7 @@ describe('LobbyDiscoveryUI', () => {
     const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
     const maxInput = document.getElementById('discovery-team-max') as HTMLInputElement;
 
-    expect(maxSlider.max).toBe('62');
+    expect(maxSlider.max).toBe('1000');
     expect(maxInput.max).toBe('62');
   });
 
@@ -826,9 +826,9 @@ describe('LobbyDiscoveryUI', () => {
       toggle('discovery-team-duos', true);
 
       const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      const minValue = document.getElementById('discovery-team-min-value') as HTMLElement;
+      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
       expect(minSlider.value).toBe('2');
-      expect(minValue.textContent).toBe('2');
+      expect(minInput.value).toBe('2');
     });
 
     it('sets min slider to 3 when Trios is checked', () => {

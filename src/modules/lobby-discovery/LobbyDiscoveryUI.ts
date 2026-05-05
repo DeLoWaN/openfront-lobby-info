@@ -1098,7 +1098,7 @@ export class LobbyDiscoveryUI {
       </div>
       <div class="ld-head">
         <div class="ld-eyebrow">Notify only · never auto-joins</div>
-        <h2 class="ld-title">Lobby Discovery</h2>
+        <h2 class="ld-title">OpenFront Game Notifier</h2>
       </div>
       <div class="discovery-body">
         <div class="discovery-content" style="overflow-y: auto;">
@@ -1119,20 +1119,26 @@ export class LobbyDiscoveryUI {
               </div>
               <div class="ld-slider-row">
                 <div class="ld-slider-label">
-                  <span>Total players</span>
+                  <span>Players</span>
                   <span class="val">
-                    <span id="discovery-ffa-min-value">1</span>
+                    <div class="ld-stepper" data-role="min">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="min" aria-label="Decrease minimum">−</button>
+                      <input type="number" id="discovery-ffa-min" min="1" max="125" value="1" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="min" aria-label="Increase minimum">+</button>
+                    </div>
                     <span class="sep">–</span>
-                    <span id="discovery-ffa-max-value">125</span>
+                    <div class="ld-stepper" data-role="max">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="max" aria-label="Decrease maximum">−</button>
+                      <input type="number" id="discovery-ffa-max" min="1" max="125" value="125" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="max" aria-label="Increase maximum">+</button>
+                    </div>
                   </span>
                 </div>
-                <div class="ld-range">
+                <div class="ld-range" id="discovery-ffa-range-root">
                   <div class="track"><div class="track-fill" id="discovery-ffa-range-fill"></div></div>
-                  <input type="range" id="discovery-ffa-min-slider" min="1" max="125" value="1" class="capacity-slider capacity-slider-min">
-                  <input type="range" id="discovery-ffa-max-slider" min="1" max="125" value="125" class="capacity-slider capacity-slider-max">
+                  <input type="range" id="discovery-ffa-min-slider" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+                  <input type="range" id="discovery-ffa-max-slider" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
                 </div>
-                <input type="number" id="discovery-ffa-min" min="1" max="125" value="1" hidden>
-                <input type="number" id="discovery-ffa-max" min="1" max="125" value="125" hidden>
               </div>
             </div>
 
@@ -1164,18 +1170,25 @@ export class LobbyDiscoveryUI {
                 <div class="ld-slider-label">
                   <span>Players per team</span>
                   <span class="val">
-                    <span id="discovery-team-min-value">1</span>
+                    <div class="ld-stepper" data-role="min">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="min" aria-label="Decrease minimum">−</button>
+                      <input type="number" id="discovery-team-min" min="2" max="62" value="2" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="min" aria-label="Increase minimum">+</button>
+                    </div>
                     <span class="sep">–</span>
-                    <span id="discovery-team-max-value">62</span>
+                    <div class="ld-stepper" data-role="max">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="max" aria-label="Decrease maximum">−</button>
+                      <input type="number" id="discovery-team-max" min="2" max="62" value="62" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="max" aria-label="Increase maximum">+</button>
+                    </div>
                   </span>
                 </div>
-                <div class="ld-range">
+                <div class="ld-range" id="discovery-team-range-root">
                   <div class="track"><div class="track-fill" id="discovery-team-range-fill"></div></div>
-                  <input type="range" id="discovery-team-min-slider" min="1" max="62" value="1" class="capacity-slider capacity-slider-min">
-                  <input type="range" id="discovery-team-max-slider" min="1" max="62" value="62" class="capacity-slider capacity-slider-max">
+                  <input type="range" id="discovery-team-min-slider" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+                  <input type="range" id="discovery-team-max-slider" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
                 </div>
-                <input type="number" id="discovery-team-min" min="1" max="62" value="1" hidden>
-                <input type="number" id="discovery-team-max" min="1" max="62" value="62" hidden>
+                <div class="ld-ticks" id="discovery-team-ticks"></div>
               </div>
               <label class="ld-2x" aria-pressed="false">
                 <input type="checkbox" id="discovery-team-two-times">
