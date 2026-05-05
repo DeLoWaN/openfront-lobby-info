@@ -651,8 +651,7 @@ describe('LobbyDiscoveryUI', () => {
     );
   });
 
-  it('uses a compact desktop panel, persists width, and restores it on init', () => {
-    store.set(STORAGE_KEYS.lobbyDiscoveryPanelSize, { width: 740 });
+  it('renders tri-state modifier chips that cycle Any → Required → Blocked', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -662,48 +661,27 @@ describe('LobbyDiscoveryUI', () => {
 
     ui = new LobbyDiscoveryUI();
 
-    const panel = document.getElementById('openfront-discovery-panel') as HTMLDivElement;
-    expect(panel.style.width).toBe('740px');
-    expect(panel.querySelector('.of-resize-handle')).toBeTruthy();
-  });
+    const chip = document.getElementById('modifier-isCompact') as HTMLButtonElement;
 
-  it('renders binary modifier button controls instead of radios and updates on click', () => {
-    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
-      criteria: [],
-      discoveryEnabled: true,
-      soundEnabled: true,
-      isTeamTwoTimesMinEnabled: false,
-    });
-
-    ui = new LobbyDiscoveryUI();
-
-    const control = document.getElementById('modifier-isCompact') as HTMLDivElement;
-    const allowed = document.getElementById(
-      'modifier-isCompact-allowed'
-    ) as HTMLButtonElement;
-    const blocked = document.getElementById(
-      'modifier-isCompact-blocked'
-    ) as HTMLButtonElement;
-
-    expect(control).toBeTruthy();
-    expect(document.querySelector('select.discovery-modifier-select')).toBeFalsy();
-    expect(document.querySelector('.discovery-tristate-knob')).toBeFalsy();
+    expect(chip).toBeTruthy();
+    expect(chip.tagName).toBe('BUTTON');
     expect(document.querySelector('#modifier-isCompact input[type="radio"]')).toBeFalsy();
-    expect(allowed.tagName).toBe('BUTTON');
-    expect(blocked.tagName).toBe('BUTTON');
-    expect(control.dataset.state).toBe('allowed');
-    expect(allowed.getAttribute('aria-pressed')).toBe('true');
-    expect(blocked.getAttribute('aria-pressed')).toBe('false');
+    expect(document.querySelector('#modifier-isCompact-allowed')).toBeFalsy();
+    expect(document.querySelector('#modifier-isCompact-blocked')).toBeFalsy();
+    expect(chip.dataset.state).toBe('any');
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
 
-    blocked.click();
-    expect(control.dataset.state).toBe('blocked');
-    expect(blocked.getAttribute('aria-pressed')).toBe('true');
-    expect(allowed.getAttribute('aria-pressed')).toBe('false');
+    chip.click();
+    expect(chip.dataset.state).toBe('required');
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
 
-    allowed.click();
-    expect(control.dataset.state).toBe('allowed');
-    expect(allowed.getAttribute('aria-pressed')).toBe('true');
-    expect(blocked.getAttribute('aria-pressed')).toBe('false');
+    chip.click();
+    expect(chip.dataset.state).toBe('blocked');
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+
+    chip.click();
+    expect(chip.dataset.state).toBe('any');
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('keeps all filter sections visible and lets the body scroll when constrained', () => {
@@ -730,7 +708,7 @@ describe('LobbyDiscoveryUI', () => {
     expect(getComputedStyle(content).overflowY).toBe('auto');
   });
 
-  it('uses a smaller default width when no saved size exists', () => {
+  it('uses the design-tuned 380px default width with no resize handle', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -741,10 +719,11 @@ describe('LobbyDiscoveryUI', () => {
     ui = new LobbyDiscoveryUI();
 
     const panel = document.getElementById('openfront-discovery-panel') as HTMLDivElement;
-    expect(panel.style.width).toBe('560px');
+    expect(panel.style.width).toBe('380px');
+    expect(panel.querySelector('.of-resize-handle')).toBeFalsy();
   });
 
-  it('exposes a Water Nukes modifier control', () => {
+  it('exposes a Water Nukes modifier control as a tri-state chip', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -754,9 +733,10 @@ describe('LobbyDiscoveryUI', () => {
 
     ui = new LobbyDiscoveryUI();
 
-    expect(document.getElementById('modifier-isWaterNukes')).toBeTruthy();
-    expect(document.getElementById('modifier-isWaterNukes-allowed')).toBeTruthy();
-    expect(document.getElementById('modifier-isWaterNukes-blocked')).toBeTruthy();
+    const chip = document.getElementById('modifier-isWaterNukes') as HTMLButtonElement;
+    expect(chip).toBeTruthy();
+    expect(chip.tagName).toBe('BUTTON');
+    expect(chip.dataset.state).toBe('any');
   });
 
   describe('auto-set team min on Duos/Trios/Quads toggle', () => {

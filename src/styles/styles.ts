@@ -3,7 +3,7 @@
  * Uses CSS-in-JS with theme tokens for consistent styling.
  */
 
-import { COLORS, SPACING, RADIUS, SHADOWS, TIMING, FONTS } from '@/config/theme';
+import { COLORS, RADIUS, SHADOWS, TIMING, FONTS } from '@/config/theme';
 import { Z_INDEX } from '@/config/constants';
 
 export function getStyles(): string {

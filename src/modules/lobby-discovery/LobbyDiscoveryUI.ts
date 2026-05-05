@@ -5,7 +5,6 @@
 import { STORAGE_KEYS } from '@/config/constants';
 import { LobbyUtils } from '@/utils/LobbyUtils';
 import { BrowserNotificationUtils } from '@/utils/BrowserNotificationUtils';
-import { ResizeHandler } from '@/utils/ResizeHandler';
 import { SoundUtils } from '@/utils/SoundUtils';
 import { URLObserver } from '@/utils/URLObserver';
 import type { Lobby } from '@/types/game';
@@ -19,6 +18,7 @@ import type {
 } from './LobbyDiscoveryTypes';
 import { LobbyDiscoveryEngine } from './LobbyDiscoveryEngine';
 import {
+  formatElapsedSince,
   getBrowserNotificationContent,
   getGameDetailsText,
   getLobbyQueueSource,
@@ -27,11 +27,51 @@ import {
 
 const STARTING_GOLD_VALUES = [1_000_000, 5_000_000, 25_000_000] as const;
 const GOLD_MULTIPLIER_VALUES = [2] as const;
+
+const MODIFIER_BOOLEAN_IDS = [
+  'modifier-isCompact',
+  'modifier-isRandomSpawn',
+  'modifier-isCrowded',
+  'modifier-isHardNations',
+  'modifier-isAlliancesDisabled',
+  'modifier-isPortsDisabled',
+  'modifier-isNukesDisabled',
+  'modifier-isSAMsDisabled',
+  'modifier-isPeaceTime',
+  'modifier-isWaterNukes',
+] as const;
+
+const TEAM_PRESET_IDS: Array<[string, string, number | null]> = [
+  ['discovery-team-duos', 'Duos', 2],
+  ['discovery-team-trios', 'Trios', 3],
+  ['discovery-team-quads', 'Quads', 4],
+  ['discovery-team-hvn', 'Humans Vs Nations', null],
+];
+
+const TEAM_COUNT_IDS: Array<[string, string]> = [
+  ['discovery-team-2', '2'],
+  ['discovery-team-3', '3'],
+  ['discovery-team-4', '4'],
+  ['discovery-team-5', '5'],
+  ['discovery-team-6', '6'],
+  ['discovery-team-7', '7'],
+];
+
+const ALL_TEAM_IDS: string[] = [
+  ...TEAM_PRESET_IDS.map(([id]) => id),
+  ...TEAM_COUNT_IDS.map(([id]) => id),
+];
+
+const ICON_CHECK = `<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>`;
+const ICON_CROSS = `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+const ICON_SOUND = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a9 9 0 010 14"/></svg>`;
+const ICON_BELL = `<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9z"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg>`;
+
 export class LobbyDiscoveryUI {
   private discoveryEnabled = true;
   private criteriaList: DiscoveryCriteria[] = [];
   private searchStartTime: number | null = null;
-  private gameFoundTime: number | null = null;
+  private lastMatchTime: number | null = null;
   private soundEnabled = true;
   private desktopNotificationsEnabled = false;
   private desktopNotificationRequestId = 0;
@@ -48,7 +88,6 @@ export class LobbyDiscoveryUI {
 
   private panel!: HTMLDivElement;
   private engine: LobbyDiscoveryEngine;
-  private resizeHandler: ResizeHandler | null = null;
 
   constructor() {
     this.engine = new LobbyDiscoveryEngine();
@@ -92,34 +131,34 @@ export class LobbyDiscoveryUI {
     } satisfies LobbyDiscoverySettings);
   }
 
-  private updateSearchTimer(): void {
-    const timerElement = document.getElementById('discovery-search-timer');
-    if (!timerElement) return;
+  private updateStatusText(): void {
+    const text = document.getElementById('discovery-search-timer');
+    if (!text) return;
 
     if (
       !this.discoveryEnabled ||
       this.criteriaList.length === 0 ||
-      this.searchStartTime === null ||
       !this.isDiscoveryFeedbackAllowed()
     ) {
-      timerElement.style.display = 'none';
+      text.textContent = '';
+      text.style.display = 'none';
       return;
     }
 
-    const endTime = this.gameFoundTime ?? Date.now();
-    const elapsed = Math.floor((endTime - this.searchStartTime) / 1000);
-    timerElement.textContent = this.gameFoundTime
-      ? `Match found (${Math.floor(elapsed / 60)}m ${elapsed % 60}s)`
-      : `Scanning ${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
-    timerElement.style.display = 'inline';
+    text.style.display = 'inline';
+    if (this.lastMatchTime !== null) {
+      text.textContent = `last match ${formatElapsedSince(this.lastMatchTime)}`;
+    } else if (this.searchStartTime !== null) {
+      text.textContent = `searching · ${formatElapsedSince(this.searchStartTime)}`;
+    } else {
+      text.textContent = 'awaiting filters';
+    }
   }
 
   private updateCurrentGameInfo(): void {
     const gameInfoElement = document.getElementById('discovery-current-game-info');
     if (!gameInfoElement || !LobbyUtils.isOnLobbyPage()) {
-      if (gameInfoElement) {
-        gameInfoElement.style.display = 'none';
-      }
+      if (gameInfoElement) gameInfoElement.style.display = 'none';
       return;
     }
 
@@ -137,7 +176,6 @@ export class LobbyDiscoveryUI {
 
     gameInfoElement.style.display = 'block';
     gameInfoElement.textContent = `Current game: ${getGameDetailsText(currentLobby)}`;
-    gameInfoElement.classList.remove('not-applicable');
   }
 
   private processLobbies(lobbies: Lobby[]): void {
@@ -153,8 +191,7 @@ export class LobbyDiscoveryUI {
         this.seenLobbies.clear();
         this.desktopNotifiedLobbies.clear();
         this.updateQueueCardPulses(new Set());
-        this.gameFoundTime = null;
-        this.updateSearchTimer();
+        this.updateStatusText();
         return;
       }
 
@@ -165,9 +202,7 @@ export class LobbyDiscoveryUI {
 
       for (const lobby of lobbies) {
         const source = getLobbyQueueSource(lobby);
-        if (!source) {
-          continue;
-        }
+        if (!source) continue;
         if (
           !this.engine.matchesCriteria(lobby, this.criteriaList, {
             isTeamTwoTimesMinEnabled: this.isTeamTwoTimesMinEnabled,
@@ -179,43 +214,38 @@ export class LobbyDiscoveryUI {
         matchedSources.add(source);
         const notificationKey = this.getNotificationKey(lobby);
         matchedKeys.add(notificationKey);
-        if (!this.seenLobbies.has(notificationKey)) {
-          hasNewMatch = true;
-        }
-        if (!this.desktopNotifiedLobbies.has(notificationKey)) {
-          newMatches.push(lobby);
-        }
+        if (!this.seenLobbies.has(notificationKey)) hasNewMatch = true;
+        if (!this.desktopNotifiedLobbies.has(notificationKey)) newMatches.push(lobby);
       }
 
       this.updateQueueCardPulses(matchedSources);
-      if (hasNewMatch && this.soundEnabled) {
-        SoundUtils.playGameFoundSound();
+      if (hasNewMatch) {
+        this.lastMatchTime = Date.now();
+        if (this.soundEnabled) SoundUtils.playGameFoundSound();
       }
       if (this.desktopNotificationsEnabled) {
-        const deliveredNotificationKeys = new Set<string>();
+        const deliveredKeys = new Set<string>();
         for (const lobby of newMatches) {
-          const notificationContent = getBrowserNotificationContent(lobby);
-          const notificationKey = this.getNotificationKey(lobby);
+          const content = getBrowserNotificationContent(lobby);
+          const key = this.getNotificationKey(lobby);
           const delivered = BrowserNotificationUtils.show({
-            title: notificationContent.title,
-            body: notificationContent.body,
-            tag: notificationKey,
+            title: content.title,
+            body: content.body,
+            tag: key,
           });
-          if (delivered) {
-            deliveredNotificationKeys.add(notificationKey);
-          }
+          if (delivered) deliveredKeys.add(key);
         }
         this.desktopNotifiedLobbies = new Set([
-          ...[...this.desktopNotifiedLobbies].filter((key) => matchedKeys.has(key)),
-          ...deliveredNotificationKeys,
+          ...[...this.desktopNotifiedLobbies].filter((k) => matchedKeys.has(k)),
+          ...deliveredKeys,
         ]);
       } else {
         this.desktopNotifiedLobbies.clear();
       }
 
       this.seenLobbies = matchedKeys;
-      this.gameFoundTime = matchedKeys.size > 0 ? this.gameFoundTime ?? Date.now() : null;
-      this.updateSearchTimer();
+      if (matchedKeys.size === 0) this.lastMatchTime = null;
+      this.updateStatusText();
     } catch (error) {
       console.error('[LobbyDiscovery] Error processing lobbies:', error);
     }
@@ -232,51 +262,37 @@ export class LobbyDiscoveryUI {
   }
 
   private isDiscoveryFeedbackAllowed(): boolean {
-    if (!LobbyUtils.isOnLobbyPage()) {
-      return false;
-    }
+    if (!LobbyUtils.isOnLobbyPage()) return false;
 
     const pagePlay = document.getElementById('page-play');
-    if (pagePlay?.classList.contains('hidden')) {
-      return false;
-    }
+    if (pagePlay?.classList.contains('hidden')) return false;
 
     const publicLobby = document.querySelector('public-lobby') as
       | { isLobbyHighlighted?: boolean }
       | null;
-    if (publicLobby?.isLobbyHighlighted === true) {
-      return false;
-    }
+    if (publicLobby?.isLobbyHighlighted === true) return false;
 
     const joinLobbyModal = document.querySelector('join-lobby-modal') as
       | { currentLobbyId?: string }
       | null;
-    if (joinLobbyModal?.currentLobbyId) {
-      return false;
-    }
+    if (joinLobbyModal?.currentLobbyId) return false;
 
     const hostLobbyModal = document.querySelector('host-lobby-modal') as
       | { lobbyId?: string }
       | null;
-    if (hostLobbyModal?.lobbyId) {
-      return false;
-    }
+    if (hostLobbyModal?.lobbyId) return false;
 
     return true;
   }
 
   private getQueueCardElements(): Partial<Record<QueueSource, HTMLElement>> {
     const selector = document.querySelector('game-mode-selector') as HTMLElement | null;
-    if (!selector) {
-      return {};
-    }
+    if (!selector) return {};
 
     const desktopGrid = Array.from(selector.querySelectorAll('div')).find((element) =>
       element.className.includes('sm:grid-cols-[2fr_1fr]')
     );
-    if (!(desktopGrid instanceof HTMLElement)) {
-      return {};
-    }
+    if (!(desktopGrid instanceof HTMLElement)) return {};
 
     const [leftColumn, rightColumn] = Array.from(desktopGrid.children) as HTMLElement[];
     const rightSections = rightColumn ? (Array.from(rightColumn.children) as HTMLElement[]) : [];
@@ -296,27 +312,15 @@ export class LobbyDiscoveryUI {
 
   private applyQueueCardPulses(): void {
     const cards = this.getQueueCardElements();
-
     for (const source of ['ffa', 'special', 'team'] as const) {
       const card = cards[source];
       if (!card) continue;
-
-      const isActive = this.activeMatchSources.has(source);
-
-      card.classList.toggle('of-discovery-card-active', isActive);
-      card.classList.remove('of-discovery-card-burst');
-      const badge = card.querySelector('.of-discovery-card-badge') as HTMLElement | null;
-      if (badge) {
-        badge.remove();
-      }
+      card.classList.toggle('of-discovery-card-active', this.activeMatchSources.has(source));
     }
   }
 
   private scheduleQueueCardPulseSync(): void {
-    if (this.pulseSyncTimeout) {
-      clearTimeout(this.pulseSyncTimeout);
-    }
-
+    if (this.pulseSyncTimeout) clearTimeout(this.pulseSyncTimeout);
     this.pulseSyncTimeout = setTimeout(() => {
       this.pulseSyncTimeout = null;
       this.applyQueueCardPulses();
@@ -350,7 +354,7 @@ export class LobbyDiscoveryUI {
 
     if (resetStart) {
       this.searchStartTime = null;
-      this.gameFoundTime = null;
+      this.lastMatchTime = null;
       this.seenLobbies.clear();
       this.desktopNotifiedLobbies.clear();
     }
@@ -360,23 +364,35 @@ export class LobbyDiscoveryUI {
       this.criteriaList.length > 0 &&
       this.isDiscoveryFeedbackAllowed()
     ) {
-      if (this.searchStartTime === null) {
-        this.searchStartTime = Date.now();
-      }
-      this.timerInterval = setInterval(() => this.updateSearchTimer(), 1000);
+      if (this.searchStartTime === null) this.searchStartTime = Date.now();
+      this.timerInterval = setInterval(() => this.updateStatusText(), 1000);
     } else {
       this.searchStartTime = null;
-      this.gameFoundTime = null;
+      this.lastMatchTime = null;
     }
 
-    this.updateSearchTimer();
+    this.updateStatusText();
+    this.updatePulseIndicator();
+  }
+
+  private updatePulseIndicator(): void {
+    const pulse = document.querySelector('.ld-pulse') as HTMLElement | null;
+    if (!pulse) return;
+    const active = this.discoveryEnabled && this.criteriaList.length > 0;
+    pulse.classList.toggle('is-paused', !active);
   }
 
   private setDiscoveryEnabled(enabled: boolean, options: { resetTimer?: boolean } = {}): void {
     this.discoveryEnabled = enabled;
     this.saveSettings();
-    this.updateUI();
+    this.updateStatusLabel();
     this.syncSearchTimer({ resetStart: options.resetTimer ?? false });
+  }
+
+  private updateStatusLabel(): void {
+    const label = document.querySelector('.ld-status-text strong') as HTMLElement | null;
+    if (!label) return;
+    label.textContent = this.discoveryEnabled ? 'Discovery active' : 'Discovery paused';
   }
 
   private getNumberValue(id: string): number | null {
@@ -386,45 +402,55 @@ export class LobbyDiscoveryUI {
     return Number.isNaN(val) ? null : val;
   }
 
-  private getModifierFilterValue(id: string): ModifierFilterState {
-    const allowedButton = document.getElementById(
-      `${id}-allowed`
-    ) as HTMLButtonElement | null;
-    const blockedButton = document.getElementById(
-      `${id}-blocked`
-    ) as HTMLButtonElement | null;
+  private getModifierState(id: string): ModifierFilterState {
+    const button = document.getElementById(id) as HTMLButtonElement | null;
+    const state = button?.dataset.state;
+    if (state === 'required' || state === 'blocked') return state;
+    return 'any';
+  }
 
-    if (blockedButton?.getAttribute('aria-pressed') === 'true') {
-      return 'blocked';
+  private setModifierState(id: string, state: ModifierFilterState): void {
+    const button = document.getElementById(id) as HTMLButtonElement | null;
+    if (!button) return;
+    button.dataset.state = state;
+    button.setAttribute('aria-pressed', String(state !== 'any'));
+    const ind = button.querySelector('.ld-mod-ind') as HTMLElement | null;
+    if (ind) {
+      if (state === 'required') ind.innerHTML = ICON_CHECK;
+      else if (state === 'blocked') ind.innerHTML = ICON_CROSS;
+      else ind.innerHTML = '';
     }
+  }
 
-    return allowedButton?.getAttribute('aria-pressed') === 'false' ? 'blocked' : 'allowed';
+  private cycleModifierState(id: string): void {
+    const cur = this.getModifierState(id);
+    const next: ModifierFilterState =
+      cur === 'any' ? 'required' : cur === 'required' ? 'blocked' : 'any';
+    this.setModifierState(id, next);
   }
 
   private getNumericModifierState(
     ids: Record<number, string>
   ): Record<number, ModifierFilterState> | undefined {
     const states: Record<number, ModifierFilterState> = {};
-
     for (const [numericValue, id] of Object.entries(ids)) {
-      states[Number(numericValue)] = this.getModifierFilterValue(id);
+      states[Number(numericValue)] = this.getModifierState(id);
     }
-
     return states;
   }
 
   private getModifierFiltersFromUI(): ModifierFilters {
     return {
-      isCompact: this.getModifierFilterValue('modifier-isCompact'),
-      isRandomSpawn: this.getModifierFilterValue('modifier-isRandomSpawn'),
-      isCrowded: this.getModifierFilterValue('modifier-isCrowded'),
-      isHardNations: this.getModifierFilterValue('modifier-isHardNations'),
-      isAlliancesDisabled: this.getModifierFilterValue('modifier-isAlliancesDisabled'),
-      isPortsDisabled: this.getModifierFilterValue('modifier-isPortsDisabled'),
-      isNukesDisabled: this.getModifierFilterValue('modifier-isNukesDisabled'),
-      isSAMsDisabled: this.getModifierFilterValue('modifier-isSAMsDisabled'),
-      isPeaceTime: this.getModifierFilterValue('modifier-isPeaceTime'),
-      isWaterNukes: this.getModifierFilterValue('modifier-isWaterNukes'),
+      isCompact: this.getModifierState('modifier-isCompact'),
+      isRandomSpawn: this.getModifierState('modifier-isRandomSpawn'),
+      isCrowded: this.getModifierState('modifier-isCrowded'),
+      isHardNations: this.getModifierState('modifier-isHardNations'),
+      isAlliancesDisabled: this.getModifierState('modifier-isAlliancesDisabled'),
+      isPortsDisabled: this.getModifierState('modifier-isPortsDisabled'),
+      isNukesDisabled: this.getModifierState('modifier-isNukesDisabled'),
+      isSAMsDisabled: this.getModifierState('modifier-isSAMsDisabled'),
+      isPeaceTime: this.getModifierState('modifier-isPeaceTime'),
+      isWaterNukes: this.getModifierState('modifier-isWaterNukes'),
       startingGold: this.getNumericModifierState({
         1000000: 'modifier-startingGold-1000000',
         5000000: 'modifier-startingGold-5000000',
@@ -438,57 +464,34 @@ export class LobbyDiscoveryUI {
 
   private getAllTeamCountValues(): TeamCount[] {
     const values: TeamCount[] = [];
-    const ids = [
-      'discovery-team-duos',
-      'discovery-team-trios',
-      'discovery-team-quads',
-      'discovery-team-hvn',
-      'discovery-team-2',
-      'discovery-team-3',
-      'discovery-team-4',
-      'discovery-team-5',
-      'discovery-team-6',
-      'discovery-team-7',
-    ];
-
-    for (const id of ids) {
+    for (const id of ALL_TEAM_IDS) {
       const checkbox = document.getElementById(id) as HTMLInputElement | null;
-      if (!checkbox?.checked) {
-        continue;
-      }
-
+      if (!checkbox?.checked) continue;
+      const value = checkbox.value;
       if (
-        checkbox.value === 'Duos' ||
-        checkbox.value === 'Trios' ||
-        checkbox.value === 'Quads' ||
-        checkbox.value === 'Humans Vs Nations'
+        value === 'Duos' ||
+        value === 'Trios' ||
+        value === 'Quads' ||
+        value === 'Humans Vs Nations'
       ) {
-        values.push(checkbox.value);
+        values.push(value);
       } else {
-        const numeric = parseInt(checkbox.value, 10);
-        if (!Number.isNaN(numeric)) {
-          values.push(numeric);
-        }
+        const numeric = parseInt(value, 10);
+        if (!Number.isNaN(numeric)) values.push(numeric);
       }
     }
-
     return values;
   }
 
   private applyAutoTeamMin(): void {
-    const presets: Array<[string, number]> = [
-      ['discovery-team-duos', 2],
-      ['discovery-team-trios', 3],
-      ['discovery-team-quads', 4],
-    ];
+    const checked = TEAM_PRESET_IDS.filter(
+      ([id, , min]) =>
+        min !== null && (document.getElementById(id) as HTMLInputElement | null)?.checked
+    ).map(([, , min]) => min as number);
 
-    const checkedValues = presets
-      .filter(([id]) => (document.getElementById(id) as HTMLInputElement | null)?.checked)
-      .map(([, value]) => value);
+    if (checked.length === 0) return;
 
-    if (checkedValues.length === 0) return;
-
-    const newMin = Math.min(...checkedValues);
+    const newMin = Math.min(...checked);
     const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement | null;
     if (!minSlider) return;
 
@@ -506,25 +509,21 @@ export class LobbyDiscoveryUI {
   }
 
   private setAllTeamCounts(checked: boolean): void {
-    const ids = [
-      'discovery-team-duos',
-      'discovery-team-trios',
-      'discovery-team-quads',
-      'discovery-team-hvn',
-      'discovery-team-2',
-      'discovery-team-3',
-      'discovery-team-4',
-      'discovery-team-5',
-      'discovery-team-6',
-      'discovery-team-7',
-    ];
-
-    for (const id of ids) {
+    for (const id of ALL_TEAM_IDS) {
       const checkbox = document.getElementById(id) as HTMLInputElement | null;
-      if (checkbox) {
-        checkbox.checked = checked;
-      }
+      if (!checkbox) continue;
+      checkbox.checked = checked;
+      this.syncChipState(id);
     }
+  }
+
+  private syncChipState(checkboxId: string): void {
+    const checkbox = document.getElementById(checkboxId) as HTMLInputElement | null;
+    if (!checkbox) return;
+    const chip = checkbox.closest('.ld-chip, .ld-mode-btn, .ld-2x') as HTMLElement | null;
+    if (!chip) return;
+    chip.classList.toggle('is-on', checkbox.checked);
+    chip.setAttribute('aria-pressed', String(checkbox.checked));
   }
 
   private buildCriteriaFromUI(): DiscoveryCriteria[] {
@@ -543,9 +542,7 @@ export class LobbyDiscoveryUI {
     }
 
     const teamCheckbox = document.getElementById('discovery-team') as HTMLInputElement | null;
-    if (!teamCheckbox?.checked) {
-      return criteria;
-    }
+    if (!teamCheckbox?.checked) return criteria;
 
     const teamCounts = this.getAllTeamCountValues();
     if (teamCounts.length === 0) {
@@ -572,60 +569,37 @@ export class LobbyDiscoveryUI {
     return criteria;
   }
 
-  private updateUI(): void {
-    const statusText = document.querySelector('.status-text') as HTMLElement | null;
-    const statusIndicator = document.querySelector('.status-indicator') as HTMLElement | null;
+  private updateFilterCount(): void {
+    const num = document.getElementById('discovery-filter-count');
+    const wordEl = document.getElementById('discovery-filter-word');
+    if (!num || !wordEl) return;
 
-    if (!statusText || !statusIndicator) return;
+    const ffaOn = (document.getElementById('discovery-ffa') as HTMLInputElement | null)?.checked;
+    const teamOn = (document.getElementById('discovery-team') as HTMLInputElement | null)?.checked;
+    const formatsOn = ALL_TEAM_IDS.filter(
+      (id) => (document.getElementById(id) as HTMLInputElement | null)?.checked
+    ).length;
+    const modsOn = [
+      ...MODIFIER_BOOLEAN_IDS,
+      ...STARTING_GOLD_VALUES.map((v) => `modifier-startingGold-${v}`),
+      ...GOLD_MULTIPLIER_VALUES.map((v) => `modifier-goldMultiplier-${v}`),
+    ].filter((id) => this.getModifierState(id) !== 'any').length;
 
-    if (this.discoveryEnabled) {
-      statusText.textContent = 'Discovery Active';
-      statusIndicator.style.background = '#38d9a9';
-      statusIndicator.classList.add('active');
-      statusIndicator.classList.remove('inactive');
-    } else {
-      statusText.textContent = 'Discovery Paused';
-      statusIndicator.style.background = '#888';
-      statusIndicator.classList.remove('active');
-      statusIndicator.classList.add('inactive');
-    }
+    const count = (ffaOn ? 1 : 0) + (teamOn ? 1 : 0) + formatsOn + modsOn;
+    num.textContent = String(count);
+    wordEl.textContent = count === 1 ? 'filter' : 'filters';
   }
 
-  private applyModeVisibility(id: string, visible: boolean): void {
-    const element = document.getElementById(id);
-    if (element) {
-      element.classList.toggle('is-disabled', !visible);
-    }
+  private setModePanelActive(panelId: string, active: boolean): void {
+    const el = document.getElementById(panelId);
+    if (el) el.classList.toggle('is-off', !active);
   }
 
-  private setTeamCountSelections(values: Array<TeamCount | null | undefined>): void {
-    for (const teamCount of values) {
-      let checkbox: HTMLInputElement | null = null;
-      if (teamCount === 'Duos') checkbox = document.getElementById('discovery-team-duos') as HTMLInputElement;
-      else if (teamCount === 'Trios') checkbox = document.getElementById('discovery-team-trios') as HTMLInputElement;
-      else if (teamCount === 'Quads') checkbox = document.getElementById('discovery-team-quads') as HTMLInputElement;
-      else if (teamCount === 'Humans Vs Nations') checkbox = document.getElementById('discovery-team-hvn') as HTMLInputElement;
-      else if (typeof teamCount === 'number') checkbox = document.getElementById(`discovery-team-${teamCount}`) as HTMLInputElement;
-      if (checkbox) checkbox.checked = true;
-    }
-  }
-
-  private setModifierControl(id: string, value: ModifierFilterState | undefined): void {
-    const state = value ?? 'allowed';
-    const control = document.getElementById(id) as HTMLDivElement | null;
-    const allowedButton = document.getElementById(
-      `${id}-allowed`
-    ) as HTMLButtonElement | null;
-    const blockedButton = document.getElementById(
-      `${id}-blocked`
-    ) as HTMLButtonElement | null;
-
-    if (!control || !allowedButton || !blockedButton) return;
-
-    control.dataset.state = state;
-    control.setAttribute('aria-valuetext', state);
-    allowedButton.setAttribute('aria-pressed', String(state === 'allowed'));
-    blockedButton.setAttribute('aria-pressed', String(state === 'blocked'));
+  private setIconButtonState(checkboxId: string, on: boolean): void {
+    const btn = document
+      .getElementById(checkboxId)
+      ?.closest('.ld-icon-btn') as HTMLElement | null;
+    if (btn) btn.classList.toggle('is-on', on);
   }
 
   private loadUIFromSettings(): void {
@@ -636,11 +610,13 @@ export class LobbyDiscoveryUI {
     const teamCheckbox = document.getElementById('discovery-team') as HTMLInputElement | null;
     if (ffaCheckbox) {
       ffaCheckbox.checked = !!ffaCriteria;
-      this.applyModeVisibility('discovery-ffa-config', !!ffaCriteria);
+      this.syncChipState('discovery-ffa');
+      this.setModePanelActive('discovery-ffa-config', !!ffaCriteria);
     }
     if (teamCheckbox) {
       teamCheckbox.checked = teamCriteria.length > 0;
-      this.applyModeVisibility('discovery-team-config', teamCriteria.length > 0);
+      this.syncChipState('discovery-team');
+      this.setModePanelActive('discovery-team-config', teamCriteria.length > 0);
     }
 
     if (ffaCriteria) {
@@ -655,72 +631,70 @@ export class LobbyDiscoveryUI {
       const max = document.getElementById('discovery-team-max') as HTMLInputElement | null;
       if (min && teamCriteria[0].minPlayers !== null) min.value = String(teamCriteria[0].minPlayers);
       if (max && teamCriteria[0].maxPlayers !== null) max.value = String(teamCriteria[0].maxPlayers);
-      this.setTeamCountSelections(teamCriteria.map((criterion) => criterion.teamCount));
+      this.setTeamCountSelections(teamCriteria.map((c) => c.teamCount));
     }
 
-    const modifierCriteria = ffaCriteria ?? teamCriteria[0];
-    const modifiers = modifierCriteria?.modifiers;
+    const modifiers = (ffaCriteria ?? teamCriteria[0])?.modifiers;
     if (modifiers) {
-      this.setModifierControl('modifier-isCompact', modifiers.isCompact);
-      this.setModifierControl('modifier-isRandomSpawn', modifiers.isRandomSpawn);
-      this.setModifierControl('modifier-isCrowded', modifiers.isCrowded);
-      this.setModifierControl('modifier-isHardNations', modifiers.isHardNations);
-      this.setModifierControl('modifier-isAlliancesDisabled', modifiers.isAlliancesDisabled);
-      this.setModifierControl('modifier-isPortsDisabled', modifiers.isPortsDisabled);
-      this.setModifierControl('modifier-isNukesDisabled', modifiers.isNukesDisabled);
-      this.setModifierControl('modifier-isSAMsDisabled', modifiers.isSAMsDisabled);
-      this.setModifierControl('modifier-isPeaceTime', modifiers.isPeaceTime);
-      this.setModifierControl('modifier-isWaterNukes', modifiers.isWaterNukes);
+      this.setModifierState('modifier-isCompact', modifiers.isCompact ?? 'any');
+      this.setModifierState('modifier-isRandomSpawn', modifiers.isRandomSpawn ?? 'any');
+      this.setModifierState('modifier-isCrowded', modifiers.isCrowded ?? 'any');
+      this.setModifierState('modifier-isHardNations', modifiers.isHardNations ?? 'any');
+      this.setModifierState('modifier-isAlliancesDisabled', modifiers.isAlliancesDisabled ?? 'any');
+      this.setModifierState('modifier-isPortsDisabled', modifiers.isPortsDisabled ?? 'any');
+      this.setModifierState('modifier-isNukesDisabled', modifiers.isNukesDisabled ?? 'any');
+      this.setModifierState('modifier-isSAMsDisabled', modifiers.isSAMsDisabled ?? 'any');
+      this.setModifierState('modifier-isPeaceTime', modifiers.isPeaceTime ?? 'any');
+      this.setModifierState('modifier-isWaterNukes', modifiers.isWaterNukes ?? 'any');
 
       for (const value of STARTING_GOLD_VALUES) {
-        this.setModifierControl(
+        this.setModifierState(
           `modifier-startingGold-${value}`,
-          modifiers.startingGold?.[value]
+          modifiers.startingGold?.[value] ?? 'any'
         );
       }
-
       for (const value of GOLD_MULTIPLIER_VALUES) {
-        this.setModifierControl(
+        this.setModifierState(
           `modifier-goldMultiplier-${value}`,
-          modifiers.goldMultiplier?.[value]
+          modifiers.goldMultiplier?.[value] ?? 'any'
         );
-      }
-    } else {
-      for (const id of [
-        'modifier-isCompact',
-        'modifier-isRandomSpawn',
-        'modifier-isCrowded',
-        'modifier-isHardNations',
-        'modifier-isAlliancesDisabled',
-        'modifier-isPortsDisabled',
-        'modifier-isNukesDisabled',
-        'modifier-isSAMsDisabled',
-        'modifier-isPeaceTime',
-        'modifier-isWaterNukes',
-        'modifier-startingGold-1000000',
-        'modifier-startingGold-5000000',
-        'modifier-startingGold-25000000',
-        'modifier-goldMultiplier-2',
-      ]) {
-        this.setModifierControl(id, 'allowed');
       }
     }
 
     const soundCheckbox = document.getElementById('discovery-sound-toggle') as HTMLInputElement | null;
     if (soundCheckbox) {
       soundCheckbox.checked = this.soundEnabled;
+      this.setIconButtonState('discovery-sound-toggle', this.soundEnabled);
     }
 
-    const desktopCheckbox = document.getElementById(
-      'discovery-desktop-toggle'
-    ) as HTMLInputElement | null;
+    const desktopCheckbox = document.getElementById('discovery-desktop-toggle') as HTMLInputElement | null;
     if (desktopCheckbox) {
       desktopCheckbox.checked = this.desktopNotificationsEnabled;
+      this.setIconButtonState('discovery-desktop-toggle', this.desktopNotificationsEnabled);
     }
 
-    const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement | null;
-    if (twoTimesCheckbox) {
-      twoTimesCheckbox.checked = this.isTeamTwoTimesMinEnabled;
+    const twoTimes = document.getElementById('discovery-team-two-times') as HTMLInputElement | null;
+    if (twoTimes) {
+      twoTimes.checked = this.isTeamTwoTimesMinEnabled;
+      this.syncChipState('discovery-team-two-times');
+    }
+
+    this.updateFilterCount();
+    this.updateStatusLabel();
+  }
+
+  private setTeamCountSelections(values: Array<TeamCount | null | undefined>): void {
+    for (const teamCount of values) {
+      let checkbox: HTMLInputElement | null = null;
+      if (teamCount === 'Duos') checkbox = document.getElementById('discovery-team-duos') as HTMLInputElement;
+      else if (teamCount === 'Trios') checkbox = document.getElementById('discovery-team-trios') as HTMLInputElement;
+      else if (teamCount === 'Quads') checkbox = document.getElementById('discovery-team-quads') as HTMLInputElement;
+      else if (teamCount === 'Humans Vs Nations') checkbox = document.getElementById('discovery-team-hvn') as HTMLInputElement;
+      else if (typeof teamCount === 'number') checkbox = document.getElementById(`discovery-team-${teamCount}`) as HTMLInputElement;
+      if (checkbox) {
+        checkbox.checked = true;
+        this.syncChipState(checkbox.id);
+      }
     }
   }
 
@@ -789,7 +763,7 @@ export class LobbyDiscoveryUI {
     const maxSlider = document.getElementById(maxSliderId) as HTMLInputElement | null;
     const minInput = document.getElementById(minInputId) as HTMLInputElement | null;
     const maxInput = document.getElementById(maxInputId) as HTMLInputElement | null;
-    const fill = document.getElementById(fillId);
+    const range = document.getElementById(fillId)?.parentElement?.parentElement as HTMLElement | null;
     const minValueSpan = document.getElementById(minValueId);
     const maxValueSpan = document.getElementById(maxValueId);
 
@@ -810,31 +784,88 @@ export class LobbyDiscoveryUI {
     minInput.value = String(minVal);
     maxInput.value = String(maxVal);
 
-    if (minValueSpan) {
-      minValueSpan.textContent = minVal === 1 ? 'Any' : String(minVal);
-    }
-    if (maxValueSpan) {
-      maxValueSpan.textContent = maxVal === parseInt(maxSlider.max, 10) ? 'Any' : String(maxVal);
-    }
+    if (minValueSpan) minValueSpan.textContent = String(minVal);
+    if (maxValueSpan) maxValueSpan.textContent = String(maxVal);
 
-    if (fill) {
-      const minPercent =
-        ((minVal - parseInt(minSlider.min, 10)) /
-          (parseInt(minSlider.max, 10) - parseInt(minSlider.min, 10))) *
-        100;
-      const maxPercent =
-        ((maxVal - parseInt(minSlider.min, 10)) /
-          (parseInt(maxSlider.max, 10) - parseInt(maxSlider.min, 10))) *
-        100;
-      fill.style.left = `${minPercent}%`;
-      fill.style.width = `${maxPercent - minPercent}%`;
+    if (range) {
+      const sliderMin = parseInt(minSlider.min, 10);
+      const sliderMax = parseInt(minSlider.max, 10);
+      const span = sliderMax - sliderMin || 1;
+      const minPct = ((minVal - sliderMin) / span) * 100;
+      const maxPct = ((maxVal - sliderMin) / span) * 100;
+      range.style.setProperty('--lo', `${minPct}%`);
+      range.style.setProperty('--hi', `${maxPct}%`);
     }
   }
 
   private refreshCriteria(): void {
     this.criteriaList = this.buildCriteriaFromUI();
     this.saveSettings();
+    this.updateFilterCount();
     this.syncSearchTimer({ resetStart: true });
+  }
+
+  private resetAll(): void {
+    const ffaCheckbox = document.getElementById('discovery-ffa') as HTMLInputElement | null;
+    const teamCheckbox = document.getElementById('discovery-team') as HTMLInputElement | null;
+    if (ffaCheckbox) {
+      ffaCheckbox.checked = false;
+      this.syncChipState('discovery-ffa');
+      this.setModePanelActive('discovery-ffa-config', false);
+    }
+    if (teamCheckbox) {
+      teamCheckbox.checked = false;
+      this.syncChipState('discovery-team');
+      this.setModePanelActive('discovery-team-config', false);
+    }
+
+    this.setAllTeamCounts(false);
+
+    const twoTimes = document.getElementById('discovery-team-two-times') as HTMLInputElement | null;
+    if (twoTimes) {
+      twoTimes.checked = false;
+      this.syncChipState('discovery-team-two-times');
+      this.isTeamTwoTimesMinEnabled = false;
+    }
+
+    for (const id of MODIFIER_BOOLEAN_IDS) this.setModifierState(id, 'any');
+    for (const v of STARTING_GOLD_VALUES) this.setModifierState(`modifier-startingGold-${v}`, 'any');
+    for (const v of GOLD_MULTIPLIER_VALUES) this.setModifierState(`modifier-goldMultiplier-${v}`, 'any');
+
+    const ffaMinSlider = document.getElementById('discovery-ffa-min-slider') as HTMLInputElement | null;
+    const ffaMaxSlider = document.getElementById('discovery-ffa-max-slider') as HTMLInputElement | null;
+    if (ffaMinSlider && ffaMaxSlider) {
+      ffaMinSlider.value = ffaMinSlider.min;
+      ffaMaxSlider.value = ffaMaxSlider.max;
+      this.updateSliderRange(
+        'discovery-ffa-min-slider',
+        'discovery-ffa-max-slider',
+        'discovery-ffa-min',
+        'discovery-ffa-max',
+        'discovery-ffa-range-fill',
+        'discovery-ffa-min-value',
+        'discovery-ffa-max-value',
+        false
+      );
+    }
+    const teamMinSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement | null;
+    const teamMaxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement | null;
+    if (teamMinSlider && teamMaxSlider) {
+      teamMinSlider.value = teamMinSlider.min;
+      teamMaxSlider.value = teamMaxSlider.max;
+      this.updateSliderRange(
+        'discovery-team-min-slider',
+        'discovery-team-max-slider',
+        'discovery-team-min',
+        'discovery-team-max',
+        'discovery-team-range-fill',
+        'discovery-team-min-value',
+        'discovery-team-max-value',
+        true
+      );
+    }
+
+    this.refreshCriteria();
   }
 
   private async handleDesktopNotificationToggleChange(
@@ -844,11 +875,12 @@ export class LobbyDiscoveryUI {
 
     if (!desktopToggle.checked) {
       this.desktopNotificationsEnabled = false;
+      this.setIconButtonState('discovery-desktop-toggle', false);
       this.saveSettings();
       return;
     }
 
-    const permissionGranted = await BrowserNotificationUtils.ensurePermission();
+    const granted = await BrowserNotificationUtils.ensurePermission();
     if (
       requestId !== this.desktopNotificationRequestId ||
       this.isDisposed ||
@@ -858,11 +890,10 @@ export class LobbyDiscoveryUI {
       return;
     }
 
-    this.desktopNotificationsEnabled = permissionGranted;
-
-    desktopToggle.checked = permissionGranted;
-    desktopToggle.toggleAttribute('checked', permissionGranted);
-
+    this.desktopNotificationsEnabled = granted;
+    desktopToggle.checked = granted;
+    desktopToggle.toggleAttribute('checked', granted);
+    this.setIconButtonState('discovery-desktop-toggle', granted);
     this.saveSettings();
   }
 
@@ -877,7 +908,8 @@ export class LobbyDiscoveryUI {
     ] as const) {
       const checkbox = document.getElementById(checkboxId) as HTMLInputElement | null;
       checkbox?.addEventListener('change', () => {
-        this.applyModeVisibility(configId, checkbox.checked);
+        this.syncChipState(checkboxId);
+        this.setModePanelActive(configId, checkbox.checked);
         this.refreshCriteria();
       });
     }
@@ -885,6 +917,7 @@ export class LobbyDiscoveryUI {
     const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement | null;
     twoTimesCheckbox?.addEventListener('change', () => {
       this.isTeamTwoTimesMinEnabled = twoTimesCheckbox.checked;
+      this.syncChipState('discovery-team-two-times');
       this.updateSliderRange(
         'discovery-team-min-slider',
         'discovery-team-max-slider',
@@ -902,38 +935,30 @@ export class LobbyDiscoveryUI {
       this.setAllTeamCounts(true);
       this.refreshCriteria();
     });
-
     document.getElementById('discovery-team-deselect-all')?.addEventListener('click', () => {
       this.setAllTeamCounts(false);
       this.refreshCriteria();
     });
 
-    for (const id of [
-      'discovery-team-2',
-      'discovery-team-3',
-      'discovery-team-4',
-      'discovery-team-5',
-      'discovery-team-6',
-      'discovery-team-7',
-      'discovery-team-duos',
-      'discovery-team-trios',
-      'discovery-team-quads',
-      'discovery-team-hvn',
-      'discovery-sound-toggle',
-      'discovery-desktop-toggle',
-    ]) {
-      const element = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
+    document.getElementById('discovery-reset')?.addEventListener('click', () => {
+      this.resetAll();
+    });
+
+    for (const id of [...ALL_TEAM_IDS, 'discovery-sound-toggle', 'discovery-desktop-toggle']) {
+      const element = document.getElementById(id) as HTMLInputElement | null;
       if (!element) continue;
       element.addEventListener('change', () => {
-        if (id === 'discovery-sound-toggle' && element instanceof HTMLInputElement) {
+        if (id === 'discovery-sound-toggle') {
           this.soundEnabled = element.checked;
+          this.setIconButtonState('discovery-sound-toggle', element.checked);
           this.saveSettings();
           return;
         }
-        if (id === 'discovery-desktop-toggle' && element instanceof HTMLInputElement) {
+        if (id === 'discovery-desktop-toggle') {
           void this.handleDesktopNotificationToggleChange(element);
           return;
         }
+        this.syncChipState(id);
         if (
           id === 'discovery-team-duos' ||
           id === 'discovery-team-trios' ||
@@ -945,221 +970,226 @@ export class LobbyDiscoveryUI {
       });
     }
 
-    for (const id of [
-      'modifier-isCompact',
-      'modifier-isRandomSpawn',
-      'modifier-isCrowded',
-      'modifier-isHardNations',
-      'modifier-isAlliancesDisabled',
-      'modifier-isPortsDisabled',
-      'modifier-isNukesDisabled',
-      'modifier-isSAMsDisabled',
-      'modifier-isPeaceTime',
-      'modifier-isWaterNukes',
-      'modifier-startingGold-1000000',
-      'modifier-startingGold-5000000',
-      'modifier-startingGold-25000000',
-      'modifier-goldMultiplier-2',
-    ]) {
-      const allowedButton = document.getElementById(
-        `${id}-allowed`
-      ) as HTMLButtonElement | null;
-      const blockedButton = document.getElementById(
-        `${id}-blocked`
-      ) as HTMLButtonElement | null;
-
-      for (const button of [allowedButton, blockedButton]) {
-        button?.addEventListener('click', () => {
-          this.setModifierControl(id, button.dataset.value as ModifierFilterState);
-          this.refreshCriteria();
-        });
-      }
+    const allModifierIds: string[] = [
+      ...MODIFIER_BOOLEAN_IDS,
+      ...STARTING_GOLD_VALUES.map((v) => `modifier-startingGold-${v}`),
+      ...GOLD_MULTIPLIER_VALUES.map((v) => `modifier-goldMultiplier-${v}`),
+    ];
+    for (const id of allModifierIds) {
+      const button = document.getElementById(id) as HTMLButtonElement | null;
+      button?.addEventListener('click', () => {
+        this.cycleModifierState(id);
+        this.refreshCriteria();
+      });
     }
   }
 
-  private createModifierControl(id: string): string {
+  private renderModeButton(id: string, label: string): string {
     return `
-      <div
-        id="${id}"
-        class="discovery-binary-toggle"
-        data-state="allowed"
-        role="group"
-        aria-valuetext="allowed"
-      >
-        <button
-            type="button"
-            class="discovery-binary-option"
-            id="${id}-allowed"
-            data-value="allowed"
-            aria-pressed="true"
-          >
-          <span class="discovery-binary-label">Allowed</span>
-        </button>
-        <button
-            type="button"
-            class="discovery-binary-option"
-            id="${id}-blocked"
-            data-value="blocked"
-            aria-pressed="false"
-          >
-          <span class="discovery-binary-label">Blocked</span>
-        </button>
-      </div>
+      <label class="ld-mode-btn" aria-pressed="false">
+        <input type="checkbox" id="${id}" value="${id === 'discovery-ffa' ? 'FFA' : 'Team'}">
+        <span class="check">${ICON_CHECK}</span>
+        <span>${label}</span>
+      </label>
+    `;
+  }
+
+  private renderChip(id: string, value: string, label: string): string {
+    return `
+      <label class="ld-chip" aria-pressed="false">
+        <input type="checkbox" id="${id}" value="${value}">${label}
+      </label>
+    `;
+  }
+
+  private renderModifierChip(id: string, name: string): string {
+    return `
+      <button type="button" class="ld-mod" id="${id}" data-state="any" aria-pressed="false" aria-label="${name}">
+        <span class="ld-mod-ind"></span>
+        <span class="ld-mod-name">${name}</span>
+      </button>
+    `;
+  }
+
+  private renderIconButton(id: string, title: string, svg: string): string {
+    return `
+      <label class="ld-icon-btn" title="${title}" aria-label="${title}">
+        <input type="checkbox" id="${id}">${svg}
+      </label>
     `;
   }
 
   private createUI(): void {
-    if (document.getElementById('openfront-discovery-panel')) {
-      return;
-    }
+    if (document.getElementById('openfront-discovery-panel')) return;
 
     this.panel = document.createElement('div');
     this.panel.id = 'openfront-discovery-panel';
     this.panel.className = 'of-panel discovery-panel';
-    this.panel.style.width = '560px';
+    this.panel.style.width = '380px';
     this.panel.innerHTML = `
-      <div class="of-header discovery-header">
-        <div class="discovery-title">
-          <span class="discovery-title-text">Lobby Discovery</span>
-          <span class="discovery-title-sub">NOTIFY ONLY</span>
+      <div class="ld-status">
+        <span class="ld-pulse" aria-hidden="true"></span>
+        <div class="ld-status-text" id="discovery-status" role="button" tabindex="0">
+          <strong>Discovery active</strong>
+          <span class="sep">·</span>
+          <span class="meta" id="discovery-search-timer"></span>
+        </div>
+        <div class="ld-icons">
+          ${this.renderIconButton('discovery-sound-toggle', 'Sound alert', ICON_SOUND)}
+          ${this.renderIconButton('discovery-desktop-toggle', 'Desktop notification', ICON_BELL)}
         </div>
       </div>
+      <div class="ld-head">
+        <div class="ld-eyebrow">Notify only · never auto-joins</div>
+        <h2 class="ld-title">Lobby Discovery</h2>
+      </div>
       <div class="discovery-body">
-        <div class="of-content discovery-content" style="overflow-y: auto;">
-          <div class="discovery-status-bar">
-            <div class="discovery-status" id="discovery-status">
-              <span class="status-indicator"></span>
-              <span class="status-text">Discovery Active</span>
-              <span class="search-timer" id="discovery-search-timer" style="display: none;"></span>
+        <div class="discovery-content" style="overflow-y: auto;">
+          <div class="ld-section">
+            <div class="ld-section-head">
+              <div class="ld-section-label">Modes</div>
+              <div class="ld-section-aside">Pick one or both</div>
             </div>
-            <label class="discovery-toggle-label">
-              <input type="checkbox" id="discovery-sound-toggle">
-              <span>Sound</span>
-            </label>
-            <label class="discovery-toggle-label">
-              <input type="checkbox" id="discovery-desktop-toggle">
-              <span>Desktop</span>
-            </label>
-          </div>
-          <div class="discovery-modes" id="discovery-modes">
-              <div class="discovery-section">
-                <div class="discovery-section-title">Modes</div>
-                <div class="discovery-config-grid">
-                  <div class="discovery-mode-config discovery-config-card">
-                    <label class="mode-checkbox-label">
-                      <input type="checkbox" id="discovery-ffa" value="FFA">
-                      <span>FFA</span>
-                    </label>
-                    <div class="discovery-mode-inner" id="discovery-ffa-config">
-                      <div class="player-filter-info"><small>Filter by lobby capacity:</small></div>
-                      <div class="capacity-range-wrapper">
-                        <div class="capacity-range-visual">
-                          <div class="capacity-track">
-                            <div class="capacity-range-fill" id="discovery-ffa-range-fill"></div>
-                            <input type="range" id="discovery-ffa-min-slider" min="1" max="125" value="1" class="capacity-slider capacity-slider-min">
-                            <input type="range" id="discovery-ffa-max-slider" min="1" max="125" value="125" class="capacity-slider capacity-slider-max">
-                          </div>
-                          <div class="capacity-labels">
-                            <div class="capacity-label-group"><label for="discovery-ffa-min-slider">Min:</label><span class="capacity-value" id="discovery-ffa-min-value">1</span></div>
-                            <div class="capacity-label-group"><label for="discovery-ffa-max-slider">Max:</label><span class="capacity-value" id="discovery-ffa-max-value">125</span></div>
-                          </div>
-                        </div>
-                        <div class="capacity-inputs-hidden">
-                          <input type="number" id="discovery-ffa-min" min="1" max="125" style="display: none;">
-                          <input type="number" id="discovery-ffa-max" min="1" max="125" style="display: none;">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="discovery-mode-config discovery-config-card">
-                    <label class="mode-checkbox-label">
-                      <input type="checkbox" id="discovery-team" value="Team">
-                      <span>Team</span>
-                    </label>
-                    <div class="discovery-mode-inner" id="discovery-team-config">
-                      <div class="team-count-section">
-                        <label>Formats (optional):</label>
-                        <div>
-                          <button type="button" id="discovery-team-select-all" class="select-all-btn">Select All</button>
-                          <button type="button" id="discovery-team-deselect-all" class="select-all-btn">Deselect All</button>
-                        </div>
-                        <div class="team-count-options-centered">
-                          <div class="team-count-column">
-                            <label><input type="checkbox" id="discovery-team-duos" value="Duos"> Duos</label>
-                            <label><input type="checkbox" id="discovery-team-trios" value="Trios"> Trios</label>
-                            <label><input type="checkbox" id="discovery-team-quads" value="Quads"> Quads</label>
-                            <label><input type="checkbox" id="discovery-team-hvn" value="Humans Vs Nations"> HvN</label>
-                          </div>
-                          <div class="team-count-column">
-                            <label><input type="checkbox" id="discovery-team-2" value="2"> 2 teams</label>
-                            <label><input type="checkbox" id="discovery-team-3" value="3"> 3 teams</label>
-                            <label><input type="checkbox" id="discovery-team-4" value="4"> 4 teams</label>
-                          </div>
-                          <div class="team-count-column">
-                            <label><input type="checkbox" id="discovery-team-5" value="5"> 5 teams</label>
-                            <label><input type="checkbox" id="discovery-team-6" value="6"> 6 teams</label>
-                            <label><input type="checkbox" id="discovery-team-7" value="7"> 7 teams</label>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="player-filter-info"><small>Filter by lobby capacity:</small></div>
-                      <div class="capacity-range-wrapper">
-                        <div class="capacity-range-visual">
-                          <div class="capacity-track">
-                            <div class="capacity-range-fill" id="discovery-team-range-fill"></div>
-                            <input type="range" id="discovery-team-min-slider" min="1" max="62" value="1" class="capacity-slider capacity-slider-min">
-                            <input type="range" id="discovery-team-max-slider" min="1" max="62" value="62" class="capacity-slider capacity-slider-max">
-                          </div>
-                          <div class="capacity-labels">
-                            <div class="capacity-label-group"><label for="discovery-team-min-slider">Min:</label><span class="capacity-value" id="discovery-team-min-value">1</span></div>
-                            <div class="three-times-checkbox"><label for="discovery-team-two-times">2×</label><input type="checkbox" id="discovery-team-two-times"></div>
-                            <div class="capacity-label-group"><label for="discovery-team-max-slider">Max:</label><span class="capacity-value" id="discovery-team-max-value">62</span></div>
-                          </div>
-                        </div>
-                        <div class="capacity-inputs-hidden">
-                          <input type="number" id="discovery-team-min" min="1" max="62" style="display: none;">
-                          <input type="number" id="discovery-team-max" min="1" max="62" style="display: none;">
-                        </div>
-                      </div>
-                      <div class="current-game-info" id="discovery-current-game-info" style="display: none;"></div>
-                    </div>
-                  </div>
-                </div>
+            <div class="ld-modes">
+              ${this.renderModeButton('discovery-ffa', 'FFA')}
+              ${this.renderModeButton('discovery-team', 'Teams')}
+            </div>
+
+            <div class="ld-mode-panel" id="discovery-ffa-config">
+              <div class="ld-mode-panel-head">
+                <span class="dot"></span>
+                <span class="title">FFA · Lobby capacity</span>
               </div>
-              <div class="discovery-section">
-                <div class="discovery-section-title">Modifiers</div>
-                <div class="discovery-mode-config discovery-config-card discovery-modifier-grid">
-                  <label><span>Compact</span>${this.createModifierControl('modifier-isCompact')}</label>
-                  <label><span>Random Spawn</span>${this.createModifierControl('modifier-isRandomSpawn')}</label>
-                  <label><span>Crowded</span>${this.createModifierControl('modifier-isCrowded')}</label>
-                  <label><span>Hard Nations</span>${this.createModifierControl('modifier-isHardNations')}</label>
-                  <label><span>Alliances Disabled</span>${this.createModifierControl('modifier-isAlliancesDisabled')}</label>
-                  <label><span>Ports Disabled</span>${this.createModifierControl('modifier-isPortsDisabled')}</label>
-                  <label><span>Nukes Disabled</span>${this.createModifierControl('modifier-isNukesDisabled')}</label>
-                  <label><span>SAMs Disabled</span>${this.createModifierControl('modifier-isSAMsDisabled')}</label>
-                  <label><span>Peace Time</span>${this.createModifierControl('modifier-isPeaceTime')}</label>
-                  <label><span>Water Nukes</span>${this.createModifierControl('modifier-isWaterNukes')}</label>
-                  <label><span>Starting Gold 1M</span>${this.createModifierControl('modifier-startingGold-1000000')}</label>
-                  <label><span>Starting Gold 5M</span>${this.createModifierControl('modifier-startingGold-5000000')}</label>
-                  <label><span>Starting Gold 25M</span>${this.createModifierControl('modifier-startingGold-25000000')}</label>
-                  <label><span>Gold Multiplier x2</span>${this.createModifierControl('modifier-goldMultiplier-2')}</label>
+              <div class="ld-slider-row">
+                <div class="ld-slider-label">
+                  <span>Total players</span>
+                  <span class="val">
+                    <span id="discovery-ffa-min-value">1</span>
+                    <span class="sep">–</span>
+                    <span id="discovery-ffa-max-value">125</span>
+                  </span>
                 </div>
+                <div class="ld-range">
+                  <div class="track"><div class="track-fill" id="discovery-ffa-range-fill"></div></div>
+                  <input type="range" id="discovery-ffa-min-slider" min="1" max="125" value="1" class="capacity-slider capacity-slider-min">
+                  <input type="range" id="discovery-ffa-max-slider" min="1" max="125" value="125" class="capacity-slider capacity-slider-max">
+                </div>
+                <input type="number" id="discovery-ffa-min" min="1" max="125" value="1" hidden>
+                <input type="number" id="discovery-ffa-max" min="1" max="125" value="125" hidden>
               </div>
+            </div>
+
+            <div class="ld-mode-panel" id="discovery-team-config">
+              <div class="ld-mode-panel-head">
+                <span class="dot"></span>
+                <span class="title">Teams · Format & size</span>
+              </div>
+              <div class="ld-format-label">FORMAT</div>
+              <div class="ld-formats">
+                ${this.renderChip('discovery-team-duos', 'Duos', 'Duos')}
+                ${this.renderChip('discovery-team-trios', 'Trios', 'Trios')}
+                ${this.renderChip('discovery-team-quads', 'Quads', 'Quads')}
+                ${this.renderChip('discovery-team-hvn', 'Humans Vs Nations', 'HvN')}
+              </div>
+              <div class="ld-formats">
+                ${this.renderChip('discovery-team-2', '2', '2 teams')}
+                ${this.renderChip('discovery-team-3', '3', '3 teams')}
+                ${this.renderChip('discovery-team-4', '4', '4 teams')}
+                ${this.renderChip('discovery-team-5', '5', '5 teams')}
+                ${this.renderChip('discovery-team-6', '6', '6 teams')}
+                ${this.renderChip('discovery-team-7', '7', '7 teams')}
+              </div>
+              <div class="ld-formats" style="margin-bottom: 14px;">
+                <button type="button" id="discovery-team-select-all" class="ld-chip">All</button>
+                <button type="button" id="discovery-team-deselect-all" class="ld-chip">None</button>
+              </div>
+              <div class="ld-slider-row">
+                <div class="ld-slider-label">
+                  <span>Players per team</span>
+                  <span class="val">
+                    <span id="discovery-team-min-value">1</span>
+                    <span class="sep">–</span>
+                    <span id="discovery-team-max-value">62</span>
+                  </span>
+                </div>
+                <div class="ld-range">
+                  <div class="track"><div class="track-fill" id="discovery-team-range-fill"></div></div>
+                  <input type="range" id="discovery-team-min-slider" min="1" max="62" value="1" class="capacity-slider capacity-slider-min">
+                  <input type="range" id="discovery-team-max-slider" min="1" max="62" value="62" class="capacity-slider capacity-slider-max">
+                </div>
+                <input type="number" id="discovery-team-min" min="1" max="62" value="1" hidden>
+                <input type="number" id="discovery-team-max" min="1" max="62" value="62" hidden>
+              </div>
+              <label class="ld-2x" aria-pressed="false">
+                <input type="checkbox" id="discovery-team-two-times">
+                <span class="check">${ICON_CHECK}</span>
+                <span class="lbl">
+                  <strong>2× lobby capacity</strong>
+                  <span class="hint">total seats ≥ 2 × per-team min</span>
+                </span>
+              </label>
+              <div class="ld-current-game-info" id="discovery-current-game-info" style="display: none;"></div>
+            </div>
           </div>
+
+          <div class="ld-section">
+            <div class="ld-section-head">
+              <div class="ld-section-label">Modifiers</div>
+              <div class="ld-mods-legend">
+                <span class="key"><span class="swatch"></span>Any</span>
+                <span class="key"><span class="swatch req"></span>Req</span>
+                <span class="key"><span class="swatch blk"></span>Block</span>
+              </div>
+            </div>
+
+            <div class="ld-mod-group">
+              <div class="ld-mod-group-label">Map</div>
+              <div class="ld-mods discovery-modifier-grid">
+                ${this.renderModifierChip('modifier-isCompact', 'Compact')}
+                ${this.renderModifierChip('modifier-isRandomSpawn', 'Random Spawn')}
+                ${this.renderModifierChip('modifier-isCrowded', 'Crowded')}
+                ${this.renderModifierChip('modifier-isHardNations', 'Hard Nations')}
+              </div>
+            </div>
+
+            <div class="ld-mod-group">
+              <div class="ld-mod-group-label">Gameplay</div>
+              <div class="ld-mods">
+                ${this.renderModifierChip('modifier-isAlliancesDisabled', 'Alliances Off')}
+                ${this.renderModifierChip('modifier-isPortsDisabled', 'Ports Off')}
+                ${this.renderModifierChip('modifier-isNukesDisabled', 'Nukes Off')}
+                ${this.renderModifierChip('modifier-isSAMsDisabled', 'SAMs Off')}
+                ${this.renderModifierChip('modifier-isPeaceTime', 'Peace Time')}
+                ${this.renderModifierChip('modifier-isWaterNukes', 'Water Nukes')}
+              </div>
+            </div>
+
+            <div class="ld-mod-group">
+              <div class="ld-mod-group-label">Economy</div>
+              <div class="ld-mods">
+                ${this.renderModifierChip('modifier-startingGold-1000000', 'Start Gold 1M')}
+                ${this.renderModifierChip('modifier-startingGold-5000000', 'Start Gold 5M')}
+                ${this.renderModifierChip('modifier-startingGold-25000000', 'Start Gold 25M')}
+                ${this.renderModifierChip('modifier-goldMultiplier-2', 'Gold ×2')}
+              </div>
+            </div>
+
+            <div class="ld-mods-hint">
+              Click to cycle <strong>Any</strong> → <strong class="req">Required</strong> → <strong class="blk">Blocked</strong>.
+            </div>
+          </div>
+        </div>
+        <div class="discovery-footer">
+          <div class="summary">
+            <span class="num" id="discovery-filter-count">0</span>
+            <span>active <span id="discovery-filter-word">filters</span></span>
+          </div>
+          <button type="button" class="reset" id="discovery-reset">Reset all</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(this.panel);
-    this.resizeHandler = new ResizeHandler(
-      this.panel,
-      (width) => {
-        this.panel.style.width = `${width}px`;
-      },
-      STORAGE_KEYS.lobbyDiscoveryPanelSize,
-      460,
-      88
-    );
 
     this.setupEventListeners();
     this.loadUIFromSettings();
@@ -1182,7 +1212,8 @@ export class LobbyDiscoveryUI {
       'discovery-team-max-value',
       true
     );
-    this.updateUI();
+    this.updateStatusLabel();
+    this.updateFilterCount();
     this.syncSearchTimer();
     this.startGameInfoUpdates();
   }
@@ -1212,8 +1243,6 @@ export class LobbyDiscoveryUI {
       this.pulseSyncTimeout = null;
     }
     this.activeMatchSources.clear();
-    this.resizeHandler?.destroy();
-    this.resizeHandler = null;
     this.applyQueueCardPulses();
     this.panel.parentNode?.removeChild(this.panel);
   }
