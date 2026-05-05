@@ -1,5 +1,5 @@
 /**
- * OpenFront.io Lobby Intel + Discovery
+ * OpenFront Game Notifier
  *
  * Main entry point for the userscript.
  */
@@ -14,7 +14,7 @@ import { CurrentPlayerHighlighter } from '@/modules/lobby-discovery/CurrentPlaye
 (function () {
   'use strict';
 
-  console.log('[OpenFront Bundle] Initializing adaptation for OpenFront 0.30...');
+  console.log('[OpenFront Game Notifier] Initializing adaptation for OpenFront 0.30...');
 
   GM_addStyle(getStyles());
   SoundUtils.preloadSounds();
@@ -50,5 +50,5 @@ import { CurrentPlayerHighlighter } from '@/modules/lobby-discovery/CurrentPlaye
     wasLive = isLive;
   });
 
-  console.log('[OpenFront Bundle] Ready! 🚀');
+  console.log('[OpenFront Game Notifier] Ready! 🚀');
 })();

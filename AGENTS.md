@@ -1,9 +1,9 @@
 
-# OpenFront.io Bundle: Lobby Discovery
+# OpenFront Game Notifier
 
 ## Project Overview
 
-This userscript is a **notify-only** lobby discovery tool for OpenFront.io. It surfaces public lobbies that match user-defined criteria (game mode, player counts, team configuration, modifiers) and alerts the user via in-page UI, sound, and optional desktop notifications. It does **not** auto-join lobbies and does **not** programmatically click any join buttons.
+This userscript (**OpenFront Game Notifier**) is a **notify-only** lobby discovery tool for OpenFront.io. It surfaces public lobbies that match user-defined criteria (game mode, player counts, team configuration, modifiers) and alerts the user via in-page UI, sound, and optional desktop notifications. It does **not** auto-join lobbies and does **not** programmatically click any join buttons.
 
 It also enhances OpenFront's native join-lobby modal by highlighting the current player and their team.
 

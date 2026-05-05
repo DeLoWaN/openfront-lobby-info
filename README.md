@@ -1,6 +1,6 @@
-# OpenFront.io Lobby Intel + Discovery
+# OpenFront Game Notifier
 
-A TypeScript userscript for OpenFront `v0.30+` that surfaces public lobbies matching your criteria, alerts you via in-page highlight, sound, and desktop notification, and enhances OpenFront's native join modal — all without ever auto-joining for you.
+A TypeScript userscript for OpenFront `v0.30+` that watches public lobbies and notifies you when one matches your filters — via in-page highlight, sound, and optional desktop notification. It also enhances OpenFront's native join modal. Never auto-joins.
 
 ## For Players
 
@@ -51,7 +51,7 @@ A TypeScript userscript for OpenFront `v0.30+` that surfaces public lobbies matc
 ### Install
 
 1. Install Tampermonkey or Greasemonkey.
-2. Install from Greasy Fork: [OpenFront.io Lobby Intel + Discovery][greasyfork].
+2. Install from Greasy Fork: [OpenFront Game Notifier][greasyfork].
 3. Visit [openfront.io](https://openfront.io/).
 
 ### Usage

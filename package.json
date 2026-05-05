@@ -1,7 +1,7 @@
 {
   "name": "openfront-bundle-userscript",
   "version": "2.9.0",
-  "description": "OpenFront.io Lobby Intel + Discovery",
+  "description": "OpenFront Game Notifier",
   "type": "module",
   "scripts": {
     "dev": "node esbuild.config.js --watch",

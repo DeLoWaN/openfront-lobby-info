@@ -12,10 +12,10 @@ const version = packageJson.version;
 
 // Userscript metadata header
 const userscriptHeader = `// ==UserScript==
-// @name         OpenFront.io Lobby Intel + Discovery
+// @name         OpenFront Game Notifier
 // @namespace    https://openfront.io/
 // @version      ${version}
-// @description  Live lobby player list and notify-only lobby discovery with Team criteria filters, shared API calls, and optional alerts.
+// @description  Notifies you when a public OpenFront lobby matches your filters (mode, team format, capacity, modifiers) via in-page highlight, sound, and optional desktop notifications. Never auto-joins.
 // @homepageURL  https://github.com/DeLoWaN/openfront-autojoin-lobby
 // @downloadURL  https://raw.githubusercontent.com/DeLoWaN/openfront-autojoin-lobby/main/dist/bundle.user.js
 // @updateURL    https://raw.githubusercontent.com/DeLoWaN/openfront-autojoin-lobby/main/dist/bundle.user.js
