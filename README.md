@@ -1,41 +1,33 @@
 # OpenFront.io Lobby Intel + Discovery
 
-A TypeScript userscript for OpenFront `v0.30+` that adds notify-only lobby
-discovery, homepage queue highlighting, optional sound and desktop
-notifications, and a stronger highlight for your own player entry in the
-native join modal.
+A TypeScript userscript for OpenFront `v0.30+` that surfaces public lobbies matching your criteria, alerts you via in-page highlight, sound, and desktop notification, and enhances OpenFront's native join modal — all without ever auto-joining for you.
 
 ## For Players
 
-OpenFront `0.30` changed the homepage queue UI and exposed native lobby
-rosters, so this project now focuses on manual lobby discovery instead of the
-old duplicate sidebar player list.
-
-<img width="525" height="1119" alt="image" src="https://github.com/user-attachments/assets/4a022e58-d25f-4100-9b54-cf76fe245ccd" />
-
-### What Changed For OpenFront 0.30
-
-- The legacy sidebar player list was removed from the live runtime.
-- Discovery remains strictly notify-only and never auto-joins or rejoins.
-- Matching queues are highlighted directly on the native OpenFront homepage.
-- The native join modal gets an additive highlight for your own player row.
+<img width="525" height="1119" alt="Discovery panel screenshot" src="https://github.com/user-attachments/assets/4a022e58-d25f-4100-9b54-cf76fe245ccd" />
 
 ### Features
 
-- Notify-only discovery for `FFA` and `Team` public lobbies
-- Homepage card pulse/highlight when one or more displayed queues match
-- Team format filters for `Duos`, `Trios`, `Quads`, `Humans Vs Nations`, and
-  custom `2-7` team formats
-- Capacity filters with correct `0.30` semantics for both lobby types
-- `FFA` filters use total lobby capacity
-- `Team` filters use players per team
+**Lobby discovery**
+- Filter `FFA` and `Team` public lobbies by mode, team format, capacity, and modifiers
+- Team format presets: `Duos`, `Trios`, `Quads`, `Humans Vs Nations`, plus custom `2-7` team counts
+- Capacity sliders use the right semantics per mode: total lobby size for `FFA`, players-per-team for `Team`
+- Optional `2×` constraint that also requires total lobby capacity to be at least double the per-team minimum
 - Modifier filters with explicit `Allowed` / `Blocked` controls
-- Optional sound alerts for new matches
-- Optional desktop notifications when the OpenFront tab is in the background
-- Resizable desktop discovery panel with persisted settings
-- Stronger visual emphasis for your own entry in the native join modal
 
-### Supported Modifier Filters
+**Alerts**
+- Pulse highlight on the matching homepage queue card the moment a lobby matches
+- Optional sound alert on new matches
+- Optional desktop notification when the OpenFront tab is in the background
+- Sound on game start, triggered by OpenFront's own `?live` URL transition
+
+**Smart UX**
+- Picking `Duos` / `Trios` / `Quads` automatically bumps the team-min slider to `2` / `3` / `4` so you never search for a Duos lobby with three players per team
+- Stronger highlight for your own player row (and your team card) inside the native join modal
+- Resizable, persisted discovery panel
+- Discovery feedback automatically pauses while you're already inside a joined lobby flow
+
+### Modifier filters
 
 - Compact
 - Random Spawn
@@ -46,88 +38,53 @@ old duplicate sidebar player list.
 - Nukes Disabled
 - SAMs Disabled
 - Peace Time
+- Water Nukes
 - Starting Gold `1M`, `5M`, `25M`
 - Gold Multiplier `x2`
 
 ### Requirements
 
 - OpenFront `v0.30+`
-- Tampermonkey or Greasemonkey
-- Browser notification permission if you want desktop alerts
+- [Tampermonkey](https://www.tampermonkey.net/) or [Greasemonkey](https://www.greasespot.net/)
+- Browser notification permission (only if you want desktop alerts)
 
 ### Install
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/) or
-   [Greasemonkey](https://www.greasespot.net/).
-2. Install from Greasy Fork: [OpenFront.io Lobby Intel + Discovery][greasyfork]
-3. Confirm the userscript installation.
-4. Visit [openfront.io](https://openfront.io/).
+1. Install Tampermonkey or Greasemonkey.
+2. Install from Greasy Fork: [OpenFront.io Lobby Intel + Discovery][greasyfork].
+3. Visit [openfront.io](https://openfront.io/).
 
-### How To Use
+### Usage
 
 1. Open the Play page on [openfront.io](https://openfront.io/).
-2. Configure the `Lobby Discovery` panel.
-3. Enable `FFA`, `Team`, or both.
-4. For Team lobbies, optionally select formats such as `Duos`, `Quads`, `HvN`,
-   or a custom team count.
-5. Mark unwanted modifiers as `Blocked` if you want them excluded.
-6. Wait for a matching queue card to pulse on the homepage.
-7. Click the native OpenFront queue card yourself to join.
+2. In the `Lobby Discovery` panel, enable `FFA`, `Team`, or both.
+3. For `Team`, optionally pick formats (`Duos`, `Quads`, `HvN`, custom counts).
+4. Set capacity bounds; mark unwanted modifiers as `Blocked`.
+5. When a queue card pulses on the homepage, click it yourself to join.
 
-### Behavior Notes
+### What this doesn't do
 
-- The script does not auto-join, auto-rejoin, or switch lobbies for you.
-- Desktop notifications require the setting to be enabled.
-- Desktop notifications require notification permission to be granted.
-- Desktop notifications only appear when the OpenFront tab is not the active
-  visible tab.
-- `Special` queues are normalized internally and matched as `FFA` or `Team`
-  depending on the resolved lobby mode.
-- The current-player enhancement is visual only. It does not replace or
-  re-render the native join modal.
-
-### Local Install
-
-1. Open [`dist/bundle.user.js`](dist/bundle.user.js).
-2. Copy the file contents.
-3. Open the Tampermonkey dashboard.
-4. Create a new script.
-5. Paste the bundle and save.
+- Never auto-joins, auto-rejoins, or switches lobbies.
+- Never modifies the native join modal — the player-row highlight is purely additive styling.
+- Doesn't read or write any cross-domain data.
 
 ## For Developers
 
-### Current Runtime Overview
-
-The active OpenFront `0.30` runtime is centered on lobby discovery and native
-UI enhancements:
-
-- `src/main.ts` boots the script and wires the runtime together
-- `src/data/LobbyDataManager.ts` fetches and normalizes lobby data
-- `src/modules/lobby-discovery/` contains the discovery UI, matching engine,
-  helpers, and join-modal enhancer
-- `src/utils/BrowserNotificationUtils.ts` manages background desktop
-  notifications
-- `src/styles/styles.ts` contains the HUD and queue-highlight styling
-
-The legacy `src/modules/player-list/` source still exists in the repository,
-but it is not mounted in the OpenFront `0.30` runtime.
-
-### Project Structure
+### Project structure
 
 ```text
 .
 ├── src/
-│   ├── config/
+│   ├── config/                                 # constants, theme tokens
 │   ├── data/
-│   │   └── LobbyDataManager.ts
+│   │   └── LobbyDataManager.ts                 # WebSocket + HTTP polling fallback
 │   ├── modules/
-│   │   ├── lobby-discovery/
-│   │   │   ├── CurrentPlayerHighlighter.ts
-│   │   │   ├── LobbyDiscoveryEngine.ts
-│   │   │   ├── LobbyDiscoveryHelpers.ts
-│   │   │   ├── LobbyDiscoveryTypes.ts
-│   │   │   └── LobbyDiscoveryUI.ts
-│   │   └── player-list/        # Legacy source, not booted on v0.30
+│   │   └── lobby-discovery/
+│   │       ├── CurrentPlayerHighlighter.ts     # additive native-modal enhancer
+│   │       ├── LobbyDiscoveryEngine.ts         # criteria matching
+│   │       ├── LobbyDiscoveryHelpers.ts        # pure helpers
+│   │       ├── LobbyDiscoveryTypes.ts
+│   │       └── LobbyDiscoveryUI.ts             # panel UI
 │   ├── styles/
 │   ├── types/
 │   ├── utils/
@@ -138,106 +95,59 @@ but it is not mounted in the OpenFront `0.30` runtime.
 │   │   └── URLObserver.ts
 │   └── main.ts
 ├── tests/
-├── dist/
-│   └── bundle.user.js
+├── dist/bundle.user.js
 ├── package.json
 ├── tsconfig.json
 ├── esbuild.config.js
 └── vitest.config.js
 ```
 
-### Quick Start
+### Quick start
 
 Prerequisites: Node.js `18+` and npm.
 
 ```bash
 npm install
-npm run build
+npm run build:prod   # writes dist/bundle.user.js
 ```
 
-The bundled userscript is written to `dist/bundle.user.js`.
-
-### Available Commands
+Common scripts:
 
 ```bash
-# Development build
-npm run build
-
-# Watch mode
-npm run dev
-
-# Production build
-npm run build:prod
-
-# Test suite
-npm run test
-
-# Vitest UI
-npm run test:ui
-
-# TypeScript only
-npm run type-check
-
-# Bundle size
-npm run size-check
+npm run dev          # esbuild watch
+npm run build:prod   # production bundle
+npm run test         # vitest --run (use --watch for TDD)
+npm run type-check   # tsc --noEmit
 ```
 
-### Runtime Behavior
+### Storage keys
 
-- Discovery criteria are stored under `OF_LOBBY_DISCOVERY_SETTINGS`.
-- Panel width is stored under `OF_LOBBY_DISCOVERY_PANEL_SIZE`.
-- Queue-card feedback is deduplicated so repeated polling does not create
-  repeated match surfaces.
-- Sound and desktop notification preferences persist independently.
-- Discovery feedback is suppressed while the user is already inside a joined
-  lobby flow.
+- `OF_LOBBY_DISCOVERY_SETTINGS` — criteria, sound/desktop preferences, `2×` toggle
+- `OF_LOBBY_DISCOVERY_PANEL_SIZE` — persisted panel width
 
 ### Testing
 
-The project uses Vitest with JSDOM.
+Vitest with JSDOM. The suite covers the matching engine, helpers, panel UI, the native-modal highlighter, and the `LobbyDataManager` connection fallback.
 
 ```bash
-# Run all tests
 npm run test
-
-# Watch tests
 npm run test -- --watch
-
-# Coverage
 npm run test -- --coverage
-
-# Type checking
-npm run type-check
 ```
-
-### Recent Version History
-
-- `v2.8.17` - OpenFront `0.30` adaptation, queue-card highlighting, current
-  player emphasis, and browser notifications
-- `v2.7.1` - Removed all automated join and rejoin behavior
-- `v2.6.0` - Added clan-based team colors and HUD improvements
-- `v2.3.0` - Refactored the bundle into a modular TypeScript architecture
 
 ### Contributing
 
-1. Follow the existing layered architecture.
-2. Prefer `@/` path aliases for imports.
-3. Keep new logic covered by tests.
-4. Run `npm run test` and `npm run type-check` before shipping changes.
-5. Rebuild `dist/bundle.user.js` for release-ready updates.
+- Follow the existing layered architecture (`config → types → styles → utils → data → modules → main`).
+- Use `@/` path aliases.
+- Keep new logic covered by tests; run `npm run test` and `npm run type-check` before shipping.
+- Rebuild `dist/bundle.user.js` for releases (`npm run build:prod`).
 
 ### License
 
-UNLICENSED - Private project
+UNLICENSED — private project.
 
 ### Authors
 
-- DeLoVaN
-- SyntaxMenace
-- DeepSeek
-- Claude
+DeLoVaN · SyntaxMenace · DeepSeek · Claude
 
-[greasyfork]:
-  https://greasyfork.org/en/scripts/555551-openfront-io-lobby-intel-discovery
-[screenshot]:
-  https://github.com/user-attachments/assets/4a022e58-d25f-4100-9b54-cf76fe245ccd
+[greasyfork]: https://greasyfork.org/en/scripts/555551-openfront-io-lobby-intel-discovery
