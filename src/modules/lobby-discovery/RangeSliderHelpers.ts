@@ -8,8 +8,8 @@
 
 export function clampToStops(value: number, stops: readonly number[]): number {
   if (stops.length === 0) return value;
-  const lo = stops[0];
-  const hi = stops[stops.length - 1];
+  const lo = stops[0]!;
+  const hi = stops[stops.length - 1]!;
   if (value < lo) return lo;
   if (value > hi) return hi;
   return value;
@@ -24,12 +24,12 @@ export function valueToPosition(value: number, stops: readonly number[]): number
   if (stops.length < 2) return 0;
   const clamped = clampToStops(value, stops);
   const lastIdx = stops.length - 1;
-  if (clamped >= stops[lastIdx]) return 1;
-  if (clamped <= stops[0]) return 0;
+  if (clamped >= stops[lastIdx]!) return 1;
+  if (clamped <= stops[0]!) return 0;
 
   for (let i = 0; i < lastIdx; i++) {
-    const lo = stops[i];
-    const hi = stops[i + 1];
+    const lo = stops[i]!;
+    const hi = stops[i + 1]!;
     if (clamped >= lo && clamped <= hi) {
       const segFrac = (clamped - lo) / (hi - lo);
       return (i + segFrac) / lastIdx;
@@ -46,13 +46,33 @@ export function valueToPosition(value: number, stops: readonly number[]): number
 export function positionToValue(position: number, stops: readonly number[]): number {
   if (stops.length < 2) return stops[0] ?? 0;
   const lastIdx = stops.length - 1;
-  if (position <= 0) return stops[0];
-  if (position >= 1) return stops[lastIdx];
+  if (position <= 0) return stops[0]!;
+  if (position >= 1) return stops[lastIdx]!;
 
   const t = position * lastIdx;
   const i = Math.floor(t);
   const frac = t - i;
   // i can equal lastIdx only if position === 1, handled above.
-  const raw = stops[i] + frac * (stops[i + 1] - stops[i]);
+  const raw = stops[i]! + frac * (stops[i + 1]! - stops[i]!);
   return Math.round(raw);
+}
+
+/**
+ * Return the stop closest to `value`. Ties are broken by preferring the
+ * lower stop (deterministic; locked by tests).
+ */
+export function nearestStop(value: number, stops: readonly number[]): number {
+  if (stops.length === 0) return value;
+  const clamped = clampToStops(value, stops);
+  let best = stops[0]!;
+  let bestDelta = Math.abs(clamped - best);
+  for (let i = 1; i < stops.length; i++) {
+    const delta = Math.abs(clamped - stops[i]!);
+    // Strict `<` preserves the lower stop on ties.
+    if (delta < bestDelta) {
+      best = stops[i]!;
+      bestDelta = delta;
+    }
+  }
+  return best;
 }
