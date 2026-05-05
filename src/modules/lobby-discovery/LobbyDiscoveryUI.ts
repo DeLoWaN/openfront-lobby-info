@@ -2,7 +2,7 @@
  * LobbyDiscoveryUI - notify-only discovery interface for matching lobbies.
  */
 
-import { STORAGE_KEYS } from '@/config/constants';
+import { STORAGE_KEYS, TEAM_PLAYERS_PER_TEAM_STOPS, TEAM_MIN_PLAYERS_PER_TEAM, TEAM_MAX_PLAYERS_PER_TEAM } from '@/config/constants';
 import { LobbyUtils } from '@/utils/LobbyUtils';
 import { BrowserNotificationUtils } from '@/utils/BrowserNotificationUtils';
 import { SoundUtils } from '@/utils/SoundUtils';
@@ -24,6 +24,7 @@ import {
   getLobbyQueueSource,
   normalizeSettings,
 } from './LobbyDiscoveryHelpers';
+import { RangeSlider } from '@/modules/lobby-discovery/RangeSlider';
 
 const STARTING_GOLD_VALUES = [1_000_000, 5_000_000, 25_000_000] as const;
 const GOLD_MULTIPLIER_VALUES = [2] as const;
@@ -100,6 +101,8 @@ export class LobbyDiscoveryUI {
   private seenLobbies: Set<string> = new Set();
   private desktopNotifiedLobbies: Set<string> = new Set();
   private isTeamTwoTimesMinEnabled = false;
+  private ffaSlider: RangeSlider | null = null;
+  private teamSlider: RangeSlider | null = null;
   private sleeping = false;
   private isDisposed = false;
 
@@ -539,20 +542,7 @@ export class LobbyDiscoveryUI {
     if (checked.length === 0) return;
 
     const newMin = Math.min(...checked);
-    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement | null;
-    if (!minSlider) return;
-
-    minSlider.value = String(newMin);
-    this.updateSliderRange(
-      'discovery-team-min-slider',
-      'discovery-team-max-slider',
-      'discovery-team-min',
-      'discovery-team-max',
-      'discovery-team-range-fill',
-      'discovery-team-min-value',
-      'discovery-team-max-value',
-      true
-    );
+    this.teamSlider?.setMin(newMin);
   }
 
   private setAllTeamCounts(checked: boolean): void {
@@ -745,114 +735,6 @@ export class LobbyDiscoveryUI {
     }
   }
 
-  private initializeSlider(
-    minSliderId: string,
-    maxSliderId: string,
-    minInputId: string,
-    maxInputId: string,
-    fillId: string,
-    minValueId: string,
-    maxValueId: string,
-    applyTwoTimesConstraint: boolean = false
-  ): void {
-    const minSlider = document.getElementById(minSliderId) as HTMLInputElement | null;
-    const maxSlider = document.getElementById(maxSliderId) as HTMLInputElement | null;
-    const minInput = document.getElementById(minInputId) as HTMLInputElement | null;
-    const maxInput = document.getElementById(maxInputId) as HTMLInputElement | null;
-
-    if (!minSlider || !maxSlider || !minInput || !maxInput) return;
-
-    const savedMin = parseInt(minInput.value, 10);
-    const savedMax = parseInt(maxInput.value, 10);
-    if (!Number.isNaN(savedMin)) minSlider.value = String(savedMin);
-    if (!Number.isNaN(savedMax)) maxSlider.value = String(savedMax);
-
-    const update = () => {
-      this.updateSliderRange(
-        minSliderId,
-        maxSliderId,
-        minInputId,
-        maxInputId,
-        fillId,
-        minValueId,
-        maxValueId,
-        applyTwoTimesConstraint
-      );
-      this.refreshCriteria();
-    };
-
-    minSlider.addEventListener('input', update);
-    maxSlider.addEventListener('input', update);
-
-    this.updateSliderRange(
-      minSliderId,
-      maxSliderId,
-      minInputId,
-      maxInputId,
-      fillId,
-      minValueId,
-      maxValueId,
-      applyTwoTimesConstraint
-    );
-  }
-
-  private updateSliderRange(
-    minSliderId: string,
-    maxSliderId: string,
-    minInputId: string,
-    maxInputId: string,
-    fillId: string,
-    minValueId: string,
-    maxValueId: string,
-    applyTwoTimesConstraint: boolean
-  ): void {
-    const minSlider = document.getElementById(minSliderId) as HTMLInputElement | null;
-    const maxSlider = document.getElementById(maxSliderId) as HTMLInputElement | null;
-    const minInput = document.getElementById(minInputId) as HTMLInputElement | null;
-    const maxInput = document.getElementById(maxInputId) as HTMLInputElement | null;
-    const range = document.getElementById(fillId)?.parentElement?.parentElement as HTMLElement | null;
-    const minValueSpan = document.getElementById(minValueId);
-    const maxValueSpan = document.getElementById(maxValueId);
-
-    if (!minSlider || !maxSlider || !minInput || !maxInput) return;
-
-    let minVal = parseInt(minSlider.value, 10);
-    let maxVal = parseInt(maxSlider.value, 10);
-    const sliderMax = parseInt(maxSlider.max, 10);
-
-    if (applyTwoTimesConstraint && this.isTeamTwoTimesMinEnabled) {
-      maxVal = Math.min(sliderMax, Math.max(1, minVal * 2));
-      maxSlider.value = String(maxVal);
-    }
-
-    if (minVal > maxVal) {
-      minVal = maxVal;
-      minSlider.value = String(minVal);
-    }
-
-    minInput.value = String(minVal);
-    maxInput.value = String(maxVal);
-
-    if (minValueSpan) minValueSpan.textContent = String(minVal);
-    if (maxValueSpan) maxValueSpan.textContent = String(maxVal);
-
-    if (range) {
-      const sliderMin = parseInt(minSlider.min, 10);
-      const span = sliderMax - sliderMin || 1;
-      const minPct = ((minVal - sliderMin) / span) * 100;
-      const maxPct = ((maxVal - sliderMin) / span) * 100;
-      range.style.setProperty('--lo', `${minPct}%`);
-      range.style.setProperty('--hi', `${maxPct}%`);
-      if (applyTwoTimesConstraint) {
-        range.classList.toggle('is-locked', this.isTeamTwoTimesMinEnabled);
-      }
-    }
-
-    if (applyTwoTimesConstraint) {
-      maxSlider.disabled = this.isTeamTwoTimesMinEnabled;
-    }
-  }
-
   private refreshCriteria(): void {
     this.criteriaList = this.buildCriteriaFromUI();
     this.saveSettings();
@@ -887,38 +769,9 @@ export class LobbyDiscoveryUI {
     for (const v of STARTING_GOLD_VALUES) this.setModifierState(`modifier-startingGold-${v}`, 'any');
     for (const v of GOLD_MULTIPLIER_VALUES) this.setModifierState(`modifier-goldMultiplier-${v}`, 'any');
 
-    const ffaMinSlider = document.getElementById('discovery-ffa-min-slider') as HTMLInputElement | null;
-    const ffaMaxSlider = document.getElementById('discovery-ffa-max-slider') as HTMLInputElement | null;
-    if (ffaMinSlider && ffaMaxSlider) {
-      ffaMinSlider.value = ffaMinSlider.min;
-      ffaMaxSlider.value = ffaMaxSlider.max;
-      this.updateSliderRange(
-        'discovery-ffa-min-slider',
-        'discovery-ffa-max-slider',
-        'discovery-ffa-min',
-        'discovery-ffa-max',
-        'discovery-ffa-range-fill',
-        'discovery-ffa-min-value',
-        'discovery-ffa-max-value',
-        false
-      );
-    }
-    const teamMinSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement | null;
-    const teamMaxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement | null;
-    if (teamMinSlider && teamMaxSlider) {
-      teamMinSlider.value = teamMinSlider.min;
-      teamMaxSlider.value = teamMaxSlider.max;
-      this.updateSliderRange(
-        'discovery-team-min-slider',
-        'discovery-team-max-slider',
-        'discovery-team-min',
-        'discovery-team-max',
-        'discovery-team-range-fill',
-        'discovery-team-min-value',
-        'discovery-team-max-value',
-        true
-      );
-    }
+    this.ffaSlider?.setRange(1, 125);
+    this.teamSlider?.setRange(TEAM_MIN_PLAYERS_PER_TEAM, TEAM_MAX_PLAYERS_PER_TEAM);
+    this.teamSlider?.applyLockState();
 
     this.refreshCriteria();
   }
@@ -973,18 +826,7 @@ export class LobbyDiscoveryUI {
     twoTimesCheckbox?.addEventListener('change', () => {
       this.isTeamTwoTimesMinEnabled = twoTimesCheckbox.checked;
       this.syncChipState('discovery-team-two-times');
-      // When unlocking, leave the max slider at its current (locked) value —
-      // the user can drag it freely from there.
-      this.updateSliderRange(
-        'discovery-team-min-slider',
-        'discovery-team-max-slider',
-        'discovery-team-min',
-        'discovery-team-max',
-        'discovery-team-range-fill',
-        'discovery-team-min-value',
-        'discovery-team-max-value',
-        true
-      );
+      this.teamSlider?.applyLockState();
       this.refreshCriteria();
     });
 
@@ -1260,25 +1102,35 @@ export class LobbyDiscoveryUI {
 
     this.setupEventListeners();
     this.loadUIFromSettings();
-    this.initializeSlider(
-      'discovery-ffa-min-slider',
-      'discovery-ffa-max-slider',
-      'discovery-ffa-min',
-      'discovery-ffa-max',
-      'discovery-ffa-range-fill',
-      'discovery-ffa-min-value',
-      'discovery-ffa-max-value'
-    );
-    this.initializeSlider(
-      'discovery-team-min-slider',
-      'discovery-team-max-slider',
-      'discovery-team-min',
-      'discovery-team-max',
-      'discovery-team-range-fill',
-      'discovery-team-min-value',
-      'discovery-team-max-value',
-      true
-    );
+
+    this.ffaSlider = new RangeSlider({
+      rootId: 'discovery-ffa-range-root',
+      minSliderId: 'discovery-ffa-min-slider',
+      maxSliderId: 'discovery-ffa-max-slider',
+      minInputId: 'discovery-ffa-min',
+      maxInputId: 'discovery-ffa-max',
+      fillId: 'discovery-ffa-range-fill',
+      bounds: { min: 1, max: 125 },
+      onChange: () => this.refreshCriteria(),
+    });
+
+    this.teamSlider = new RangeSlider({
+      rootId: 'discovery-team-range-root',
+      minSliderId: 'discovery-team-min-slider',
+      maxSliderId: 'discovery-team-max-slider',
+      minInputId: 'discovery-team-min',
+      maxInputId: 'discovery-team-max',
+      fillId: 'discovery-team-range-fill',
+      ticksContainerId: 'discovery-team-ticks',
+      bounds: {
+        min: TEAM_MIN_PLAYERS_PER_TEAM,
+        max: TEAM_MAX_PLAYERS_PER_TEAM,
+      },
+      stops: TEAM_PLAYERS_PER_TEAM_STOPS,
+      lockMaxToTwiceMin: () => this.isTeamTwoTimesMinEnabled,
+      onChange: () => this.refreshCriteria(),
+    });
+
     this.updateStatusLabel();
     this.updateFilterCount();
     this.syncSearchTimer();

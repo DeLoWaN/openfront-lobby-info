@@ -378,21 +378,26 @@ describe('LobbyDiscoveryUI', () => {
 
     ui = new LobbyDiscoveryUI();
 
-    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+    // Use number inputs (change events) to set min=8, max=20 since slider
+    // positions are now 0..1000 and RangeSlider owns that mapping.
+    const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+    const maxInput = document.getElementById('discovery-team-max') as HTMLInputElement;
     const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
     const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement;
 
-    minSlider.value = '8';
-    minSlider.dispatchEvent(new Event('input'));
-    maxSlider.value = '20';
-    maxSlider.dispatchEvent(new Event('input'));
+    minInput.value = '8';
+    minInput.dispatchEvent(new Event('change'));
+    maxInput.value = '20';
+    maxInput.dispatchEvent(new Event('change'));
 
     twoTimesCheckbox.checked = true;
     twoTimesCheckbox.dispatchEvent(new Event('change'));
 
-    expect(maxSlider.value).toBe('16');
+    // 2×8 = 16. valueToPosition(16, stops) = 720 (between stop 15@idx7 and 20@idx8).
+    expect(maxInput.value).toBe('16');
+    expect(maxSlider.value).toBe('720');
     expect(maxSlider.disabled).toBe(true);
-    expect(maxSlider.closest('.ld-range')?.classList.contains('is-locked')).toBe(true);
+    expect(maxSlider.classList.contains('is-max-locked')).toBe(true);
   });
 
   it('keeps the locked max value when the 2x toggle is turned off (no rollback)', () => {
@@ -405,25 +410,31 @@ describe('LobbyDiscoveryUI', () => {
 
     ui = new LobbyDiscoveryUI();
 
-    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+    // Use number inputs (change events) to set min=5, max=30 (nearest stop to 40)
+    // since slider positions are now 0..1000 and RangeSlider owns that mapping.
+    const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+    const maxInput = document.getElementById('discovery-team-max') as HTMLInputElement;
     const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
     const twoTimes = document.getElementById('discovery-team-two-times') as HTMLInputElement;
 
-    minSlider.value = '5';
-    minSlider.dispatchEvent(new Event('input'));
-    maxSlider.value = '40';
-    maxSlider.dispatchEvent(new Event('input'));
+    minInput.value = '5';
+    minInput.dispatchEvent(new Event('change'));
+    maxInput.value = '30';
+    maxInput.dispatchEvent(new Event('change'));
 
     twoTimes.checked = true;
     twoTimes.dispatchEvent(new Event('change'));
-    expect(maxSlider.value).toBe('10');
+    // 2×5 = 10. valueToPosition(10, stops) = 600 (stop at idx 6).
+    expect(maxInput.value).toBe('10');
+    expect(maxSlider.value).toBe('600');
     expect(maxSlider.disabled).toBe(true);
 
     twoTimes.checked = false;
     twoTimes.dispatchEvent(new Event('change'));
-    expect(maxSlider.value).toBe('10');
+    expect(maxInput.value).toBe('10');
+    expect(maxSlider.value).toBe('600');
     expect(maxSlider.disabled).toBe(false);
-    expect(maxSlider.closest('.ld-range')?.classList.contains('is-locked')).toBe(false);
+    expect(maxSlider.classList.contains('is-max-locked')).toBe(false);
   });
 
   it('renders without the old player-list discovery slot and exposes FFA and 2x controls', () => {
@@ -825,9 +836,10 @@ describe('LobbyDiscoveryUI', () => {
       setupTeamUI();
       toggle('discovery-team-duos', true);
 
+      // minSlider.value is a 0..1000 position; valueToPosition(2, stops) = 0/10 = 0.
       const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
       const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
-      expect(minSlider.value).toBe('2');
+      expect(minSlider.value).toBe('0');
       expect(minInput.value).toBe('2');
     });
 
@@ -835,16 +847,22 @@ describe('LobbyDiscoveryUI', () => {
       setupTeamUI();
       toggle('discovery-team-trios', true);
 
+      // valueToPosition(3, stops) = 1/10 = 0.1 → position 100.
       const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      expect(minSlider.value).toBe('3');
+      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+      expect(minSlider.value).toBe('100');
+      expect(minInput.value).toBe('3');
     });
 
     it('sets min slider to 4 when Quads is checked', () => {
       setupTeamUI();
       toggle('discovery-team-quads', true);
 
+      // valueToPosition(4, stops) = 2/10 = 0.2 → position 200.
       const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      expect(minSlider.value).toBe('4');
+      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+      expect(minSlider.value).toBe('200');
+      expect(minInput.value).toBe('4');
     });
 
     it('drops min slider to the lowest selected per-team value when multiple presets are checked', () => {
@@ -852,31 +870,42 @@ describe('LobbyDiscoveryUI', () => {
       toggle('discovery-team-trios', true);
       toggle('discovery-team-duos', true);
 
+      // min(2, 3) = 2. valueToPosition(2, stops) = 0.
       const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      expect(minSlider.value).toBe('2');
+      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+      expect(minSlider.value).toBe('0');
+      expect(minInput.value).toBe('2');
     });
 
     it('does not touch the min slider when only HvN or numeric team-count checkboxes change', () => {
       setupTeamUI();
 
+      // Drive min via number input change (RangeSlider owns the slider↔value mapping).
+      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
       const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      minSlider.value = '5';
-      minSlider.dispatchEvent(new Event('input'));
+      minInput.value = '5';
+      minInput.dispatchEvent(new Event('change'));
 
       toggle('discovery-team-hvn', true);
       toggle('discovery-team-3', true);
 
-      expect(minSlider.value).toBe('5');
+      // valueToPosition(5, stops) = 3/10 = 0.3 → position 300.
+      expect(minSlider.value).toBe('300');
+      expect(minInput.value).toBe('5');
     });
 
     it('leaves the min slider where it last landed after a preset is unchecked', () => {
       setupTeamUI();
       toggle('discovery-team-trios', true);
       const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      expect(minSlider.value).toBe('3');
+      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+      // valueToPosition(3, stops) = 1/10 = 0.1 → position 100.
+      expect(minSlider.value).toBe('100');
+      expect(minInput.value).toBe('3');
 
       toggle('discovery-team-trios', false);
-      expect(minSlider.value).toBe('3');
+      expect(minSlider.value).toBe('100');
+      expect(minInput.value).toBe('3');
     });
   });
 });
