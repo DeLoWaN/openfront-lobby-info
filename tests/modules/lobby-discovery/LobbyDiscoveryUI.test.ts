@@ -395,7 +395,7 @@ describe('LobbyDiscoveryUI', () => {
     expect(maxSlider.closest('.ld-range')?.classList.contains('is-locked')).toBe(true);
   });
 
-  it('restores the previous manual max when the 2x toggle is turned off', () => {
+  it('keeps the locked max value when the 2x toggle is turned off (no rollback)', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -421,7 +421,7 @@ describe('LobbyDiscoveryUI', () => {
 
     twoTimes.checked = false;
     twoTimes.dispatchEvent(new Event('change'));
-    expect(maxSlider.value).toBe('40');
+    expect(maxSlider.value).toBe('10');
     expect(maxSlider.disabled).toBe(false);
     expect(maxSlider.closest('.ld-range')?.classList.contains('is-locked')).toBe(false);
   });

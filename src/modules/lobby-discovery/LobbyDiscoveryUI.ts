@@ -100,7 +100,6 @@ export class LobbyDiscoveryUI {
   private seenLobbies: Set<string> = new Set();
   private desktopNotifiedLobbies: Set<string> = new Set();
   private isTeamTwoTimesMinEnabled = false;
-  private lastTeamManualMax: number | null = null;
   private sleeping = false;
   private isDisposed = false;
 
@@ -972,15 +971,10 @@ export class LobbyDiscoveryUI {
 
     const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement | null;
     twoTimesCheckbox?.addEventListener('change', () => {
-      const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement | null;
-      if (twoTimesCheckbox.checked && maxSlider) {
-        this.lastTeamManualMax = parseInt(maxSlider.value, 10);
-      } else if (!twoTimesCheckbox.checked && maxSlider) {
-        const restored = this.lastTeamManualMax ?? parseInt(maxSlider.max, 10);
-        maxSlider.value = String(restored);
-      }
       this.isTeamTwoTimesMinEnabled = twoTimesCheckbox.checked;
       this.syncChipState('discovery-team-two-times');
+      // When unlocking, leave the max slider at its current (locked) value —
+      // the user can drag it freely from there.
       this.updateSliderRange(
         'discovery-team-min-slider',
         'discovery-team-max-slider',
