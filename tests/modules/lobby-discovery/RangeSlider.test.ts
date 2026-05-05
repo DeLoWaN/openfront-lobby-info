@@ -91,3 +91,70 @@ describe('RangeSlider — linear fallback (no stops)', () => {
     expect(min).toBeLessThanOrEqual(max);
   });
 });
+
+describe('RangeSlider — with stops (snap-on-drag)', () => {
+  const stops = [2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 62];
+
+  beforeEach(() => {
+    setupDOM();
+    // Reset starting values to per-team defaults.
+    (document.getElementById('min-num') as HTMLInputElement).value = '2';
+    (document.getElementById('max-num') as HTMLInputElement).value = '62';
+  });
+
+  function build(onChange = vi.fn(), lockFn?: () => boolean) {
+    return new RangeSlider({
+      rootId: 'root',
+      minSliderId: 'min-pos',
+      maxSliderId: 'max-pos',
+      minInputId: 'min-num',
+      maxInputId: 'max-num',
+      fillId: 'fill',
+      bounds: { min: 2, max: 62 },
+      stops,
+      lockMaxToTwiceMin: lockFn,
+      onChange,
+    });
+  }
+
+  it('drag snaps the value to the nearest stop', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    const minPos = document.getElementById('min-pos') as HTMLInputElement;
+    // Position 0.42 maps to value ≈ 6.2; nearest stop is 6.
+    minPos.value = '420';
+    minPos.dispatchEvent(new Event('input'));
+    expect(onChange).toHaveBeenCalledWith(6, 62);
+    const minNum = document.getElementById('min-num') as HTMLInputElement;
+    expect(minNum.value).toBe('6');
+  });
+
+  it('typing a non-stop value into the number input keeps that exact value', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    const minNum = document.getElementById('min-num') as HTMLInputElement;
+    minNum.value = '7';
+    minNum.dispatchEvent(new Event('change'));
+    expect(onChange).toHaveBeenCalledWith(7, 62);
+    expect(minNum.value).toBe('7');
+  });
+
+  it('typed value > bounds.max clamps to bounds.max', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    const maxNum = document.getElementById('max-num') as HTMLInputElement;
+    maxNum.value = '200';
+    maxNum.dispatchEvent(new Event('change'));
+    expect(onChange).toHaveBeenCalledWith(2, 62);
+    expect(maxNum.value).toBe('62');
+  });
+
+  it('typed empty string reverts to last value', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    const minNum = document.getElementById('min-num') as HTMLInputElement;
+    minNum.value = '';
+    minNum.dispatchEvent(new Event('change'));
+    expect(minNum.value).toBe('2');  // unchanged from default
+  });
+});
