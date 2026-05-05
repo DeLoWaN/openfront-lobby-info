@@ -300,3 +300,63 @@ describe('RangeSlider — lock-max-to-2×', () => {
     expect(maxSlider.classList.contains('is-max-locked')).toBe(false);
   });
 });
+
+describe('RangeSlider — tick rendering', () => {
+  const stops = [2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 62];
+
+  beforeEach(setupDOM);
+
+  it('renders one tick + label per stop in the ticks container', () => {
+    new RangeSlider({
+      rootId: 'root',
+      minSliderId: 'min-pos',
+      maxSliderId: 'max-pos',
+      minInputId: 'min-num',
+      maxInputId: 'max-num',
+      fillId: 'fill',
+      ticksContainerId: 'ticks',
+      bounds: { min: 2, max: 62 },
+      stops,
+      onChange: () => {},
+    });
+    const ticks = document.querySelectorAll('#ticks .ld-tick');
+    const labels = document.querySelectorAll('#ticks .ld-tick-label');
+    expect(ticks.length).toBe(stops.length);
+    expect(labels.length).toBe(stops.length);
+    expect(labels[0].textContent).toBe('2');
+    expect(labels[labels.length - 1].textContent).toBe('62');
+  });
+
+  it('positions each tick at valueToPosition(stop) * 100%', () => {
+    new RangeSlider({
+      rootId: 'root',
+      minSliderId: 'min-pos',
+      maxSliderId: 'max-pos',
+      minInputId: 'min-num',
+      maxInputId: 'max-num',
+      fillId: 'fill',
+      ticksContainerId: 'ticks',
+      bounds: { min: 2, max: 62 },
+      stops,
+      onChange: () => {},
+    });
+    const ticks = document.querySelectorAll<HTMLElement>('#ticks .ld-tick');
+    expect(ticks[0].style.left).toBe('0%');
+    expect(ticks[4].style.left).toBe('40%');  // value 6 → 0.4
+    expect(ticks[ticks.length - 1].style.left).toBe('100%');
+  });
+
+  it('does not render ticks when ticksContainerId is omitted', () => {
+    new RangeSlider({
+      rootId: 'root',
+      minSliderId: 'min-pos',
+      maxSliderId: 'max-pos',
+      minInputId: 'min-num',
+      maxInputId: 'max-num',
+      fillId: 'fill',
+      bounds: { min: 1, max: 125 },
+      onChange: () => {},
+    });
+    expect(document.querySelectorAll('#ticks .ld-tick').length).toBe(0);
+  });
+});

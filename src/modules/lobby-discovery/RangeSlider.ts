@@ -62,6 +62,7 @@ export class RangeSlider {
     this.maxInput.addEventListener('change', this.onMaxInputChange);
 
     this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
+    this.renderTicks();
     this.wireSteppers();
     this.applyLockState();
   }
@@ -172,6 +173,26 @@ export class RangeSlider {
     }
 
     if (opts.fireOnChange) this.cfg.onChange(nextMin, nextMax);
+  }
+
+  private renderTicks(): void {
+    if (!this.cfg.ticksContainerId || !this.cfg.stops) return;
+    const container = document.getElementById(this.cfg.ticksContainerId);
+    if (!container) return;
+
+    container.innerHTML = '';
+    for (const stop of this.cfg.stops) {
+      const pct = valueToPosition(stop, this.cfg.stops) * 100;
+      const tick = document.createElement('div');
+      tick.className = 'ld-tick';
+      tick.style.left = `${pct}%`;
+      const label = document.createElement('span');
+      label.className = 'ld-tick-label';
+      label.style.left = `${pct}%`;
+      label.textContent = String(stop);
+      container.appendChild(tick);
+      container.appendChild(label);
+    }
   }
 
   private wireSteppers(): void {
