@@ -133,16 +133,16 @@ describe('LobbyDiscoveryEngine', () => {
       },
     } as any;
 
-    const allowedCriteria = [
+    const anyCriteria = [
       {
         gameMode: 'FFA',
         teamCount: null,
         minPlayers: 20,
         maxPlayers: 30,
         modifiers: {
-          isCompact: 'allowed',
-          startingGold: { 1000000: 'allowed', 5000000: 'allowed', 25000000: 'allowed' },
-          goldMultiplier: { 2: 'allowed' },
+          isCompact: 'any',
+          startingGold: { 1000000: 'any', 5000000: 'any', 25000000: 'any' },
+          goldMultiplier: { 2: 'any' },
         },
       },
     ] as any;
@@ -154,9 +154,9 @@ describe('LobbyDiscoveryEngine', () => {
         minPlayers: 20,
         maxPlayers: 30,
         modifiers: {
-          isCompact: 'allowed',
-          startingGold: { 1000000: 'allowed', 5000000: 'blocked', 25000000: 'allowed' },
-          goldMultiplier: { 2: 'allowed' },
+          isCompact: 'any',
+          startingGold: { 1000000: 'any', 5000000: 'blocked', 25000000: 'any' },
+          goldMultiplier: { 2: 'any' },
         },
       },
     ] as any;
@@ -169,14 +169,140 @@ describe('LobbyDiscoveryEngine', () => {
         maxPlayers: 30,
         modifiers: {
           isCompact: 'blocked',
-          startingGold: { 5000000: 'allowed' },
-          goldMultiplier: { 2: 'allowed' },
+          startingGold: { 5000000: 'any' },
+          goldMultiplier: { 2: 'any' },
         },
       },
     ] as any;
 
-    expect(engine.matchesCriteria(lobby, allowedCriteria)).toBe(true);
+    expect(engine.matchesCriteria(lobby, anyCriteria)).toBe(true);
     expect(engine.matchesCriteria(lobby, blockedCriteria)).toBe(false);
     expect(engine.matchesCriteria(lobby, blockedBooleanCriteria)).toBe(false);
+  });
+
+  it('matches when a required boolean modifier is present', () => {
+    const lobby = {
+      gameID: 'ffa-required-on',
+      publicGameType: 'ffa',
+      gameConfig: {
+        gameMode: 'Free For All',
+        maxPlayers: 25,
+        publicGameModifiers: { isCompact: true },
+      },
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'FFA',
+        teamCount: null,
+        minPlayers: 20,
+        maxPlayers: 30,
+        modifiers: { isCompact: 'required' },
+      },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(true);
+  });
+
+  it('rejects when a required boolean modifier is absent', () => {
+    const lobby = {
+      gameID: 'ffa-required-off',
+      publicGameType: 'ffa',
+      gameConfig: {
+        gameMode: 'Free For All',
+        maxPlayers: 25,
+        publicGameModifiers: {},
+      },
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'FFA',
+        teamCount: null,
+        minPlayers: 20,
+        maxPlayers: 30,
+        modifiers: { isCompact: 'required' },
+      },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(false);
+  });
+
+  it('matches when a required numeric modifier value matches the lobby', () => {
+    const lobby = {
+      gameID: 'ffa-required-gold-match',
+      publicGameType: 'ffa',
+      gameConfig: {
+        gameMode: 'Free For All',
+        maxPlayers: 25,
+        publicGameModifiers: { startingGold: 5000000 },
+      },
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'FFA',
+        teamCount: null,
+        minPlayers: 20,
+        maxPlayers: 30,
+        modifiers: {
+          startingGold: { 5000000: 'required' },
+        },
+      },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(true);
+  });
+
+  it('rejects when a required numeric modifier value does not match the lobby', () => {
+    const lobby = {
+      gameID: 'ffa-required-gold-mismatch',
+      publicGameType: 'ffa',
+      gameConfig: {
+        gameMode: 'Free For All',
+        maxPlayers: 25,
+        publicGameModifiers: { startingGold: 1000000 },
+      },
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'FFA',
+        teamCount: null,
+        minPlayers: 20,
+        maxPlayers: 30,
+        modifiers: {
+          startingGold: { 5000000: 'required' },
+        },
+      },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(false);
+  });
+
+  it('rejects when a required numeric modifier is absent from the lobby', () => {
+    const lobby = {
+      gameID: 'ffa-required-gold-missing',
+      publicGameType: 'ffa',
+      gameConfig: {
+        gameMode: 'Free For All',
+        maxPlayers: 25,
+        publicGameModifiers: {},
+      },
+    } as any;
+
+    const criteria = [
+      {
+        gameMode: 'FFA',
+        teamCount: null,
+        minPlayers: 20,
+        maxPlayers: 30,
+        modifiers: {
+          startingGold: { 5000000: 'required' },
+        },
+      },
+    ] as any;
+
+    expect(engine.matchesCriteria(lobby, criteria)).toBe(false);
   });
 });

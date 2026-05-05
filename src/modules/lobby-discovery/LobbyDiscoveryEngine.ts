@@ -115,12 +115,15 @@ export class LobbyDiscoveryEngine {
 
     for (const key of BOOLEAN_MODIFIER_KEYS) {
       const state = filters[key];
-      if (!state || state === 'allowed') {
+      if (!state || state === 'any') {
         continue;
       }
 
       const actual = Boolean(getLobbyModifierValue(lobby, key));
       if (state === 'blocked' && actual) {
+        return false;
+      }
+      if (state === 'required' && !actual) {
         return false;
       }
     }
@@ -160,6 +163,19 @@ export class LobbyDiscoveryEngine {
 
     if (numericActual !== null && blockedValues.includes(numericActual)) {
       return false;
+    }
+
+    const requiredValues = entries
+      .filter(([, state]) => state === 'required')
+      .map(([value]) => Number(value));
+
+    if (requiredValues.length > 0) {
+      if (numericActual === null) {
+        return false;
+      }
+      if (!requiredValues.includes(numericActual)) {
+        return false;
+      }
     }
 
     return true;

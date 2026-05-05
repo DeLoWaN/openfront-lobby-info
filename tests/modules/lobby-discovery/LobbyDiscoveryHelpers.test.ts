@@ -10,6 +10,7 @@ import {
   getLobbyQueueSource,
   getGameDetailsText,
   getBrowserNotificationContent,
+  formatElapsedSince,
 } from '@/modules/lobby-discovery/LobbyDiscoveryHelpers';
 
 describe('LobbyDiscoveryHelpers', () => {
@@ -77,17 +78,19 @@ describe('LobbyDiscoveryHelpers', () => {
     expect(normalized.isTeamTwoTimesMinEnabled).toBe(true);
   });
 
-  it('collapses legacy modifier states into the new allowed or blocked model', () => {
+  it('migrates legacy allowed/rejected modifier states to any/blocked, preserves required', () => {
     const criteria = sanitizeCriteria([
       {
         gameMode: 'FFA',
         minPlayers: 10,
         maxPlayers: 30,
         modifiers: {
-          isCompact: 'required',
+          isCompact: 'allowed',
           isCrowded: 'rejected',
+          isHardNations: 'required',
+          isPeaceTime: 'indifferent',
           startingGold: {
-            1000000: 'indifferent',
+            1000000: 'allowed',
             5000000: 'required',
             25000000: 'rejected',
           },
@@ -102,24 +105,40 @@ describe('LobbyDiscoveryHelpers', () => {
         minPlayers: 10,
         maxPlayers: 30,
         modifiers: {
-          isCompact: 'allowed',
-          isRandomSpawn: 'allowed',
+          isCompact: 'any',
+          isRandomSpawn: 'any',
           isCrowded: 'blocked',
-          isHardNations: 'allowed',
-          isAlliancesDisabled: 'allowed',
-          isPortsDisabled: 'allowed',
-          isNukesDisabled: 'allowed',
-          isSAMsDisabled: 'allowed',
-          isPeaceTime: 'allowed',
-          isWaterNukes: 'allowed',
+          isHardNations: 'required',
+          isAlliancesDisabled: 'any',
+          isPortsDisabled: 'any',
+          isNukesDisabled: 'any',
+          isSAMsDisabled: 'any',
+          isPeaceTime: 'any',
+          isWaterNukes: 'any',
           startingGold: {
-            1000000: 'allowed',
-            5000000: 'allowed',
+            1000000: 'any',
+            5000000: 'required',
             25000000: 'blocked',
           },
         },
       },
     ]);
+  });
+
+  it('treats unknown modifier values as any (defensive default)', () => {
+    const criteria = sanitizeCriteria([
+      {
+        gameMode: 'FFA',
+        minPlayers: 10,
+        maxPlayers: 30,
+        modifiers: {
+          isCompact: 'something-bogus' as any,
+          startingGold: { 5000000: undefined as any },
+        },
+      },
+    ]);
+
+    expect(criteria[0]?.modifiers?.isCompact).toBe('any');
   });
 
   it('detects Humans Vs Nations as a valid team config', () => {
@@ -208,6 +227,14 @@ describe('LobbyDiscoveryHelpers', () => {
       title: 'Europe • 4 teams • 8/team',
       body: '32 slots • Compact, Random, 5M, x2, No Alliances',
     });
+  });
+
+  it('formats elapsed time since a timestamp as Xm Ys', () => {
+    const now = 1_000_000_000_000;
+    expect(formatElapsedSince(now, now)).toBe('0m 0s');
+    expect(formatElapsedSince(now - 12_000, now)).toBe('0m 12s');
+    expect(formatElapsedSince(now - 75_000, now)).toBe('1m 15s');
+    expect(formatElapsedSince(now + 1000, now)).toBe('0m 0s');
   });
 
   it('builds compact browser notification content for ffa lobbies', () => {

@@ -15,7 +15,7 @@ import type {
   TeamCount,
 } from './LobbyDiscoveryTypes';
 
-const DEFAULT_MODIFIER_FILTER_STATE: ModifierFilterState = 'allowed';
+const DEFAULT_MODIFIER_FILTER_STATE: ModifierFilterState = 'any';
 
 export function normalizeGameMode(
   mode: string | null | undefined
@@ -316,8 +316,12 @@ function sanitizeModifierFilterState(value: unknown): ModifierFilterState {
     return 'blocked';
   }
 
-  if (value === 'allowed' || value === 'required' || value === 'indifferent') {
-    return 'allowed';
+  if (value === 'required') {
+    return 'required';
+  }
+
+  if (value === 'any' || value === 'allowed' || value === 'indifferent') {
+    return 'any';
   }
 
   return DEFAULT_MODIFIER_FILTER_STATE;
@@ -394,6 +398,11 @@ export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
   }
 
   return sanitized;
+}
+
+export function formatElapsedSince(timestampMs: number, now: number = Date.now()): string {
+  const elapsed = Math.max(0, Math.floor((now - timestampMs) / 1000));
+  return `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
 }
 
 export function normalizeSettings(
