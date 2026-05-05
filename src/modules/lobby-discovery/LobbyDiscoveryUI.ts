@@ -62,6 +62,10 @@ export class LobbyDiscoveryUI {
     this.processLobbies(lobbies);
   }
 
+  isSoundEnabled(): boolean {
+    return this.soundEnabled;
+  }
+
   private loadSettings(): void {
     const saved = GM_getValue<LobbyDiscoverySettings | null>(
       STORAGE_KEYS.lobbyDiscoverySettings,
