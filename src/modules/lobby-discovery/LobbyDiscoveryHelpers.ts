@@ -3,6 +3,7 @@
  * Pure functions with no side effects.
  */
 
+import { TEAM_MIN_PLAYERS_PER_TEAM } from '@/config/constants';
 import type { Lobby } from '@/types/game';
 import type {
   DiscoveryCriteria,
@@ -388,11 +389,27 @@ export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
       continue;
     }
 
+    let minPlayers = sanitizeNumber(candidate.minPlayers);
+    let maxPlayers = sanitizeNumber(candidate.maxPlayers);
+
+    if (gameMode === 'Team') {
+      if (typeof minPlayers === 'number' && minPlayers < TEAM_MIN_PLAYERS_PER_TEAM) {
+        minPlayers = TEAM_MIN_PLAYERS_PER_TEAM;
+      }
+      if (
+        typeof minPlayers === 'number' &&
+        typeof maxPlayers === 'number' &&
+        maxPlayers < minPlayers
+      ) {
+        maxPlayers = minPlayers;
+      }
+    }
+
     sanitized.push({
       gameMode,
       teamCount: gameMode === 'Team' ? parseTeamCount(candidate.teamCount ?? null) : null,
-      minPlayers: sanitizeNumber(candidate.minPlayers),
-      maxPlayers: sanitizeNumber(candidate.maxPlayers),
+      minPlayers,
+      maxPlayers,
       modifiers: sanitizeModifierFilters(candidate.modifiers),
     });
   }

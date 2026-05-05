@@ -313,4 +313,42 @@ describe('LobbyDiscoveryHelpers', () => {
       body: '25 slots • Crowded, No Ports',
     });
   });
+
+  describe('sanitizeCriteria — Team minPlayers floor', () => {
+    it('clamps Team minPlayers below 2 to 2', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Duos', minPlayers: 1, maxPlayers: 62 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(2);
+      expect(result[0]!.maxPlayers).toBe(62);
+    });
+
+    it('clamps Team minPlayers below 2, bumps maxPlayers if needed', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: null, minPlayers: 1, maxPlayers: 1 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(2);
+      expect(result[0]!.maxPlayers).toBe(2);
+    });
+
+    it('preserves Team minPlayers >= 2 untouched even if not on stops list', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Trios', minPlayers: 7, maxPlayers: 12 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(7);
+      expect(result[0]!.maxPlayers).toBe(12);
+    });
+
+    it('does not apply the per-team floor to FFA criteria', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'FFA', teamCount: null, minPlayers: 1, maxPlayers: 125 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(1);
+      expect(result[0]!.maxPlayers).toBe(125);
+    });
+  });
 });
