@@ -323,8 +323,8 @@ describe('RangeSlider — tick rendering', () => {
     const labels = document.querySelectorAll('#ticks .ld-tick-label');
     expect(ticks.length).toBe(stops.length);
     expect(labels.length).toBe(stops.length);
-    expect(labels[0].textContent).toBe('2');
-    expect(labels[labels.length - 1].textContent).toBe('62');
+    expect(labels[0]!.textContent).toBe('2');
+    expect(labels[labels.length - 1]!.textContent).toBe('62');
   });
 
   it('positions each tick at valueToPosition(stop) * 100%', () => {
@@ -341,9 +341,9 @@ describe('RangeSlider — tick rendering', () => {
       onChange: () => {},
     });
     const ticks = document.querySelectorAll<HTMLElement>('#ticks .ld-tick');
-    expect(ticks[0].style.left).toBe('0%');
-    expect(ticks[4].style.left).toBe('40%');  // value 6 → 0.4
-    expect(ticks[ticks.length - 1].style.left).toBe('100%');
+    expect(ticks[0]!.style.left).toBe('0%');
+    expect(ticks[4]!.style.left).toBe('40%');  // value 6 → 0.4
+    expect(ticks[ticks.length - 1]!.style.left).toBe('100%');
   });
 
   it('does not render ticks when ticksContainerId is omitted', () => {
