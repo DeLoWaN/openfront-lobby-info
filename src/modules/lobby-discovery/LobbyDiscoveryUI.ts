@@ -217,20 +217,30 @@ export class LobbyDiscoveryUI {
         return;
       }
 
-      const matchedSources = new Set<QueueSource>();
+      // OpenFront only renders games[source][0] per slot. Hidden lobbies in the
+      // same source aren't actionable: clicking the card joins the visible
+      // lobby. So pulsing or notifying for a hidden match is misleading — the
+      // user can't act on it. We restrict everything to the featured lobby.
+      const visibleSources = new Set<QueueSource>();
       const matchedKeys = new Set<string>();
       const newMatches: Lobby[] = [];
       let hasNewMatch = false;
 
       const debugEnabled = isDebugEnabled();
+      const seenSourcesForVisible = new Set<QueueSource>();
       for (const lobby of lobbies) {
         const source = getLobbyQueueSource(lobby);
         if (!source) continue;
         const matched = this.engine.matchesCriteria(lobby, this.criteriaList);
+        const isFeaturedForSource = !seenSourcesForVisible.has(source);
+        if (isFeaturedForSource) {
+          seenSourcesForVisible.add(source);
+        }
         if (debugEnabled) {
           console.log('[OF Discovery]', {
             lobbyId: lobby.gameID,
             source,
+            featured: isFeaturedForSource,
             mode: lobby.gameConfig?.gameMode,
             playerTeams: lobby.gameConfig?.playerTeams,
             modifiers: lobby.gameConfig?.publicGameModifiers,
@@ -242,16 +252,16 @@ export class LobbyDiscoveryUI {
             matched,
           });
         }
-        if (!matched) continue;
+        if (!matched || !isFeaturedForSource) continue;
 
-        matchedSources.add(source);
+        visibleSources.add(source);
         const notificationKey = this.getNotificationKey(lobby);
         matchedKeys.add(notificationKey);
         if (!this.seenLobbies.has(notificationKey)) hasNewMatch = true;
         if (!this.desktopNotifiedLobbies.has(notificationKey)) newMatches.push(lobby);
       }
 
-      this.updateQueueCardPulses(matchedSources);
+      this.updateQueueCardPulses(visibleSources);
       if (hasNewMatch) {
         this.lastMatchTime = Date.now();
         if (this.soundEnabled) SoundUtils.playGameFoundSound();

@@ -611,12 +611,48 @@ describe('LobbyDiscoveryUI', () => {
     expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(2);
   });
 
-  it('evaluates every lobby instead of only the first displayed lobby per source', () => {
+  it('ignores hidden lobby matches entirely — no pulse, no sound, no notification', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 30, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    // OpenFront only renders games[source][0]. Clicking the card joins the
+    // visible lobby — a hidden match isn't actionable, so we don't ping the
+    // user about it.
+    const lobbies = [
+      {
+        gameID: 'ffa-visible-too-small',
+        publicGameType: 'ffa',
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 25 },
+      },
+      {
+        gameID: 'ffa-hidden-match',
+        publicGameType: 'ffa',
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 40 },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      false
+    );
+    expect(BrowserNotificationUtils.show).not.toHaveBeenCalled();
+    expect(SoundUtils.playGameFoundSound).not.toHaveBeenCalled();
+  });
+
+  it('pulses the queue card when the featured (first) lobby matches', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 30, maxPlayers: null }],
       discoveryEnabled: true,
       soundEnabled: false,
-      desktopNotificationsEnabled: true,
+      desktopNotificationsEnabled: false,
       isTeamTwoTimesMinEnabled: false,
     });
 
@@ -624,20 +660,14 @@ describe('LobbyDiscoveryUI', () => {
 
     const lobbies = [
       {
-        gameID: 'ffa-too-small',
+        gameID: 'ffa-visible-match',
         publicGameType: 'ffa',
-        gameConfig: {
-          gameMode: 'Free For All',
-          maxPlayers: 25,
-        },
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 40 },
       },
       {
-        gameID: 'ffa-match',
+        gameID: 'ffa-hidden-too-small',
         publicGameType: 'ffa',
-        gameConfig: {
-          gameMode: 'Free For All',
-          maxPlayers: 40,
-        },
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 25 },
       },
     ] as any;
 
@@ -646,9 +676,6 @@ describe('LobbyDiscoveryUI', () => {
     expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
       true
     );
-    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(1);
-    const [notificationPayload] = vi.mocked(BrowserNotificationUtils.show).mock.calls[0] ?? [];
-    expect(notificationPayload?.tag).toContain('ffa-match');
   });
 
   it('cleanup clears queue card pulses without scheduling another sync tick', () => {
