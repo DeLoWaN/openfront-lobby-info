@@ -62,6 +62,7 @@ export class RangeSlider {
     this.maxInput.addEventListener('change', this.onMaxInputChange);
 
     this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
+    this.wireSteppers();
   }
 
   /** Public setter — used when min is auto-bumped from outside (e.g. team-count chips). */
@@ -150,5 +151,32 @@ export class RangeSlider {
     }
 
     if (opts.fireOnChange) this.cfg.onChange(nextMin, nextMax);
+  }
+
+  private wireSteppers(): void {
+    const root = document.getElementById(this.cfg.rootId);
+    if (!root) return;
+    const buttons = root.querySelectorAll<HTMLButtonElement>('.ld-step-btn');
+    buttons.forEach((btn) => {
+      const target = btn.dataset.target as 'min' | 'max' | undefined;
+      const action = btn.dataset.action as 'inc' | 'dec' | undefined;
+      if (!target || !action) return;
+      btn.addEventListener('click', () => {
+        const delta = action === 'inc' ? 1 : -1;
+        if (target === 'min') {
+          const next = clampToStops(
+            this.lastMin + delta,
+            [this.cfg.bounds.min, this.cfg.bounds.max]
+          );
+          this.applyValues(next, this.lastMax, { fireOnChange: true });
+        } else {
+          const next = clampToStops(
+            this.lastMax + delta,
+            [this.cfg.bounds.min, this.cfg.bounds.max]
+          );
+          this.applyValues(this.lastMin, next, { fireOnChange: true });
+        }
+      });
+    });
   }
 }

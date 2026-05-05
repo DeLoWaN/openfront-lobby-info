@@ -158,3 +158,65 @@ describe('RangeSlider — with stops (snap-on-drag)', () => {
     expect(minNum.value).toBe('2');  // unchanged from default
   });
 });
+
+describe('RangeSlider — stepper buttons', () => {
+  const stops = [2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 62];
+
+  beforeEach(() => {
+    setupDOM();
+    (document.getElementById('min-num') as HTMLInputElement).value = '5';
+    (document.getElementById('max-num') as HTMLInputElement).value = '20';
+  });
+
+  function build(onChange = vi.fn()) {
+    return new RangeSlider({
+      rootId: 'root',
+      minSliderId: 'min-pos',
+      maxSliderId: 'max-pos',
+      minInputId: 'min-num',
+      maxInputId: 'max-num',
+      fillId: 'fill',
+      bounds: { min: 2, max: 62 },
+      stops,
+      onChange,
+    });
+  }
+
+  function clickStep(target: 'min' | 'max', action: 'inc' | 'dec'): void {
+    const btn = document.querySelector(
+      `.ld-step-btn[data-action="${action}"][data-target="${target}"]`
+    ) as HTMLButtonElement;
+    btn.click();
+  }
+
+  it('+ button increments the value by 1', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    clickStep('min', 'inc');
+    expect(onChange).toHaveBeenCalledWith(6, 20);
+    expect((document.getElementById('min-num') as HTMLInputElement).value).toBe('6');
+  });
+
+  it('− button decrements the value by 1', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    clickStep('max', 'dec');
+    expect(onChange).toHaveBeenCalledWith(5, 19);
+  });
+
+  it('+ button clamps at bounds.max', () => {
+    (document.getElementById('max-num') as HTMLInputElement).value = '62';
+    const onChange = vi.fn();
+    build(onChange);
+    clickStep('max', 'inc');
+    expect((document.getElementById('max-num') as HTMLInputElement).value).toBe('62');
+  });
+
+  it('− button clamps at bounds.min', () => {
+    (document.getElementById('min-num') as HTMLInputElement).value = '2';
+    const onChange = vi.fn();
+    build(onChange);
+    clickStep('min', 'dec');
+    expect((document.getElementById('min-num') as HTMLInputElement).value).toBe('2');
+  });
+});
