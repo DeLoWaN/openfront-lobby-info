@@ -22,3 +22,10 @@ declare function GM_setValue<T>(key: string, value: T): void;
  * @param css - CSS string to inject
  */
 declare function GM_addStyle(css: string): void;
+
+/**
+ * The unwrapped page window (bypasses the userscript sandbox).
+ * Required so values set in the page's DevTools console (e.g. `window.__OF_DEBUG_DISCOVERY = true`)
+ * are visible to the userscript at runtime.
+ */
+declare const unsafeWindow: typeof globalThis & Record<string, unknown>;

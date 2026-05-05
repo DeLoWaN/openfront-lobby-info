@@ -62,6 +62,27 @@ const ALL_TEAM_IDS: string[] = [
   ...TEAM_COUNT_IDS.map(([id]) => id),
 ];
 
+function isDebugEnabled(): boolean {
+  try {
+    if (typeof unsafeWindow !== 'undefined' && unsafeWindow.__OF_DEBUG_DISCOVERY === true) {
+      return true;
+    }
+  } catch {
+    // unsafeWindow not granted — fall through
+  }
+  if ((globalThis as { __OF_DEBUG_DISCOVERY?: boolean }).__OF_DEBUG_DISCOVERY === true) {
+    return true;
+  }
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('__OF_DEBUG_DISCOVERY') === 'true') {
+      return true;
+    }
+  } catch {
+    // localStorage may throw in privacy modes — fall through
+  }
+  return false;
+}
+
 const ICON_CHECK = `<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>`;
 const ICON_CROSS = `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
 const ICON_SOUND = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a9 9 0 010 14"/></svg>`;
@@ -201,12 +222,13 @@ export class LobbyDiscoveryUI {
       const newMatches: Lobby[] = [];
       let hasNewMatch = false;
 
+      const debugEnabled = isDebugEnabled();
       for (const lobby of lobbies) {
         const source = getLobbyQueueSource(lobby);
         if (!source) continue;
         const matched = this.engine.matchesCriteria(lobby, this.criteriaList);
-        if ((globalThis as { __OF_DEBUG_DISCOVERY?: boolean }).__OF_DEBUG_DISCOVERY === true) {
-          console.debug('[OF Discovery]', {
+        if (debugEnabled) {
+          console.log('[OF Discovery]', {
             lobbyId: lobby.gameID,
             source,
             mode: lobby.gameConfig?.gameMode,

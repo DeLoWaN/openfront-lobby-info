@@ -24,6 +24,7 @@ const userscriptHeader = `// ==UserScript==
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_addStyle
+// @grant        unsafeWindow
 // @license      UNLICENSED
 // ==/UserScript==
 `;
