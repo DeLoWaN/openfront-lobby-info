@@ -959,7 +959,7 @@ export class LobbyDiscoveryUI {
                 <span class="dot"></span>
                 <span class="title">FFA · Lobby capacity</span>
               </div>
-              <div class="ld-slider-row">
+              <div class="ld-slider-row" id="discovery-ffa-slider-row">
                 <div class="ld-slider-label">
                   <span>Players</span>
                   <span class="val">
@@ -1008,7 +1008,7 @@ export class LobbyDiscoveryUI {
                 <button type="button" id="discovery-team-select-all" class="ld-chip">All</button>
                 <button type="button" id="discovery-team-deselect-all" class="ld-chip">None</button>
               </div>
-              <div class="ld-slider-row">
+              <div class="ld-slider-row" id="discovery-team-slider-row">
                 <div class="ld-slider-label">
                   <span>Players per team</span>
                   <span class="val">
@@ -1104,7 +1104,8 @@ export class LobbyDiscoveryUI {
     this.loadUIFromSettings();
 
     this.ffaSlider = new RangeSlider({
-      rootId: 'discovery-ffa-range-root',
+      containerId: 'discovery-ffa-slider-row',
+      rangeRootId: 'discovery-ffa-range-root',
       minSliderId: 'discovery-ffa-min-slider',
       maxSliderId: 'discovery-ffa-max-slider',
       minInputId: 'discovery-ffa-min',
@@ -1115,7 +1116,8 @@ export class LobbyDiscoveryUI {
     });
 
     this.teamSlider = new RangeSlider({
-      rootId: 'discovery-team-range-root',
+      containerId: 'discovery-team-slider-row',
+      rangeRootId: 'discovery-team-range-root',
       minSliderId: 'discovery-team-min-slider',
       maxSliderId: 'discovery-team-max-slider',
       minInputId: 'discovery-team-min',

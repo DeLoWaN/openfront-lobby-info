@@ -6,12 +6,13 @@ import {
 } from '@/modules/lobby-discovery/RangeSliderHelpers';
 
 export interface RangeSliderConfig {
-  rootId: string;
-  minSliderId: string;  // <input type="range"> 0..1000 for min position
-  maxSliderId: string;  // <input type="range"> 0..1000 for max position
-  minInputId: string;   // <input type="number"> for min value
-  maxInputId: string;   // <input type="number"> for max value
-  fillId: string;       // <div> whose --lo / --hi CSS vars draw the fill
+  containerId: string;     // <div class="ld-slider-row"> outer container; scope for stepper buttons
+  rangeRootId: string;     // <div class="ld-range"> element receiving --lo/--hi CSS vars
+  minSliderId: string;     // <input type="range"> 0..1000 for min position
+  maxSliderId: string;     // <input type="range"> 0..1000 for max position
+  minInputId: string;      // <input type="number"> for min value
+  maxInputId: string;      // <input type="number"> for max value
+  fillId: string;          // <div> whose --lo / --hi CSS vars draw the fill
   ticksContainerId?: string;
   bounds: { min: number; max: number };
   stops?: readonly number[];
@@ -27,6 +28,7 @@ export class RangeSlider {
   private readonly minInput: HTMLInputElement;
   private readonly maxInput: HTMLInputElement;
   private readonly rangeRoot: HTMLElement | null;
+  private readonly container: HTMLElement | null;
   private readonly stops: readonly number[];
   private readonly cfg: RangeSliderConfig;
   private lastMin: number;
@@ -39,10 +41,11 @@ export class RangeSlider {
     this.maxSlider = document.getElementById(cfg.maxSliderId) as HTMLInputElement;
     this.minInput = document.getElementById(cfg.minInputId) as HTMLInputElement;
     this.maxInput = document.getElementById(cfg.maxInputId) as HTMLInputElement;
-    this.rangeRoot = document.getElementById(cfg.rootId);
+    this.rangeRoot = document.getElementById(cfg.rangeRootId);
+    this.container = document.getElementById(cfg.containerId);
 
     if (!this.minSlider || !this.maxSlider || !this.minInput || !this.maxInput) {
-      throw new Error(`RangeSlider: missing required element in ${cfg.rootId}`);
+      throw new Error(`RangeSlider: missing required element in ${cfg.rangeRootId}`);
     }
 
     this.minSlider.min = '0';
@@ -72,9 +75,8 @@ export class RangeSlider {
     this.maxSlider.classList.toggle('is-max-locked', locked);
     this.maxInput.disabled = locked;
 
-    const root = document.getElementById(this.cfg.rootId);
-    if (root) {
-      root
+    if (this.container) {
+      this.container
         .querySelectorAll<HTMLButtonElement>('.ld-step-btn[data-target="max"]')
         .forEach((btn) => { btn.disabled = locked; });
     }
@@ -203,9 +205,8 @@ export class RangeSlider {
   }
 
   private wireSteppers(): void {
-    const root = document.getElementById(this.cfg.rootId);
-    if (!root) return;
-    const buttons = root.querySelectorAll<HTMLButtonElement>('.ld-step-btn');
+    if (!this.container) return;
+    const buttons = this.container.querySelectorAll<HTMLButtonElement>('.ld-step-btn');
     buttons.forEach((btn) => {
       const target = btn.dataset.target as 'min' | 'max' | undefined;
       const action = btn.dataset.action as 'inc' | 'dec' | undefined;

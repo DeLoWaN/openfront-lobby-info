@@ -5,26 +5,29 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RangeSlider } from '@/modules/lobby-discovery/RangeSlider';
 
 /**
- * The `.ld-range` element IS the rootId element — matching the production
- * markup where `<div class="ld-range" id="discovery-team-range-root">` is the
- * root.  Steppers and ticks live inside it so applyLockState / wireSteppers
- * can query them via rootId.
+ * The fixture mirrors production markup: steppers live inside `.ld-slider-label`
+ * (scoped by `containerId`) and range inputs live inside `.ld-range` (scoped by
+ * `rangeRootId`). The outer `.ld-slider-row` is the container.
  */
 function setupDOM(): void {
   document.body.innerHTML = `
-    <div id="root" class="ld-range">
-      <div class="track"><div class="track-fill" id="fill"></div></div>
-      <input type="range" id="min-pos" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
-      <input type="range" id="max-pos" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
-      <div class="ld-stepper" data-role="min">
-        <button type="button" class="ld-step-btn" data-action="dec" data-target="min">−</button>
-        <input type="number" id="min-num" value="1">
-        <button type="button" class="ld-step-btn" data-action="inc" data-target="min">+</button>
+    <div id="container" class="ld-slider-row">
+      <div class="ld-slider-label">
+        <div class="ld-stepper" data-role="min">
+          <button type="button" class="ld-step-btn" data-action="dec" data-target="min">−</button>
+          <input type="number" id="min-num" value="1">
+          <button type="button" class="ld-step-btn" data-action="inc" data-target="min">+</button>
+        </div>
+        <div class="ld-stepper" data-role="max">
+          <button type="button" class="ld-step-btn" data-action="dec" data-target="max">−</button>
+          <input type="number" id="max-num" value="125">
+          <button type="button" class="ld-step-btn" data-action="inc" data-target="max">+</button>
+        </div>
       </div>
-      <div class="ld-stepper" data-role="max">
-        <button type="button" class="ld-step-btn" data-action="dec" data-target="max">−</button>
-        <input type="number" id="max-num" value="125">
-        <button type="button" class="ld-step-btn" data-action="inc" data-target="max">+</button>
+      <div id="range-root" class="ld-range">
+        <div class="track"><div class="track-fill" id="fill"></div></div>
+        <input type="range" id="min-pos" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+        <input type="range" id="max-pos" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
       </div>
       <div id="ticks"></div>
     </div>
@@ -37,7 +40,8 @@ describe('RangeSlider — linear fallback (no stops)', () => {
   it('initialises number inputs from config bounds when defaults are out of range', () => {
     const onChange = vi.fn();
     new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -55,7 +59,8 @@ describe('RangeSlider — linear fallback (no stops)', () => {
   it('drag on min position fires onChange with new (min, max)', () => {
     const onChange = vi.fn();
     new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -76,7 +81,8 @@ describe('RangeSlider — linear fallback (no stops)', () => {
   it('drag past max bumps min back so min <= max', () => {
     const onChange = vi.fn();
     new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -108,7 +114,8 @@ describe('RangeSlider — with stops (snap-on-drag)', () => {
 
   function build(onChange = vi.fn(), lockFn?: () => boolean) {
     return new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -217,7 +224,8 @@ describe('RangeSlider — stepper buttons', () => {
 
   function build(onChange = vi.fn()) {
     return new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -282,7 +290,8 @@ describe('RangeSlider — lock-max-to-2×', () => {
   function build() {
     const onChange = vi.fn();
     const slider = new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -355,7 +364,8 @@ describe('RangeSlider — tick rendering', () => {
 
   it('renders one tick + label per stop in the ticks container', () => {
     new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -376,7 +386,8 @@ describe('RangeSlider — tick rendering', () => {
 
   it('positions each tick at valueToPosition(stop) * 100%', () => {
     new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -395,7 +406,8 @@ describe('RangeSlider — tick rendering', () => {
 
   it('does not render ticks when ticksContainerId is omitted', () => {
     new RangeSlider({
-      rootId: 'root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
@@ -411,16 +423,21 @@ describe('RangeSlider — tick rendering', () => {
 describe('RangeSlider — CSS custom properties on rangeRoot', () => {
   it('sets --lo / --hi CSS vars on the range root after construction', () => {
     document.body.innerHTML = `
-      <div id="range-root" class="ld-range">
-        <div class="track"><div class="track-fill" id="fill"></div></div>
-        <input type="range" id="min-pos" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
-        <input type="range" id="max-pos" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
+      <div id="container" class="ld-slider-row">
+        <div class="ld-slider-label">
+          <input type="number" id="min-num" value="2">
+          <input type="number" id="max-num" value="62">
+        </div>
+        <div id="range-root" class="ld-range">
+          <div class="track"><div class="track-fill" id="fill"></div></div>
+          <input type="range" id="min-pos" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+          <input type="range" id="max-pos" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
+        </div>
       </div>
-      <input type="number" id="min-num" value="2">
-      <input type="number" id="max-num" value="62">
     `;
     new RangeSlider({
-      rootId: 'range-root',
+      containerId: 'container',
+      rangeRootId: 'range-root',
       minSliderId: 'min-pos',
       maxSliderId: 'max-pos',
       minInputId: 'min-num',
