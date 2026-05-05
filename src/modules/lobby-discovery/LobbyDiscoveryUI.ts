@@ -475,6 +475,36 @@ export class LobbyDiscoveryUI {
     return values;
   }
 
+  private applyAutoTeamMin(): void {
+    const presets: Array<[string, number]> = [
+      ['discovery-team-duos', 2],
+      ['discovery-team-trios', 3],
+      ['discovery-team-quads', 4],
+    ];
+
+    const checkedValues = presets
+      .filter(([id]) => (document.getElementById(id) as HTMLInputElement | null)?.checked)
+      .map(([, value]) => value);
+
+    if (checkedValues.length === 0) return;
+
+    const newMin = Math.min(...checkedValues);
+    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement | null;
+    if (!minSlider) return;
+
+    minSlider.value = String(newMin);
+    this.updateSliderRange(
+      'discovery-team-min-slider',
+      'discovery-team-max-slider',
+      'discovery-team-min',
+      'discovery-team-max',
+      'discovery-team-range-fill',
+      'discovery-team-min-value',
+      'discovery-team-max-value',
+      true
+    );
+  }
+
   private setAllTeamCounts(checked: boolean): void {
     const ids = [
       'discovery-team-duos',
@@ -903,6 +933,13 @@ export class LobbyDiscoveryUI {
         if (id === 'discovery-desktop-toggle' && element instanceof HTMLInputElement) {
           void this.handleDesktopNotificationToggleChange(element);
           return;
+        }
+        if (
+          id === 'discovery-team-duos' ||
+          id === 'discovery-team-trios' ||
+          id === 'discovery-team-quads'
+        ) {
+          this.applyAutoTeamMin();
         }
         this.refreshCriteria();
       });

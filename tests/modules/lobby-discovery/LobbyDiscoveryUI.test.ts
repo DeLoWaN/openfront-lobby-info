@@ -759,4 +759,84 @@ describe('LobbyDiscoveryUI', () => {
     expect(document.getElementById('modifier-isWaterNukes-blocked')).toBeTruthy();
   });
 
+  describe('auto-set team min on Duos/Trios/Quads toggle', () => {
+    function setupTeamUI(): void {
+      store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+        criteria: [],
+        discoveryEnabled: true,
+        soundEnabled: true,
+        isTeamTwoTimesMinEnabled: false,
+      });
+
+      ui = new LobbyDiscoveryUI();
+
+      const teamCheckbox = document.getElementById('discovery-team') as HTMLInputElement;
+      teamCheckbox.checked = true;
+      teamCheckbox.dispatchEvent(new Event('change'));
+    }
+
+    function toggle(id: string, checked: boolean): void {
+      const checkbox = document.getElementById(id) as HTMLInputElement;
+      checkbox.checked = checked;
+      checkbox.dispatchEvent(new Event('change'));
+    }
+
+    it('sets min slider to 2 when Duos is checked', () => {
+      setupTeamUI();
+      toggle('discovery-team-duos', true);
+
+      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+      const minValue = document.getElementById('discovery-team-min-value') as HTMLElement;
+      expect(minSlider.value).toBe('2');
+      expect(minValue.textContent).toBe('2');
+    });
+
+    it('sets min slider to 3 when Trios is checked', () => {
+      setupTeamUI();
+      toggle('discovery-team-trios', true);
+
+      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+      expect(minSlider.value).toBe('3');
+    });
+
+    it('sets min slider to 4 when Quads is checked', () => {
+      setupTeamUI();
+      toggle('discovery-team-quads', true);
+
+      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+      expect(minSlider.value).toBe('4');
+    });
+
+    it('drops min slider to the lowest selected per-team value when multiple presets are checked', () => {
+      setupTeamUI();
+      toggle('discovery-team-trios', true);
+      toggle('discovery-team-duos', true);
+
+      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+      expect(minSlider.value).toBe('2');
+    });
+
+    it('does not touch the min slider when only HvN or numeric team-count checkboxes change', () => {
+      setupTeamUI();
+
+      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+      minSlider.value = '5';
+      minSlider.dispatchEvent(new Event('input'));
+
+      toggle('discovery-team-hvn', true);
+      toggle('discovery-team-3', true);
+
+      expect(minSlider.value).toBe('5');
+    });
+
+    it('leaves the min slider where it last landed after a preset is unchecked', () => {
+      setupTeamUI();
+      toggle('discovery-team-trios', true);
+      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+      expect(minSlider.value).toBe('3');
+
+      toggle('discovery-team-trios', false);
+      expect(minSlider.value).toBe('3');
+    });
+  });
 });
