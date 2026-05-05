@@ -26,7 +26,6 @@ export class RangeSlider {
   private readonly maxSlider: HTMLInputElement;
   private readonly minInput: HTMLInputElement;
   private readonly maxInput: HTMLInputElement;
-  private readonly fill: HTMLElement | null;
   private readonly rangeRoot: HTMLElement | null;
   private readonly stops: readonly number[];
   private readonly cfg: RangeSliderConfig;
@@ -40,8 +39,7 @@ export class RangeSlider {
     this.maxSlider = document.getElementById(cfg.maxSliderId) as HTMLInputElement;
     this.minInput = document.getElementById(cfg.minInputId) as HTMLInputElement;
     this.maxInput = document.getElementById(cfg.maxInputId) as HTMLInputElement;
-    this.fill = document.getElementById(cfg.fillId);
-    this.rangeRoot = this.fill?.parentElement?.parentElement ?? null;
+    this.rangeRoot = document.getElementById(cfg.rootId);
 
     if (!this.minSlider || !this.maxSlider || !this.minInput || !this.maxInput) {
       throw new Error(`RangeSlider: missing required element in ${cfg.rootId}`);
@@ -61,7 +59,7 @@ export class RangeSlider {
     this.minInput.addEventListener('change', this.onMinInputChange);
     this.maxInput.addEventListener('change', this.onMaxInputChange);
 
-    this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
+    this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false, changed: 'both' });
     this.renderTicks();
     this.wireSteppers();
     this.applyLockState();
@@ -83,18 +81,19 @@ export class RangeSlider {
 
     if (locked) {
       // Re-apply the 2× constraint so visual state matches.
-      this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
+      // Min is the source of truth; max follows from it.
+      this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false, changed: 'min' });
     }
   }
 
   /** Public setter — used when min is auto-bumped from outside (e.g. team-count chips). */
   setMin(value: number): void {
-    this.applyValues(value, this.lastMax, { fireOnChange: true });
+    this.applyValues(value, this.lastMax, { fireOnChange: true, changed: 'min' });
   }
 
   /** Public setter — used by reset / load. */
   setRange(min: number, max: number): void {
-    this.applyValues(min, max, { fireOnChange: false });
+    this.applyValues(min, max, { fireOnChange: false, changed: 'both' });
   }
 
   private readInputClamped(el: HTMLInputElement, fallback: number): number {
@@ -107,40 +106,40 @@ export class RangeSlider {
     const position = parseInt(this.minSlider.value, 10) / POSITION_RANGE;
     let value = positionToValue(position, this.stops);
     if (this.cfg.stops) value = nearestStop(value, this.stops);
-    this.applyValues(value, this.lastMax, { fireOnChange: true });
+    this.applyValues(value, this.lastMax, { fireOnChange: true, changed: 'min' });
   };
 
   private onMaxSliderInput = (): void => {
     const position = parseInt(this.maxSlider.value, 10) / POSITION_RANGE;
     let value = positionToValue(position, this.stops);
     if (this.cfg.stops) value = nearestStop(value, this.stops);
-    this.applyValues(this.lastMin, value, { fireOnChange: true });
+    this.applyValues(this.lastMin, value, { fireOnChange: true, changed: 'max' });
   };
 
   private onMinInputChange = (): void => {
     const parsed = parseInt(this.minInput.value, 10);
     if (!Number.isFinite(parsed)) {
-      this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
+      this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false, changed: 'both' });
       return;
     }
     const clamped = clampToStops(parsed, [this.cfg.bounds.min, this.cfg.bounds.max]);
-    this.applyValues(clamped, this.lastMax, { fireOnChange: true });
+    this.applyValues(clamped, this.lastMax, { fireOnChange: true, changed: 'min' });
   };
 
   private onMaxInputChange = (): void => {
     const parsed = parseInt(this.maxInput.value, 10);
     if (!Number.isFinite(parsed)) {
-      this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
+      this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false, changed: 'both' });
       return;
     }
     const clamped = clampToStops(parsed, [this.cfg.bounds.min, this.cfg.bounds.max]);
-    this.applyValues(this.lastMin, clamped, { fireOnChange: true });
+    this.applyValues(this.lastMin, clamped, { fireOnChange: true, changed: 'max' });
   };
 
   private applyValues(
     min: number,
     max: number,
-    opts: { fireOnChange: boolean }
+    opts: { fireOnChange: boolean; changed?: 'min' | 'max' | 'both' }
   ): void {
     let nextMin = min;
     let nextMax = max;
@@ -151,10 +150,18 @@ export class RangeSlider {
     }
 
     if (nextMin > nextMax) {
-      // Whichever was just changed wins; bump the other to match.
-      // Heuristic: if min increased above max, bump max; otherwise bump min.
-      if (nextMin > this.lastMin) nextMax = nextMin;
-      else nextMin = nextMax;
+      const side = opts.changed ?? 'both';
+      if (side === 'min') {
+        // Caller raised min; max follows.
+        nextMax = nextMin;
+      } else if (side === 'max') {
+        // Caller lowered max; min follows.
+        nextMin = nextMax;
+      } else {
+        // Both changed simultaneously — normalize symmetrically.
+        nextMin = Math.min(min, max);
+        nextMax = Math.max(min, max);
+      }
     }
 
     this.lastMin = nextMin;
@@ -210,13 +217,13 @@ export class RangeSlider {
             this.lastMin + delta,
             [this.cfg.bounds.min, this.cfg.bounds.max]
           );
-          this.applyValues(next, this.lastMax, { fireOnChange: true });
+          this.applyValues(next, this.lastMax, { fireOnChange: true, changed: 'min' });
         } else {
           const next = clampToStops(
             this.lastMax + delta,
             [this.cfg.bounds.min, this.cfg.bounds.max]
           );
-          this.applyValues(this.lastMin, next, { fireOnChange: true });
+          this.applyValues(this.lastMin, next, { fireOnChange: true, changed: 'max' });
         }
       });
     });

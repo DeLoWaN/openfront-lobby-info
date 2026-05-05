@@ -4,14 +4,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RangeSlider } from '@/modules/lobby-discovery/RangeSlider';
 
+/**
+ * The `.ld-range` element IS the rootId element — matching the production
+ * markup where `<div class="ld-range" id="discovery-team-range-root">` is the
+ * root.  Steppers and ticks live inside it so applyLockState / wireSteppers
+ * can query them via rootId.
+ */
 function setupDOM(): void {
   document.body.innerHTML = `
-    <div id="root">
-      <div class="ld-range">
-        <div class="track"><div class="track-fill" id="fill"></div></div>
-        <input type="range" id="min-pos" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
-        <input type="range" id="max-pos" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
-      </div>
+    <div id="root" class="ld-range">
+      <div class="track"><div class="track-fill" id="fill"></div></div>
+      <input type="range" id="min-pos" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+      <input type="range" id="max-pos" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
       <div class="ld-stepper" data-role="min">
         <button type="button" class="ld-step-btn" data-action="dec" data-target="min">−</button>
         <input type="number" id="min-num" value="1">
@@ -156,6 +160,49 @@ describe('RangeSlider — with stops (snap-on-drag)', () => {
     minNum.value = '';
     minNum.dispatchEvent(new Event('change'));
     expect(minNum.value).toBe('2');  // unchanged from default
+  });
+
+  it('dragging min up past max bumps max to match min', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    // Set max to 5 first, then drag min past it.
+    const maxNum = document.getElementById('max-num') as HTMLInputElement;
+    maxNum.value = '5';
+    maxNum.dispatchEvent(new Event('change'));
+    // Drag min slider to position that maps to stop 8 (> 5).
+    const minPos = document.getElementById('min-pos') as HTMLInputElement;
+    minPos.value = '500';  // maps to stop 8
+    minPos.dispatchEvent(new Event('input'));
+    const [min, max] = onChange.mock.calls.at(-1)!;
+    expect(min).toBeLessThanOrEqual(max);
+    expect(min).toBe(max);  // max was bumped up to meet min
+  });
+
+  it('dragging max down past min bumps min to match max', () => {
+    const onChange = vi.fn();
+    build(onChange);
+    // Set min to 20 first, then drag max below it.
+    const minNum = document.getElementById('min-num') as HTMLInputElement;
+    minNum.value = '20';
+    minNum.dispatchEvent(new Event('change'));
+    // Drag max slider to position that maps to stop 6 (< 20).
+    const maxPos = document.getElementById('max-pos') as HTMLInputElement;
+    maxPos.value = '400';  // maps to stop 6
+    maxPos.dispatchEvent(new Event('input'));
+    const [min, max] = onChange.mock.calls.at(-1)!;
+    expect(min).toBeLessThanOrEqual(max);
+    expect(min).toBe(max);  // min was bumped down to meet max
+  });
+
+  it('setMin lowering min below current max sets min correctly', () => {
+    const onChange = vi.fn();
+    const slider = build(onChange);
+    // Force lastMin/lastMax to a state where min == max via setRange.
+    slider.setRange(8, 8);
+    // Now lower min via setMin — should respect the new value, not snap to lastMin.
+    slider.setMin(3);
+    const minNum = document.getElementById('min-num') as HTMLInputElement;
+    expect(minNum.value).toBe('3');
   });
 });
 
@@ -358,5 +405,33 @@ describe('RangeSlider — tick rendering', () => {
       onChange: () => {},
     });
     expect(document.querySelectorAll('#ticks .ld-tick').length).toBe(0);
+  });
+});
+
+describe('RangeSlider — CSS custom properties on rangeRoot', () => {
+  it('sets --lo / --hi CSS vars on the range root after construction', () => {
+    document.body.innerHTML = `
+      <div id="range-root" class="ld-range">
+        <div class="track"><div class="track-fill" id="fill"></div></div>
+        <input type="range" id="min-pos" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+        <input type="range" id="max-pos" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
+      </div>
+      <input type="number" id="min-num" value="2">
+      <input type="number" id="max-num" value="62">
+    `;
+    new RangeSlider({
+      rootId: 'range-root',
+      minSliderId: 'min-pos',
+      maxSliderId: 'max-pos',
+      minInputId: 'min-num',
+      maxInputId: 'max-num',
+      fillId: 'fill',
+      bounds: { min: 2, max: 62 },
+      stops: [2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 62],
+      onChange: () => {},
+    });
+    const root = document.getElementById('range-root') as HTMLElement;
+    expect(root.style.getPropertyValue('--lo')).toBe('0%');
+    expect(root.style.getPropertyValue('--hi')).toBe('100%');
   });
 });
