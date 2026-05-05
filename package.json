@@ -20,14 +20,10 @@
   ],
   "author": "DeLoVaN + SyntaxMenace + DeepSeek + Claude",
   "license": "UNLICENSED",
-  "dependencies": {
-    "seedrandom": "^3.0.5"
-  },
   "devDependencies": {
     "@types/chai": "^5.2.3",
     "@types/greasemonkey": "^4.0.7",
     "@types/node": "^20.10.6",
-    "@types/seedrandom": "^3.0.8",
     "@vitest/ui": "^1.1.0",
     "esbuild": "^0.19.11",
     "jsdom": "^27.4.0",

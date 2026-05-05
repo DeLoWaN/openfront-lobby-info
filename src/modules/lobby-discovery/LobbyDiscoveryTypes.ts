@@ -41,17 +41,3 @@ export interface LobbyDiscoverySettings {
   isTeamTwoTimesMinEnabled: boolean;
   isTeamThreeTimesMinEnabled?: boolean;
 }
-
-export interface LegacyAutoJoinSettings {
-  criteria?: Array<{
-    gameMode?: string | null;
-    teamCount?: string | number | null;
-    minPlayers?: number | null;
-    maxPlayers?: number | null;
-    modifiers?: ModifierFilters | null;
-  }>;
-  autoJoinEnabled?: boolean;
-  soundEnabled?: boolean;
-  isTeamThreeTimesMinEnabled?: boolean;
-  isTeamTwoTimesMinEnabled?: boolean;
-}

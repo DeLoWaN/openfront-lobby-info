@@ -7,7 +7,6 @@ import type { Lobby } from '@/types/game';
 import type {
   DiscoveryCriteria,
   DiscoveryGameMode,
-  LegacyAutoJoinSettings,
   LobbyDiscoverySettings,
   ModifierFilters,
   ModifierFilterState,
@@ -393,36 +392,21 @@ export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
   return sanitized;
 }
 
-export function migrateLegacySettings(
-  legacy: LegacyAutoJoinSettings | null | undefined,
+export function normalizeSettings(
   current: LobbyDiscoverySettings | null | undefined
 ): LobbyDiscoverySettings {
-  if (current) {
-    return {
-      criteria: sanitizeCriteria(current.criteria),
-      discoveryEnabled:
-        typeof current.discoveryEnabled === 'boolean' ? current.discoveryEnabled : true,
-      soundEnabled: typeof current.soundEnabled === 'boolean' ? current.soundEnabled : true,
-      desktopNotificationsEnabled:
-        typeof current.desktopNotificationsEnabled === 'boolean'
-          ? current.desktopNotificationsEnabled
-          : false,
-      isTeamTwoTimesMinEnabled:
-        typeof current.isTeamTwoTimesMinEnabled === 'boolean'
-          ? current.isTeamTwoTimesMinEnabled
-          : !!current.isTeamThreeTimesMinEnabled,
-    };
-  }
-
   return {
-    criteria: sanitizeCriteria(legacy?.criteria),
+    criteria: sanitizeCriteria(current?.criteria),
     discoveryEnabled:
-      typeof legacy?.autoJoinEnabled === 'boolean' ? legacy.autoJoinEnabled : true,
-    soundEnabled: typeof legacy?.soundEnabled === 'boolean' ? legacy.soundEnabled : true,
-    desktopNotificationsEnabled: false,
+      typeof current?.discoveryEnabled === 'boolean' ? current.discoveryEnabled : true,
+    soundEnabled: typeof current?.soundEnabled === 'boolean' ? current.soundEnabled : true,
+    desktopNotificationsEnabled:
+      typeof current?.desktopNotificationsEnabled === 'boolean'
+        ? current.desktopNotificationsEnabled
+        : false,
     isTeamTwoTimesMinEnabled:
-      typeof legacy?.isTeamTwoTimesMinEnabled === 'boolean'
-        ? legacy.isTeamTwoTimesMinEnabled
-        : !!legacy?.isTeamThreeTimesMinEnabled,
+      typeof current?.isTeamTwoTimesMinEnabled === 'boolean'
+        ? current.isTeamTwoTimesMinEnabled
+        : !!current?.isTeamThreeTimesMinEnabled,
   };
 }

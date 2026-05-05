@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   sanitizeCriteria,
-  migrateLegacySettings,
+  normalizeSettings,
   getLobbyTeamConfig,
   getLobbyGameMode,
   getLobbyCapacity,
@@ -40,46 +40,20 @@ describe('LobbyDiscoveryHelpers', () => {
     ]);
   });
 
-  it('migrates legacy settings to notify-only discovery settings', () => {
-    const migrated = migrateLegacySettings(
-      {
-        autoJoinEnabled: false,
-        soundEnabled: false,
-        isTeamThreeTimesMinEnabled: true,
-        criteria: [
-          { gameMode: 'FFA', minPlayers: 10, maxPlayers: 30 },
-          { gameMode: 'Team', teamCount: 'Quads', minPlayers: 2, maxPlayers: 4 },
-        ],
-      },
-      null
-    );
+  it('returns defaults when no settings are persisted', () => {
+    const normalized = normalizeSettings(null);
 
-    expect(migrated).toEqual({
-      criteria: [
-        {
-          gameMode: 'FFA',
-          teamCount: null,
-          minPlayers: 10,
-          maxPlayers: 30,
-          modifiers: undefined,
-        },
-        {
-          gameMode: 'Team',
-          teamCount: 'Quads',
-          minPlayers: 2,
-          maxPlayers: 4,
-          modifiers: undefined,
-        },
-      ],
-      discoveryEnabled: false,
-      soundEnabled: false,
+    expect(normalized).toEqual({
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
       desktopNotificationsEnabled: false,
-      isTeamTwoTimesMinEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
     });
   });
 
-  it('preserves persisted desktop notification preference when current settings exist', () => {
-    const migrated = migrateLegacySettings(null, {
+  it('preserves persisted settings on load', () => {
+    const normalized = normalizeSettings({
       criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 5, maxPlayers: 25 }],
       discoveryEnabled: true,
       soundEnabled: true,
@@ -87,7 +61,20 @@ describe('LobbyDiscoveryHelpers', () => {
       isTeamTwoTimesMinEnabled: false,
     });
 
-    expect(migrated.desktopNotificationsEnabled).toBe(true);
+    expect(normalized.desktopNotificationsEnabled).toBe(true);
+    expect(normalized.criteria).toHaveLength(1);
+  });
+
+  it('upgrades the legacy isTeamThreeTimesMinEnabled flag when isTeamTwoTimesMinEnabled is absent', () => {
+    const normalized = normalizeSettings({
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: false,
+      isTeamThreeTimesMinEnabled: true,
+    } as any);
+
+    expect(normalized.isTeamTwoTimesMinEnabled).toBe(true);
   });
 
   it('collapses legacy modifier states into the new allowed or blocked model', () => {

@@ -11,7 +11,6 @@ import { URLObserver } from '@/utils/URLObserver';
 import type { Lobby } from '@/types/game';
 import type {
   DiscoveryCriteria,
-  LegacyAutoJoinSettings,
   LobbyDiscoverySettings,
   ModifierFilters,
   ModifierFilterState,
@@ -23,7 +22,7 @@ import {
   getBrowserNotificationContent,
   getGameDetailsText,
   getLobbyQueueSource,
-  migrateLegacySettings,
+  normalizeSettings,
 } from './LobbyDiscoveryHelpers';
 
 const STARTING_GOLD_VALUES = [1_000_000, 5_000_000, 25_000_000] as const;
@@ -63,35 +62,20 @@ export class LobbyDiscoveryUI {
     this.processLobbies(lobbies);
   }
 
-  private migrateSettings(): void {
-    const legacySettings = GM_getValue<LegacyAutoJoinSettings | null>('autoJoinSettings', null);
-    const currentSettings = GM_getValue<LobbyDiscoverySettings | null>(
-      STORAGE_KEYS.lobbyDiscoverySettings,
-      null
-    );
-
-    const migrated = migrateLegacySettings(legacySettings, currentSettings);
-    GM_setValue(STORAGE_KEYS.lobbyDiscoverySettings, migrated);
-  }
-
   private loadSettings(): void {
-    this.migrateSettings();
-
     const saved = GM_getValue<LobbyDiscoverySettings | null>(
       STORAGE_KEYS.lobbyDiscoverySettings,
       null
     );
 
-    if (!saved) {
-      return;
-    }
+    const settings = normalizeSettings(saved);
+    GM_setValue(STORAGE_KEYS.lobbyDiscoverySettings, settings);
 
-    this.criteriaList = saved.criteria || [];
-    this.soundEnabled = saved.soundEnabled !== undefined ? saved.soundEnabled : true;
-    this.desktopNotificationsEnabled =
-      saved.desktopNotificationsEnabled !== undefined ? saved.desktopNotificationsEnabled : false;
-    this.discoveryEnabled = saved.discoveryEnabled !== undefined ? saved.discoveryEnabled : true;
-    this.isTeamTwoTimesMinEnabled = saved.isTeamTwoTimesMinEnabled || false;
+    this.criteriaList = settings.criteria;
+    this.soundEnabled = settings.soundEnabled;
+    this.desktopNotificationsEnabled = settings.desktopNotificationsEnabled;
+    this.discoveryEnabled = settings.discoveryEnabled;
+    this.isTeamTwoTimesMinEnabled = settings.isTeamTwoTimesMinEnabled;
   }
 
   private saveSettings(): void {
