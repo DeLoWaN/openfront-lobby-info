@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OpenFront.io Lobby Intel + Discovery
 // @namespace    https://openfront.io/
-// @version      2.8.17
+// @version      2.9.0
 // @description  Live lobby player list and notify-only lobby discovery with Team criteria filters, shared API calls, and optional alerts.
 // @homepageURL  https://github.com/DeLoWaN/openfront-autojoin-lobby
 // @downloadURL  https://raw.githubusercontent.com/DeLoWaN/openfront-autojoin-lobby/main/dist/bundle.user.js
