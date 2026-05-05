@@ -21,6 +21,7 @@ export interface ModifierFilters {
   isNukesDisabled?: ModifierFilterState;
   isSAMsDisabled?: ModifierFilterState;
   isPeaceTime?: ModifierFilterState;
+  isWaterNukes?: ModifierFilterState;
   startingGold?: NumericModifierState;
   goldMultiplier?: NumericModifierState;
 }

@@ -111,6 +111,7 @@ describe('LobbyDiscoveryHelpers', () => {
           isNukesDisabled: 'allowed',
           isSAMsDisabled: 'allowed',
           isPeaceTime: 'allowed',
+          isWaterNukes: 'allowed',
           startingGold: {
             1000000: 'allowed',
             5000000: 'allowed',

@@ -424,6 +424,7 @@ export class LobbyDiscoveryUI {
       isNukesDisabled: this.getModifierFilterValue('modifier-isNukesDisabled'),
       isSAMsDisabled: this.getModifierFilterValue('modifier-isSAMsDisabled'),
       isPeaceTime: this.getModifierFilterValue('modifier-isPeaceTime'),
+      isWaterNukes: this.getModifierFilterValue('modifier-isWaterNukes'),
       startingGold: this.getNumericModifierState({
         1000000: 'modifier-startingGold-1000000',
         5000000: 'modifier-startingGold-5000000',
@@ -639,6 +640,7 @@ export class LobbyDiscoveryUI {
       this.setModifierControl('modifier-isNukesDisabled', modifiers.isNukesDisabled);
       this.setModifierControl('modifier-isSAMsDisabled', modifiers.isSAMsDisabled);
       this.setModifierControl('modifier-isPeaceTime', modifiers.isPeaceTime);
+      this.setModifierControl('modifier-isWaterNukes', modifiers.isWaterNukes);
 
       for (const value of STARTING_GOLD_VALUES) {
         this.setModifierControl(
@@ -664,6 +666,7 @@ export class LobbyDiscoveryUI {
         'modifier-isNukesDisabled',
         'modifier-isSAMsDisabled',
         'modifier-isPeaceTime',
+        'modifier-isWaterNukes',
         'modifier-startingGold-1000000',
         'modifier-startingGold-5000000',
         'modifier-startingGold-25000000',
@@ -915,6 +918,7 @@ export class LobbyDiscoveryUI {
       'modifier-isNukesDisabled',
       'modifier-isSAMsDisabled',
       'modifier-isPeaceTime',
+      'modifier-isWaterNukes',
       'modifier-startingGold-1000000',
       'modifier-startingGold-5000000',
       'modifier-startingGold-25000000',
@@ -1097,6 +1101,7 @@ export class LobbyDiscoveryUI {
                   <label><span>Nukes Disabled</span>${this.createModifierControl('modifier-isNukesDisabled')}</label>
                   <label><span>SAMs Disabled</span>${this.createModifierControl('modifier-isSAMsDisabled')}</label>
                   <label><span>Peace Time</span>${this.createModifierControl('modifier-isPeaceTime')}</label>
+                  <label><span>Water Nukes</span>${this.createModifierControl('modifier-isWaterNukes')}</label>
                   <label><span>Starting Gold 1M</span>${this.createModifierControl('modifier-startingGold-1000000')}</label>
                   <label><span>Starting Gold 5M</span>${this.createModifierControl('modifier-startingGold-5000000')}</label>
                   <label><span>Starting Gold 25M</span>${this.createModifierControl('modifier-startingGold-25000000')}</label>

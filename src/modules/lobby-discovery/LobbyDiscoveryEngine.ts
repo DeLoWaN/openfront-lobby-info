@@ -30,6 +30,7 @@ const BOOLEAN_MODIFIER_KEYS: Array<keyof ModifierFilters> = [
   'isNukesDisabled',
   'isSAMsDisabled',
   'isPeaceTime',
+  'isWaterNukes',
 ];
 
 export class LobbyDiscoveryEngine {

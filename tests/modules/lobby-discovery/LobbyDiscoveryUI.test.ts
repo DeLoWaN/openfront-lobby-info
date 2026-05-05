@@ -743,4 +743,20 @@ describe('LobbyDiscoveryUI', () => {
     const panel = document.getElementById('openfront-discovery-panel') as HTMLDivElement;
     expect(panel.style.width).toBe('560px');
   });
+
+  it('exposes a Water Nukes modifier control', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    expect(document.getElementById('modifier-isWaterNukes')).toBeTruthy();
+    expect(document.getElementById('modifier-isWaterNukes-allowed')).toBeTruthy();
+    expect(document.getElementById('modifier-isWaterNukes-blocked')).toBeTruthy();
+  });
+
 });

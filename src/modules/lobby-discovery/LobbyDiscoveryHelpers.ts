@@ -156,6 +156,8 @@ export function getLobbyModifierValue(
       return modifiers.isSAMsDisabled;
     case 'isPeaceTime':
       return modifiers.isPeaceTime;
+    case 'isWaterNukes':
+      return modifiers.isWaterNukes;
     case 'startingGold':
       return modifiers.startingGold;
     case 'goldMultiplier':
@@ -263,6 +265,7 @@ export function getActiveModifierLabels(lobby: Lobby): string[] {
   if (modifiers.isNukesDisabled) labels.push('No Nukes');
   if (modifiers.isSAMsDisabled) labels.push('No SAMs');
   if (modifiers.isPeaceTime) labels.push('Peace');
+  if (modifiers.isWaterNukes) labels.push('Water Nukes');
 
   return labels;
 }
@@ -352,6 +355,7 @@ export function sanitizeModifierFilters(value: unknown): ModifierFilters | undef
     isNukesDisabled: sanitizeModifierFilterState(candidate.isNukesDisabled),
     isSAMsDisabled: sanitizeModifierFilterState(candidate.isSAMsDisabled),
     isPeaceTime: sanitizeModifierFilterState(candidate.isPeaceTime),
+    isWaterNukes: sanitizeModifierFilterState(candidate.isWaterNukes),
     startingGold: sanitizeNumericModifierState(candidate.startingGold),
     goldMultiplier: sanitizeNumericModifierState(candidate.goldMultiplier),
   };

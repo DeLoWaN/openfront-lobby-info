@@ -24,6 +24,7 @@ export interface GameConfig {
     isNukesDisabled?: boolean;
     isSAMsDisabled?: boolean;
     isPeaceTime?: boolean;
+    isWaterNukes?: boolean;
   };
   disableNations?: boolean;
   maxClients?: number;
