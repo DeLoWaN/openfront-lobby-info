@@ -220,3 +220,83 @@ describe('RangeSlider — stepper buttons', () => {
     expect((document.getElementById('min-num') as HTMLInputElement).value).toBe('2');
   });
 });
+
+describe('RangeSlider — lock-max-to-2×', () => {
+  const stops = [2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 62];
+  let locked = false;
+
+  beforeEach(() => {
+    setupDOM();
+    locked = false;
+    (document.getElementById('min-num') as HTMLInputElement).value = '4';
+    (document.getElementById('max-num') as HTMLInputElement).value = '62';
+  });
+
+  function build() {
+    const onChange = vi.fn();
+    const slider = new RangeSlider({
+      rootId: 'root',
+      minSliderId: 'min-pos',
+      maxSliderId: 'max-pos',
+      minInputId: 'min-num',
+      maxInputId: 'max-num',
+      fillId: 'fill',
+      bounds: { min: 2, max: 62 },
+      stops,
+      lockMaxToTwiceMin: () => locked,
+      onChange,
+    });
+    return { slider, onChange };
+  }
+
+  it('with lock active, changing min updates max to 2× min', () => {
+    locked = true;
+    const { onChange } = build();
+    const minNum = document.getElementById('min-num') as HTMLInputElement;
+    minNum.value = '5';
+    minNum.dispatchEvent(new Event('change'));
+    const [min, max] = onChange.mock.calls.at(-1)!;
+    expect(min).toBe(5);
+    expect(max).toBe(10);
+  });
+
+  it('with lock active and min × 2 exceeding bounds.max, max clamps to bounds.max', () => {
+    locked = true;
+    const { onChange } = build();
+    const minNum = document.getElementById('min-num') as HTMLInputElement;
+    minNum.value = '40';
+    minNum.dispatchEvent(new Event('change'));
+    const [, max] = onChange.mock.calls.at(-1)!;
+    expect(max).toBe(62);
+  });
+
+  it('toggling lock applies disabled + .is-max-locked on max controls', () => {
+    const { slider } = build();
+    locked = true;
+    slider.applyLockState();
+    const maxSlider = document.getElementById('max-pos') as HTMLInputElement;
+    const maxNum = document.getElementById('max-num') as HTMLInputElement;
+    expect(maxSlider.disabled).toBe(true);
+    expect(maxNum.disabled).toBe(true);
+    expect(maxSlider.classList.contains('is-max-locked')).toBe(true);
+    const decBtn = document.querySelector(
+      '.ld-step-btn[data-target="max"][data-action="dec"]'
+    ) as HTMLButtonElement;
+    const incBtn = document.querySelector(
+      '.ld-step-btn[data-target="max"][data-action="inc"]'
+    ) as HTMLButtonElement;
+    expect(decBtn.disabled).toBe(true);
+    expect(incBtn.disabled).toBe(true);
+  });
+
+  it('removing lock re-enables max controls', () => {
+    const { slider } = build();
+    locked = true;
+    slider.applyLockState();
+    locked = false;
+    slider.applyLockState();
+    const maxSlider = document.getElementById('max-pos') as HTMLInputElement;
+    expect(maxSlider.disabled).toBe(false);
+    expect(maxSlider.classList.contains('is-max-locked')).toBe(false);
+  });
+});

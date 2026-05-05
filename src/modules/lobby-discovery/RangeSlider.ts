@@ -63,6 +63,27 @@ export class RangeSlider {
 
     this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
     this.wireSteppers();
+    this.applyLockState();
+  }
+
+  /** Toggle the disabled appearance + behavior on max-side controls. */
+  applyLockState(): void {
+    const locked = !!this.cfg.lockMaxToTwiceMin?.();
+    this.maxSlider.disabled = locked;
+    this.maxSlider.classList.toggle('is-max-locked', locked);
+    this.maxInput.disabled = locked;
+
+    const root = document.getElementById(this.cfg.rootId);
+    if (root) {
+      root
+        .querySelectorAll<HTMLButtonElement>('.ld-step-btn[data-target="max"]')
+        .forEach((btn) => { btn.disabled = locked; });
+    }
+
+    if (locked) {
+      // Re-apply the 2× constraint so visual state matches.
+      this.applyValues(this.lastMin, this.lastMax, { fireOnChange: false });
+    }
   }
 
   /** Public setter — used when min is auto-bumped from outside (e.g. team-count chips). */
