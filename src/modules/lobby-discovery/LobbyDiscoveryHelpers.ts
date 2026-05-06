@@ -368,6 +368,8 @@ export function sanitizeModifierFilters(value: unknown): ModifierFilters | undef
   return sanitized;
 }
 
+// Saved-settings migration only. parseTeamCount must stay permissive
+// for lobby-data parsing — 'Duos' / 'Trios' / 'Quads' still arrive from OpenFront.
 function sanitizeCriteriaTeamCount(
   value: string | number | null | undefined
 ): TeamCount | null {
