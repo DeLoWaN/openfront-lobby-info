@@ -807,15 +807,6 @@ export class LobbyDiscoveryUI {
       this.refreshCriteria();
     });
 
-    document.getElementById('discovery-team-select-all')?.addEventListener('click', () => {
-      this.setAllTeamCounts(true);
-      this.refreshCriteria();
-    });
-    document.getElementById('discovery-team-deselect-all')?.addEventListener('click', () => {
-      this.setAllTeamCounts(false);
-      this.refreshCriteria();
-    });
-
     document.getElementById('discovery-reset')?.addEventListener('click', () => {
       this.resetAll();
     });
@@ -961,17 +952,16 @@ export class LobbyDiscoveryUI {
               </div>
               <div class="ld-format-label">FORMAT</div>
               <div class="ld-formats">
-                ${this.renderChip('discovery-team-hvn', 'Humans Vs Nations', 'HvN')}
-                ${this.renderChip('discovery-team-2', '2', '2 teams')}
-                ${this.renderChip('discovery-team-3', '3', '3 teams')}
-                ${this.renderChip('discovery-team-4', '4', '4 teams')}
-                ${this.renderChip('discovery-team-5', '5', '5 teams')}
-                ${this.renderChip('discovery-team-6', '6', '6 teams')}
-                ${this.renderChip('discovery-team-7', '7', '7 teams')}
+                ${this.renderChip('discovery-team-hvn', 'Humans Vs Nations', 'Humans Vs Nations')}
               </div>
+              <div class="ld-format-label" style="margin-top: 10px;">NUMBER OF TEAMS</div>
               <div class="ld-formats" style="margin-bottom: 14px;">
-                <button type="button" id="discovery-team-select-all" class="ld-chip">All</button>
-                <button type="button" id="discovery-team-deselect-all" class="ld-chip">None</button>
+                ${this.renderChip('discovery-team-2', '2', '2')}
+                ${this.renderChip('discovery-team-3', '3', '3')}
+                ${this.renderChip('discovery-team-4', '4', '4')}
+                ${this.renderChip('discovery-team-5', '5', '5')}
+                ${this.renderChip('discovery-team-6', '6', '6')}
+                ${this.renderChip('discovery-team-7', '7', '7')}
               </div>
               <div class="ld-slider-row" id="discovery-team-slider-row">
                 <div class="ld-slider-label">

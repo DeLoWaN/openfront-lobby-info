@@ -827,5 +827,34 @@ describe('LobbyDiscoveryUI', () => {
       expect(document.getElementById('discovery-team-hvn')).not.toBeNull();
       expect(document.getElementById('discovery-team-2')).not.toBeNull();
     });
+
+    it('renders FORMAT and NUMBER OF TEAMS subsections without All/None buttons', () => {
+      Object.assign(globalThis as Record<string, unknown>, {
+        GM_getValue: () => undefined,
+        GM_setValue: () => undefined,
+      });
+
+      ui = new LobbyDiscoveryUI();
+
+      const hvnChip = document.getElementById('discovery-team-hvn') as HTMLInputElement | null;
+      expect(hvnChip).not.toBeNull();
+      const hvnLabel = hvnChip?.closest('label');
+      expect(hvnLabel?.textContent?.trim()).toBe('Humans Vs Nations');
+
+      for (const n of [2, 3, 4, 5, 6, 7]) {
+        const chip = document.getElementById(`discovery-team-${n}`) as HTMLInputElement | null;
+        expect(chip).not.toBeNull();
+        expect(chip?.closest('label')?.textContent?.trim()).toBe(String(n));
+      }
+
+      const labels = Array.from(document.querySelectorAll('.ld-format-label')).map((el) =>
+        el.textContent?.trim()
+      );
+      expect(labels).toContain('FORMAT');
+      expect(labels).toContain('NUMBER OF TEAMS');
+
+      expect(document.getElementById('discovery-team-select-all')).toBeNull();
+      expect(document.getElementById('discovery-team-deselect-all')).toBeNull();
+    });
   });
 });
