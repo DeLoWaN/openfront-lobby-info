@@ -43,9 +43,6 @@ const MODIFIER_BOOLEAN_IDS = [
 ] as const;
 
 const TEAM_PRESET_IDS: Array<[string, string, number | null]> = [
-  ['discovery-team-duos', 'Duos', 2],
-  ['discovery-team-trios', 'Trios', 3],
-  ['discovery-team-quads', 'Quads', 4],
   ['discovery-team-hvn', 'Humans Vs Nations', null],
 ];
 
@@ -518,12 +515,7 @@ export class LobbyDiscoveryUI {
       const checkbox = document.getElementById(id) as HTMLInputElement | null;
       if (!checkbox?.checked) continue;
       const value = checkbox.value;
-      if (
-        value === 'Duos' ||
-        value === 'Trios' ||
-        value === 'Quads' ||
-        value === 'Humans Vs Nations'
-      ) {
+      if (value === 'Humans Vs Nations') {
         values.push(value);
       } else {
         const numeric = parseInt(value, 10);
@@ -723,10 +715,7 @@ export class LobbyDiscoveryUI {
   private setTeamCountSelections(values: Array<TeamCount | null | undefined>): void {
     for (const teamCount of values) {
       let checkbox: HTMLInputElement | null = null;
-      if (teamCount === 'Duos') checkbox = document.getElementById('discovery-team-duos') as HTMLInputElement;
-      else if (teamCount === 'Trios') checkbox = document.getElementById('discovery-team-trios') as HTMLInputElement;
-      else if (teamCount === 'Quads') checkbox = document.getElementById('discovery-team-quads') as HTMLInputElement;
-      else if (teamCount === 'Humans Vs Nations') checkbox = document.getElementById('discovery-team-hvn') as HTMLInputElement;
+      if (teamCount === 'Humans Vs Nations') checkbox = document.getElementById('discovery-team-hvn') as HTMLInputElement;
       else if (typeof teamCount === 'number') checkbox = document.getElementById(`discovery-team-${teamCount}`) as HTMLInputElement;
       if (checkbox) {
         checkbox.checked = true;
@@ -991,12 +980,7 @@ export class LobbyDiscoveryUI {
               </div>
               <div class="ld-format-label">FORMAT</div>
               <div class="ld-formats">
-                ${this.renderChip('discovery-team-duos', 'Duos', 'Duos')}
-                ${this.renderChip('discovery-team-trios', 'Trios', 'Trios')}
-                ${this.renderChip('discovery-team-quads', 'Quads', 'Quads')}
                 ${this.renderChip('discovery-team-hvn', 'Humans Vs Nations', 'HvN')}
-              </div>
-              <div class="ld-formats">
                 ${this.renderChip('discovery-team-2', '2', '2 teams')}
                 ${this.renderChip('discovery-team-3', '3', '3 teams')}
                 ${this.renderChip('discovery-team-4', '4', '4 teams')}
