@@ -57,7 +57,7 @@ A TypeScript userscript for OpenFront `v0.30+` that watches public lobbies and n
 ### Usage
 
 1. Open the Play page on [openfront.io](https://openfront.io/).
-2. In the `Lobby Discovery` panel, enable `FFA`, `Team`, or both.
+2. In the `OpenFront Game Notifier` panel, enable `FFA`, `Team`, or both.
 3. For `Team`, optionally pick formats (`Duos`, `Quads`, `HvN`, custom counts).
 4. Set capacity bounds; mark unwanted modifiers as `Blocked`.
 5. When a queue card pulses on the homepage, click it yourself to join.

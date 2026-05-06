@@ -128,16 +128,17 @@ describe('RangeSlider — with stops (snap-on-drag)', () => {
     });
   }
 
-  it('drag snaps the value to the nearest stop', () => {
+  it('drag produces every integer along the log-mapped scale (no snapping)', () => {
     const onChange = vi.fn();
     build(onChange);
     const minPos = document.getElementById('min-pos') as HTMLInputElement;
-    // Position 0.42 maps to value ≈ 6.2; nearest stop is 6.
-    minPos.value = '420';
+    // Position 0.45 sits halfway in the 6→8 segment (positions 0.4–0.5),
+    // so the integer value is 7 — not snapped to a stop.
+    minPos.value = '450';
     minPos.dispatchEvent(new Event('input'));
-    expect(onChange).toHaveBeenCalledWith(6, 62);
+    expect(onChange).toHaveBeenCalledWith(7, 62);
     const minNum = document.getElementById('min-num') as HTMLInputElement;
-    expect(minNum.value).toBe('6');
+    expect(minNum.value).toBe('7');
   });
 
   it('typing a non-stop value into the number input keeps that exact value', () => {

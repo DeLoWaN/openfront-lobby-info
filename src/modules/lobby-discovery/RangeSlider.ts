@@ -1,6 +1,5 @@
 import {
   clampToStops,
-  nearestStop,
   positionToValue,
   valueToPosition,
 } from '@/modules/lobby-discovery/RangeSliderHelpers';
@@ -106,15 +105,13 @@ export class RangeSlider {
 
   private onMinSliderInput = (): void => {
     const position = parseInt(this.minSlider.value, 10) / POSITION_RANGE;
-    let value = positionToValue(position, this.stops);
-    if (this.cfg.stops) value = nearestStop(value, this.stops);
+    const value = positionToValue(position, this.stops);
     this.applyValues(value, this.lastMax, { fireOnChange: true, changed: 'min' });
   };
 
   private onMaxSliderInput = (): void => {
     const position = parseInt(this.maxSlider.value, 10) / POSITION_RANGE;
-    let value = positionToValue(position, this.stops);
-    if (this.cfg.stops) value = nearestStop(value, this.stops);
+    const value = positionToValue(position, this.stops);
     this.applyValues(this.lastMin, value, { fireOnChange: true, changed: 'max' });
   };
 

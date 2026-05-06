@@ -3,7 +3,6 @@ import {
   clampToStops,
   valueToPosition,
   positionToValue,
-  nearestStop,
 } from '@/modules/lobby-discovery/RangeSliderHelpers';
 
 describe('clampToStops', () => {
@@ -105,31 +104,3 @@ describe('positionToValue', () => {
   });
 });
 
-describe('nearestStop', () => {
-  const stops = [2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 62];
-
-  it('returns exact stops unchanged', () => {
-    expect(nearestStop(6, stops)).toBe(6);
-    expect(nearestStop(15, stops)).toBe(15);
-  });
-
-  it('rounds toward the closer neighbor', () => {
-    expect(nearestStop(11, stops)).toBe(10); // |11-10|=1 < |11-15|=4
-    expect(nearestStop(13, stops)).toBe(15); // |13-15|=2 < |13-10|=3
-    expect(nearestStop(40, stops)).toBe(30); // |40-30|=10 < |40-62|=22
-  });
-
-  it('breaks ties by preferring the lower stop', () => {
-    // 7 is equidistant from 6 and 8 -> prefer 6.
-    expect(nearestStop(7, stops)).toBe(6);
-    // 9 is equidistant from 8 and 10 -> prefer 8.
-    expect(nearestStop(9, stops)).toBe(8);
-    // 25 is equidistant from 20 and 30 -> prefer 20.
-    expect(nearestStop(25, stops)).toBe(20);
-  });
-
-  it('clamps to first/last stop for out-of-range values', () => {
-    expect(nearestStop(0, stops)).toBe(2);
-    expect(nearestStop(100, stops)).toBe(62);
-  });
-});

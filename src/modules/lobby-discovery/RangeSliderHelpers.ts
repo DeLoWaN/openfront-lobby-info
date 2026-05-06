@@ -57,22 +57,3 @@ export function positionToValue(position: number, stops: readonly number[]): num
   return Math.round(raw);
 }
 
-/**
- * Return the stop closest to `value`. Ties are broken by preferring the
- * lower stop (deterministic; locked by tests).
- */
-export function nearestStop(value: number, stops: readonly number[]): number {
-  if (stops.length === 0) return value;
-  const clamped = clampToStops(value, stops);
-  let best = stops[0]!;
-  let bestDelta = Math.abs(clamped - best);
-  for (let i = 1; i < stops.length; i++) {
-    const delta = Math.abs(clamped - stops[i]!);
-    // Strict `<` preserves the lower stop on ties.
-    if (delta < bestDelta) {
-      best = stops[i]!;
-      bestDelta = delta;
-    }
-  }
-  return best;
-}

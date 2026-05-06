@@ -5,7 +5,9 @@
       "Bash(npm version:*)",
       "Bash(git restore:*)",
       "Bash(npx vitest *)",
-      "Bash(curl -sL 'https://openfront.io/api/public_lobbies')"
+      "Bash(curl -sL 'https://openfront.io/api/public_lobbies')",
+      "Bash(kill %1)",
+      "Bash(pkill -f 'vitest')"
     ]
   }
 }
