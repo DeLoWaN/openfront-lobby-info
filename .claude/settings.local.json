@@ -7,7 +7,13 @@
       "Bash(npx vitest *)",
       "Bash(curl -sL 'https://openfront.io/api/public_lobbies')",
       "Bash(kill %1)",
-      "Bash(pkill -f 'vitest')"
+      "Bash(pkill -f 'vitest')",
+      "Bash(gh pr create --base main --head clear-old-code-fix-bell --title 'Release v2.10.7 — discovery panel rewrite, log slider, team panel split' --body ' *)",
+      "Bash(gh pr *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git tag *)",
+      "Bash(git stash *)"
     ]
   }
 }
