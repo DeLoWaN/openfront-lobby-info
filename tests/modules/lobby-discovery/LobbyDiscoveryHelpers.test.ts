@@ -32,7 +32,7 @@ describe('LobbyDiscoveryHelpers', () => {
 
     expect(criteria).toEqual([
       { gameMode: 'FFA', teamCount: null, minPlayers: 10, maxPlayers: 30 },
-      { gameMode: 'Team', teamCount: 'Duos', minPlayers: 8, maxPlayers: 16 },
+      { gameMode: 'Team', teamCount: null, minPlayers: 8, maxPlayers: 16 },
       { gameMode: 'Team', teamCount: 3, minPlayers: 9, maxPlayers: 18 },
       {
         gameMode: 'Team',
@@ -317,7 +317,7 @@ describe('LobbyDiscoveryHelpers', () => {
   describe('sanitizeCriteria — Team minPlayers floor', () => {
     it('clamps Team minPlayers below 2 to 2', () => {
       const result = sanitizeCriteria([
-        { gameMode: 'Team', teamCount: 'Duos', minPlayers: 1, maxPlayers: 62 },
+        { gameMode: 'Team', teamCount: null, minPlayers: 1, maxPlayers: 62 },
       ]);
       expect(result).toHaveLength(1);
       expect(result[0]!.minPlayers).toBe(2);
@@ -335,7 +335,7 @@ describe('LobbyDiscoveryHelpers', () => {
 
     it('preserves Team minPlayers >= 2 untouched even if not on stops list', () => {
       const result = sanitizeCriteria([
-        { gameMode: 'Team', teamCount: 'Trios', minPlayers: 7, maxPlayers: 12 },
+        { gameMode: 'Team', teamCount: 3, minPlayers: 7, maxPlayers: 12 },
       ]);
       expect(result).toHaveLength(1);
       expect(result[0]!.minPlayers).toBe(7);
