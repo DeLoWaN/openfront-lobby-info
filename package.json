@@ -7,7 +7,8 @@
     "dev": "node esbuild.config.js --watch",
     "build": "node esbuild.config.js",
     "build:prod": "NODE_ENV=production node esbuild.config.js",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "type-check": "tsc --noEmit",
     "size-check": "ls -lh dist/bundle.user.js"
