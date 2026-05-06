@@ -1,58 +1,76 @@
 /**
- * Design system tokens for consistent theming
- * These values are used throughout the UI and in CSS generation
+ * Design system tokens for consistent theming.
+ * Warm-neutral dark palette with a blue accent.
  */
 
 export const COLORS = {
-  bgPrimary: "rgba(10, 14, 22, 0.92)",
-  bgSecondary: "rgba(18, 26, 40, 0.75)",
-  bgHover: "rgba(35, 48, 70, 0.6)",
-  textPrimary: "#e7f1ff",
-  textSecondary: "rgba(231, 241, 255, 0.7)",
-  textMuted: "rgba(231, 241, 255, 0.5)",
-  accent: "rgba(46, 211, 241, 0.95)",
-  accentHover: "rgba(99, 224, 255, 0.95)",
-  accentMuted: "rgba(46, 211, 241, 0.18)",
-  accentAlt: "rgba(99, 110, 255, 0.9)",
-  success: "rgba(20, 220, 170, 0.9)",
-  successSolid: "#38d9a9",
-  warning: "#f2c94c",
-  error: "#ff7d87",
-  highlight: "rgba(88, 211, 255, 0.2)",
-  border: "rgba(120, 140, 180, 0.3)",
-  borderAccent: "rgba(46, 211, 241, 0.55)",
+  bgPrimary: '#0d0f10',
+  bgSecondary: '#14171a',
+  bgElevated: '#1a1e22',
+  bgRaised: '#20252a',
+  bgHover: 'rgba(255,255,255,0.04)',
+
+  textPrimary: '#f2f1ee',
+  textSecondary: '#c8c6c0',
+  textMuted: '#8e8c85',
+  textFaint: '#5a5853',
+
+  border: 'rgba(255,255,255,0.06)',
+  borderSubtle: 'rgba(255,255,255,0.10)',
+  borderStrong: 'rgba(255,255,255,0.16)',
+
+  accent: '#7aa7d4',
+  accentSoft: 'rgba(122,167,212,0.14)',
+  accentLine: 'rgba(122,167,212,0.32)',
+  accentShadow: '122,167,212',
+
+  warning: '#d4a056',
+  warningSoft: 'rgba(212,160,86,0.14)',
+  danger: '#d27a6b',
+  dangerSoft: 'rgba(210,122,107,0.14)',
+  dangerLine: 'rgba(210,122,107,0.30)',
+
+  // legacy aliases — kept so other modules compile unchanged
+  accentMuted: 'rgba(122,167,212,0.14)',
+  accentHover: '#9bbfe0',
+  accentAlt: '#9bbfe0',
+  borderAccent: 'rgba(122,167,212,0.32)',
+  highlight: 'rgba(122,167,212,0.20)',
+  success: '#74c69d',
+  successSolid: '#74c69d',
+  error: '#d27a6b',
 } as const;
 
 export const FONTS = {
-  display: "'Trebuchet MS', 'Segoe UI', Tahoma, Verdana, sans-serif",
-  body: "'Segoe UI', Tahoma, Verdana, sans-serif",
-  mono: "'Consolas', 'Courier New', monospace",
+  body: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  display: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
 } as const;
 
 export const SPACING = {
-  xs: "4px",
-  sm: "8px",
-  md: "12px",
-  lg: "16px",
-  xl: "20px",
-  xxl: "24px",
+  xs: '4px',
+  sm: '8px',
+  md: '12px',
+  lg: '16px',
+  xl: '20px',
+  xxl: '24px',
 } as const;
 
 export const RADIUS = {
-  sm: "4px",
-  md: "6px",
-  lg: "8px",
-  xl: "12px",
+  sm: '6px',
+  md: '7px',
+  lg: '10px',
+  xl: '14px',
 } as const;
 
 export const SHADOWS = {
-  sm: "0 2px 8px rgba(3, 8, 18, 0.35)",
-  md: "0 10px 22px rgba(3, 8, 18, 0.45)",
-  lg: "0 24px 40px rgba(2, 6, 16, 0.55), 0 0 24px rgba(46, 211, 241, 0.08)",
+  sm: '0 1px 3px rgba(0,0,0,0.4)',
+  md: '0 2px 8px rgba(0,0,0,0.3)',
+  lg: '0 1px 0 rgba(255,255,255,0.04) inset, 0 24px 48px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3)',
 } as const;
 
 export const TIMING = {
-  fast: "0.12s",
-  normal: "0.2s",
-  slow: "0.3s",
+  fast: '0.12s',
+  normal: '0.2s',
+  slow: '0.3s',
 } as const;

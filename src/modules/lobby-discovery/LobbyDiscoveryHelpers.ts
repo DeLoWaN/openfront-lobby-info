@@ -3,11 +3,11 @@
  * Pure functions with no side effects.
  */
 
+import { TEAM_MIN_PLAYERS_PER_TEAM } from '@/config/constants';
 import type { Lobby } from '@/types/game';
 import type {
   DiscoveryCriteria,
   DiscoveryGameMode,
-  LegacyAutoJoinSettings,
   LobbyDiscoverySettings,
   ModifierFilters,
   ModifierFilterState,
@@ -16,7 +16,7 @@ import type {
   TeamCount,
 } from './LobbyDiscoveryTypes';
 
-const DEFAULT_MODIFIER_FILTER_STATE: ModifierFilterState = 'allowed';
+const DEFAULT_MODIFIER_FILTER_STATE: ModifierFilterState = 'any';
 
 export function normalizeGameMode(
   mode: string | null | undefined
@@ -136,31 +136,32 @@ export function getLobbyModifierValue(
   key: keyof ModifierFilters
 ): boolean | number | undefined {
   const modifiers = lobby.gameConfig?.publicGameModifiers;
-  if (!modifiers) return undefined;
 
   switch (key) {
     case 'isCompact':
-      return modifiers.isCompact;
+      return modifiers?.isCompact;
     case 'isRandomSpawn':
-      return modifiers.isRandomSpawn;
+      return modifiers?.isRandomSpawn;
     case 'isCrowded':
-      return modifiers.isCrowded;
+      return modifiers?.isCrowded;
     case 'isHardNations':
-      return modifiers.isHardNations;
+      return modifiers?.isHardNations;
     case 'isAlliancesDisabled':
-      return modifiers.isAlliancesDisabled;
+      return modifiers?.isAlliancesDisabled;
     case 'isPortsDisabled':
-      return modifiers.isPortsDisabled;
+      return modifiers?.isPortsDisabled;
     case 'isNukesDisabled':
-      return modifiers.isNukesDisabled;
+      return modifiers?.isNukesDisabled;
     case 'isSAMsDisabled':
-      return modifiers.isSAMsDisabled;
+      return modifiers?.isSAMsDisabled;
     case 'isPeaceTime':
-      return modifiers.isPeaceTime;
+      return modifiers?.isPeaceTime;
+    case 'isWaterNukes':
+      return modifiers?.isWaterNukes;
     case 'startingGold':
-      return modifiers.startingGold;
+      return modifiers?.startingGold ?? lobby.gameConfig?.startingGold ?? undefined;
     case 'goldMultiplier':
-      return modifiers.goldMultiplier;
+      return modifiers?.goldMultiplier ?? lobby.gameConfig?.goldMultiplier ?? undefined;
     default:
       return undefined;
   }
@@ -243,27 +244,29 @@ function formatStartingGold(value: number): string {
 
 export function getActiveModifierLabels(lobby: Lobby): string[] {
   const modifiers = lobby.gameConfig?.publicGameModifiers;
-  if (!modifiers) {
-    return [];
-  }
-
   const labels: string[] = [];
 
-  if (modifiers.isCompact) labels.push('Compact');
-  if (modifiers.isRandomSpawn) labels.push('Random');
-  if (modifiers.isCrowded) labels.push('Crowded');
-  if (modifiers.isHardNations) labels.push('Hard');
-  if (typeof modifiers.startingGold === 'number') {
-    labels.push(formatStartingGold(modifiers.startingGold));
+  if (modifiers?.isCompact) labels.push('Compact');
+  if (modifiers?.isRandomSpawn) labels.push('Random');
+  if (modifiers?.isCrowded) labels.push('Crowded');
+  if (modifiers?.isHardNations) labels.push('Hard');
+
+  const startingGold = modifiers?.startingGold ?? lobby.gameConfig?.startingGold;
+  if (typeof startingGold === 'number') {
+    labels.push(formatStartingGold(startingGold));
   }
-  if (typeof modifiers.goldMultiplier === 'number') {
-    labels.push(`x${modifiers.goldMultiplier}`);
+
+  const goldMultiplier = modifiers?.goldMultiplier ?? lobby.gameConfig?.goldMultiplier;
+  if (typeof goldMultiplier === 'number') {
+    labels.push(`x${goldMultiplier}`);
   }
-  if (modifiers.isAlliancesDisabled) labels.push('No Alliances');
-  if (modifiers.isPortsDisabled) labels.push('No Ports');
-  if (modifiers.isNukesDisabled) labels.push('No Nukes');
-  if (modifiers.isSAMsDisabled) labels.push('No SAMs');
-  if (modifiers.isPeaceTime) labels.push('Peace');
+
+  if (modifiers?.isAlliancesDisabled) labels.push('No Alliances');
+  if (modifiers?.isPortsDisabled) labels.push('No Ports');
+  if (modifiers?.isNukesDisabled) labels.push('No Nukes');
+  if (modifiers?.isSAMsDisabled) labels.push('No SAMs');
+  if (modifiers?.isPeaceTime) labels.push('Peace');
+  if (modifiers?.isWaterNukes) labels.push('Water Nukes');
 
   return labels;
 }
@@ -314,8 +317,12 @@ function sanitizeModifierFilterState(value: unknown): ModifierFilterState {
     return 'blocked';
   }
 
-  if (value === 'allowed' || value === 'required' || value === 'indifferent') {
-    return 'allowed';
+  if (value === 'required') {
+    return 'required';
+  }
+
+  if (value === 'any' || value === 'allowed' || value === 'indifferent') {
+    return 'any';
   }
 
   return DEFAULT_MODIFIER_FILTER_STATE;
@@ -353,11 +360,24 @@ export function sanitizeModifierFilters(value: unknown): ModifierFilters | undef
     isNukesDisabled: sanitizeModifierFilterState(candidate.isNukesDisabled),
     isSAMsDisabled: sanitizeModifierFilterState(candidate.isSAMsDisabled),
     isPeaceTime: sanitizeModifierFilterState(candidate.isPeaceTime),
+    isWaterNukes: sanitizeModifierFilterState(candidate.isWaterNukes),
     startingGold: sanitizeNumericModifierState(candidate.startingGold),
     goldMultiplier: sanitizeNumericModifierState(candidate.goldMultiplier),
   };
 
   return sanitized;
+}
+
+// Saved-settings migration only. parseTeamCount must stay permissive
+// for lobby-data parsing — 'Duos' / 'Trios' / 'Quads' still arrive from OpenFront.
+function sanitizeCriteriaTeamCount(
+  value: string | number | null | undefined
+): TeamCount | null {
+  const parsed = parseTeamCount(value);
+  if (parsed === 'Duos' || parsed === 'Trios' || parsed === 'Quads') {
+    return null;
+  }
+  return parsed;
 }
 
 export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
@@ -381,11 +401,27 @@ export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
       continue;
     }
 
+    let minPlayers = sanitizeNumber(candidate.minPlayers);
+    let maxPlayers = sanitizeNumber(candidate.maxPlayers);
+
+    if (gameMode === 'Team') {
+      if (typeof minPlayers === 'number' && minPlayers < TEAM_MIN_PLAYERS_PER_TEAM) {
+        minPlayers = TEAM_MIN_PLAYERS_PER_TEAM;
+      }
+      if (
+        typeof minPlayers === 'number' &&
+        typeof maxPlayers === 'number' &&
+        maxPlayers < minPlayers
+      ) {
+        maxPlayers = minPlayers;
+      }
+    }
+
     sanitized.push({
       gameMode,
-      teamCount: gameMode === 'Team' ? parseTeamCount(candidate.teamCount ?? null) : null,
-      minPlayers: sanitizeNumber(candidate.minPlayers),
-      maxPlayers: sanitizeNumber(candidate.maxPlayers),
+      teamCount: gameMode === 'Team' ? sanitizeCriteriaTeamCount(candidate.teamCount ?? null) : null,
+      minPlayers,
+      maxPlayers,
       modifiers: sanitizeModifierFilters(candidate.modifiers),
     });
   }
@@ -393,36 +429,26 @@ export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
   return sanitized;
 }
 
-export function migrateLegacySettings(
-  legacy: LegacyAutoJoinSettings | null | undefined,
+export function formatElapsedSince(timestampMs: number, now: number = Date.now()): string {
+  const elapsed = Math.max(0, Math.floor((now - timestampMs) / 1000));
+  return `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
+}
+
+export function normalizeSettings(
   current: LobbyDiscoverySettings | null | undefined
 ): LobbyDiscoverySettings {
-  if (current) {
-    return {
-      criteria: sanitizeCriteria(current.criteria),
-      discoveryEnabled:
-        typeof current.discoveryEnabled === 'boolean' ? current.discoveryEnabled : true,
-      soundEnabled: typeof current.soundEnabled === 'boolean' ? current.soundEnabled : true,
-      desktopNotificationsEnabled:
-        typeof current.desktopNotificationsEnabled === 'boolean'
-          ? current.desktopNotificationsEnabled
-          : false,
-      isTeamTwoTimesMinEnabled:
-        typeof current.isTeamTwoTimesMinEnabled === 'boolean'
-          ? current.isTeamTwoTimesMinEnabled
-          : !!current.isTeamThreeTimesMinEnabled,
-    };
-  }
-
   return {
-    criteria: sanitizeCriteria(legacy?.criteria),
+    criteria: sanitizeCriteria(current?.criteria),
     discoveryEnabled:
-      typeof legacy?.autoJoinEnabled === 'boolean' ? legacy.autoJoinEnabled : true,
-    soundEnabled: typeof legacy?.soundEnabled === 'boolean' ? legacy.soundEnabled : true,
-    desktopNotificationsEnabled: false,
+      typeof current?.discoveryEnabled === 'boolean' ? current.discoveryEnabled : true,
+    soundEnabled: typeof current?.soundEnabled === 'boolean' ? current.soundEnabled : true,
+    desktopNotificationsEnabled:
+      typeof current?.desktopNotificationsEnabled === 'boolean'
+        ? current.desktopNotificationsEnabled
+        : false,
     isTeamTwoTimesMinEnabled:
-      typeof legacy?.isTeamTwoTimesMinEnabled === 'boolean'
-        ? legacy.isTeamTwoTimesMinEnabled
-        : !!legacy?.isTeamThreeTimesMinEnabled,
+      typeof current?.isTeamTwoTimesMinEnabled === 'boolean'
+        ? current.isTeamTwoTimesMinEnabled
+        : !!current?.isTeamThreeTimesMinEnabled,
   };
 }

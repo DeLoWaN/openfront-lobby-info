@@ -5,7 +5,7 @@
 export type QueueSource = 'ffa' | 'team' | 'special';
 export type DiscoveryGameMode = 'FFA' | 'Team';
 export type TeamCount = 'Duos' | 'Trios' | 'Quads' | 'Humans Vs Nations' | number;
-export type ModifierFilterState = 'allowed' | 'blocked';
+export type ModifierFilterState = 'any' | 'required' | 'blocked';
 
 export interface NumericModifierState {
   [value: number]: ModifierFilterState | undefined;
@@ -21,6 +21,7 @@ export interface ModifierFilters {
   isNukesDisabled?: ModifierFilterState;
   isSAMsDisabled?: ModifierFilterState;
   isPeaceTime?: ModifierFilterState;
+  isWaterNukes?: ModifierFilterState;
   startingGold?: NumericModifierState;
   goldMultiplier?: NumericModifierState;
 }
@@ -40,18 +41,4 @@ export interface LobbyDiscoverySettings {
   desktopNotificationsEnabled: boolean;
   isTeamTwoTimesMinEnabled: boolean;
   isTeamThreeTimesMinEnabled?: boolean;
-}
-
-export interface LegacyAutoJoinSettings {
-  criteria?: Array<{
-    gameMode?: string | null;
-    teamCount?: string | number | null;
-    minPlayers?: number | null;
-    maxPlayers?: number | null;
-    modifiers?: ModifierFilters | null;
-  }>;
-  autoJoinEnabled?: boolean;
-  soundEnabled?: boolean;
-  isTeamThreeTimesMinEnabled?: boolean;
-  isTeamTwoTimesMinEnabled?: boolean;
 }

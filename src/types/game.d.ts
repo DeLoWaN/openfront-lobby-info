@@ -24,11 +24,14 @@ export interface GameConfig {
     isNukesDisabled?: boolean;
     isSAMsDisabled?: boolean;
     isPeaceTime?: boolean;
+    isWaterNukes?: boolean;
   };
   disableNations?: boolean;
   maxClients?: number;
   maxPlayers?: number;
   maxPlayersPerGame?: number;
+  startingGold?: number | null;
+  goldMultiplier?: number | null;
 }
 
 /**

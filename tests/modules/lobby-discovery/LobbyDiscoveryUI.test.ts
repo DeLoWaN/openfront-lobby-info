@@ -347,7 +347,7 @@ describe('LobbyDiscoveryUI', () => {
     const maxSlider = document.getElementById('discovery-ffa-max-slider') as HTMLInputElement;
     const maxInput = document.getElementById('discovery-ffa-max') as HTMLInputElement;
 
-    expect(maxSlider.max).toBe('125');
+    expect(maxSlider.max).toBe('1000');
     expect(maxInput.max).toBe('125');
   });
 
@@ -364,11 +364,11 @@ describe('LobbyDiscoveryUI', () => {
     const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
     const maxInput = document.getElementById('discovery-team-max') as HTMLInputElement;
 
-    expect(maxSlider.max).toBe('62');
+    expect(maxSlider.max).toBe('1000');
     expect(maxInput.max).toBe('62');
   });
 
-  it('does not collapse the team max slider to exactly 2x min when the 2x toggle is enabled', () => {
+  it('locks team max slider to 2x min and disables it when the 2x toggle is enabled', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -378,19 +378,63 @@ describe('LobbyDiscoveryUI', () => {
 
     ui = new LobbyDiscoveryUI();
 
-    const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
+    // Use number inputs (change events) to set min=8, max=20 since slider
+    // positions are now 0..1000 and RangeSlider owns that mapping.
+    const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+    const maxInput = document.getElementById('discovery-team-max') as HTMLInputElement;
     const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
     const twoTimesCheckbox = document.getElementById('discovery-team-two-times') as HTMLInputElement;
 
-    minSlider.value = '8';
-    minSlider.dispatchEvent(new Event('input'));
-    maxSlider.value = '20';
-    maxSlider.dispatchEvent(new Event('input'));
+    minInput.value = '8';
+    minInput.dispatchEvent(new Event('change'));
+    maxInput.value = '20';
+    maxInput.dispatchEvent(new Event('change'));
 
     twoTimesCheckbox.checked = true;
     twoTimesCheckbox.dispatchEvent(new Event('change'));
 
-    expect(maxSlider.value).toBe('20');
+    // 2×8 = 16. valueToPosition(16, stops) = 720 (between stop 15@idx7 and 20@idx8).
+    expect(maxInput.value).toBe('16');
+    expect(maxSlider.value).toBe('720');
+    expect(maxSlider.disabled).toBe(true);
+    expect(maxSlider.classList.contains('is-max-locked')).toBe(true);
+  });
+
+  it('keeps the locked max value when the 2x toggle is turned off (no rollback)', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    // Use number inputs (change events) to set min=5, max=30 (nearest stop to 40)
+    // since slider positions are now 0..1000 and RangeSlider owns that mapping.
+    const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
+    const maxInput = document.getElementById('discovery-team-max') as HTMLInputElement;
+    const maxSlider = document.getElementById('discovery-team-max-slider') as HTMLInputElement;
+    const twoTimes = document.getElementById('discovery-team-two-times') as HTMLInputElement;
+
+    minInput.value = '5';
+    minInput.dispatchEvent(new Event('change'));
+    maxInput.value = '30';
+    maxInput.dispatchEvent(new Event('change'));
+
+    twoTimes.checked = true;
+    twoTimes.dispatchEvent(new Event('change'));
+    // 2×5 = 10. valueToPosition(10, stops) = 600 (stop at idx 6).
+    expect(maxInput.value).toBe('10');
+    expect(maxSlider.value).toBe('600');
+    expect(maxSlider.disabled).toBe(true);
+
+    twoTimes.checked = false;
+    twoTimes.dispatchEvent(new Event('change'));
+    expect(maxInput.value).toBe('10');
+    expect(maxSlider.value).toBe('600');
+    expect(maxSlider.disabled).toBe(false);
+    expect(maxSlider.classList.contains('is-max-locked')).toBe(false);
   });
 
   it('renders without the old player-list discovery slot and exposes FFA and 2x controls', () => {
@@ -578,12 +622,48 @@ describe('LobbyDiscoveryUI', () => {
     expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(2);
   });
 
-  it('evaluates every lobby instead of only the first displayed lobby per source', () => {
+  it('ignores hidden lobby matches entirely — no pulse, no sound, no notification', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 30, maxPlayers: null }],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    // OpenFront only renders games[source][0]. Clicking the card joins the
+    // visible lobby — a hidden match isn't actionable, so we don't ping the
+    // user about it.
+    const lobbies = [
+      {
+        gameID: 'ffa-visible-too-small',
+        publicGameType: 'ffa',
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 25 },
+      },
+      {
+        gameID: 'ffa-hidden-match',
+        publicGameType: 'ffa',
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 40 },
+      },
+    ] as any;
+
+    ui.receiveLobbyUpdate(lobbies);
+
+    expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
+      false
+    );
+    expect(BrowserNotificationUtils.show).not.toHaveBeenCalled();
+    expect(SoundUtils.playGameFoundSound).not.toHaveBeenCalled();
+  });
+
+  it('pulses the queue card when the featured (first) lobby matches', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 30, maxPlayers: null }],
       discoveryEnabled: true,
       soundEnabled: false,
-      desktopNotificationsEnabled: true,
+      desktopNotificationsEnabled: false,
       isTeamTwoTimesMinEnabled: false,
     });
 
@@ -591,20 +671,14 @@ describe('LobbyDiscoveryUI', () => {
 
     const lobbies = [
       {
-        gameID: 'ffa-too-small',
+        gameID: 'ffa-visible-match',
         publicGameType: 'ffa',
-        gameConfig: {
-          gameMode: 'Free For All',
-          maxPlayers: 25,
-        },
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 40 },
       },
       {
-        gameID: 'ffa-match',
+        gameID: 'ffa-hidden-too-small',
         publicGameType: 'ffa',
-        gameConfig: {
-          gameMode: 'Free For All',
-          maxPlayers: 40,
-        },
+        gameConfig: { gameMode: 'Free For All', maxPlayers: 25 },
       },
     ] as any;
 
@@ -613,9 +687,6 @@ describe('LobbyDiscoveryUI', () => {
     expect(document.getElementById('ffa-card')?.classList.contains('of-discovery-card-active')).toBe(
       true
     );
-    expect(BrowserNotificationUtils.show).toHaveBeenCalledTimes(1);
-    const [notificationPayload] = vi.mocked(BrowserNotificationUtils.show).mock.calls[0] ?? [];
-    expect(notificationPayload?.tag).toContain('ffa-match');
   });
 
   it('cleanup clears queue card pulses without scheduling another sync tick', () => {
@@ -651,8 +722,7 @@ describe('LobbyDiscoveryUI', () => {
     );
   });
 
-  it('uses a compact desktop panel, persists width, and restores it on init', () => {
-    store.set(STORAGE_KEYS.lobbyDiscoveryPanelSize, { width: 740 });
+  it('renders tri-state modifier chips that cycle Any → Required → Blocked', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -662,48 +732,27 @@ describe('LobbyDiscoveryUI', () => {
 
     ui = new LobbyDiscoveryUI();
 
-    const panel = document.getElementById('openfront-discovery-panel') as HTMLDivElement;
-    expect(panel.style.width).toBe('740px');
-    expect(panel.querySelector('.of-resize-handle')).toBeTruthy();
-  });
+    const chip = document.getElementById('modifier-isCompact') as HTMLButtonElement;
 
-  it('renders binary modifier button controls instead of radios and updates on click', () => {
-    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
-      criteria: [],
-      discoveryEnabled: true,
-      soundEnabled: true,
-      isTeamTwoTimesMinEnabled: false,
-    });
-
-    ui = new LobbyDiscoveryUI();
-
-    const control = document.getElementById('modifier-isCompact') as HTMLDivElement;
-    const allowed = document.getElementById(
-      'modifier-isCompact-allowed'
-    ) as HTMLButtonElement;
-    const blocked = document.getElementById(
-      'modifier-isCompact-blocked'
-    ) as HTMLButtonElement;
-
-    expect(control).toBeTruthy();
-    expect(document.querySelector('select.discovery-modifier-select')).toBeFalsy();
-    expect(document.querySelector('.discovery-tristate-knob')).toBeFalsy();
+    expect(chip).toBeTruthy();
+    expect(chip.tagName).toBe('BUTTON');
     expect(document.querySelector('#modifier-isCompact input[type="radio"]')).toBeFalsy();
-    expect(allowed.tagName).toBe('BUTTON');
-    expect(blocked.tagName).toBe('BUTTON');
-    expect(control.dataset.state).toBe('allowed');
-    expect(allowed.getAttribute('aria-pressed')).toBe('true');
-    expect(blocked.getAttribute('aria-pressed')).toBe('false');
+    expect(document.querySelector('#modifier-isCompact-allowed')).toBeFalsy();
+    expect(document.querySelector('#modifier-isCompact-blocked')).toBeFalsy();
+    expect(chip.dataset.state).toBe('any');
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
 
-    blocked.click();
-    expect(control.dataset.state).toBe('blocked');
-    expect(blocked.getAttribute('aria-pressed')).toBe('true');
-    expect(allowed.getAttribute('aria-pressed')).toBe('false');
+    chip.click();
+    expect(chip.dataset.state).toBe('required');
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
 
-    allowed.click();
-    expect(control.dataset.state).toBe('allowed');
-    expect(allowed.getAttribute('aria-pressed')).toBe('true');
-    expect(blocked.getAttribute('aria-pressed')).toBe('false');
+    chip.click();
+    expect(chip.dataset.state).toBe('blocked');
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+
+    chip.click();
+    expect(chip.dataset.state).toBe('any');
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('keeps all filter sections visible and lets the body scroll when constrained', () => {
@@ -730,7 +779,7 @@ describe('LobbyDiscoveryUI', () => {
     expect(getComputedStyle(content).overflowY).toBe('auto');
   });
 
-  it('uses a smaller default width when no saved size exists', () => {
+  it('uses the design-tuned 380px default width with no resize handle', () => {
     store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
       criteria: [],
       discoveryEnabled: true,
@@ -741,6 +790,71 @@ describe('LobbyDiscoveryUI', () => {
     ui = new LobbyDiscoveryUI();
 
     const panel = document.getElementById('openfront-discovery-panel') as HTMLDivElement;
-    expect(panel.style.width).toBe('560px');
+    expect(panel.style.width).toBe('380px');
+    expect(panel.querySelector('.of-resize-handle')).toBeFalsy();
+  });
+
+  it('exposes a Water Nukes modifier control as a tri-state chip', () => {
+    store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
+    });
+
+    ui = new LobbyDiscoveryUI();
+
+    const chip = document.getElementById('modifier-isWaterNukes') as HTMLButtonElement;
+    expect(chip).toBeTruthy();
+    expect(chip.tagName).toBe('BUTTON');
+    expect(chip.dataset.state).toBe('any');
+  });
+
+  describe('team panel layout', () => {
+    it('does not render discovery-team-duos, -trios, or -quads', () => {
+      store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
+        criteria: [],
+        discoveryEnabled: true,
+        soundEnabled: true,
+        isTeamTwoTimesMinEnabled: false,
+      });
+
+      ui = new LobbyDiscoveryUI();
+
+      expect(document.getElementById('discovery-team-duos')).toBeNull();
+      expect(document.getElementById('discovery-team-trios')).toBeNull();
+      expect(document.getElementById('discovery-team-quads')).toBeNull();
+      expect(document.getElementById('discovery-team-hvn')).not.toBeNull();
+      expect(document.getElementById('discovery-team-2')).not.toBeNull();
+    });
+
+    it('renders FORMAT and NUMBER OF TEAMS subsections without All/None buttons', () => {
+      Object.assign(globalThis as Record<string, unknown>, {
+        GM_getValue: () => undefined,
+        GM_setValue: () => undefined,
+      });
+
+      ui = new LobbyDiscoveryUI();
+
+      const hvnChip = document.getElementById('discovery-team-hvn') as HTMLInputElement | null;
+      expect(hvnChip).not.toBeNull();
+      const hvnLabel = hvnChip?.closest('label');
+      expect(hvnLabel?.textContent?.trim()).toBe('Humans Vs Nations');
+
+      for (const n of [2, 3, 4, 5, 6, 7]) {
+        const chip = document.getElementById(`discovery-team-${n}`) as HTMLInputElement | null;
+        expect(chip).not.toBeNull();
+        expect(chip?.closest('label')?.textContent?.trim()).toBe(String(n));
+      }
+
+      const labels = Array.from(document.querySelectorAll('.ld-format-label')).map((el) =>
+        el.textContent?.trim()
+      );
+      expect(labels).toContain('FORMAT');
+      expect(labels).toContain('NUMBER OF TEAMS');
+
+      expect(document.getElementById('discovery-team-select-all')).toBeNull();
+      expect(document.getElementById('discovery-team-deselect-all')).toBeNull();
+    });
   });
 });

@@ -16,10 +16,6 @@ import {
   getPlayersPerTeam,
 } from './LobbyDiscoveryHelpers';
 
-interface MatchOptions {
-  isTeamTwoTimesMinEnabled?: boolean;
-}
-
 const BOOLEAN_MODIFIER_KEYS: Array<keyof ModifierFilters> = [
   'isCompact',
   'isRandomSpawn',
@@ -30,13 +26,13 @@ const BOOLEAN_MODIFIER_KEYS: Array<keyof ModifierFilters> = [
   'isNukesDisabled',
   'isSAMsDisabled',
   'isPeaceTime',
+  'isWaterNukes',
 ];
 
 export class LobbyDiscoveryEngine {
   matchesCriteria(
     lobby: Lobby,
-    criteriaList: DiscoveryCriteria[],
-    options: MatchOptions = {}
+    criteriaList: DiscoveryCriteria[]
   ): boolean {
     if (!lobby || !lobby.gameConfig || !criteriaList || criteriaList.length === 0) {
       return false;
@@ -64,15 +60,6 @@ export class LobbyDiscoveryEngine {
           criteria.teamCount !== null &&
           criteria.teamCount !== undefined &&
           criteria.teamCount !== lobbyTeamConfig
-        ) {
-          continue;
-        }
-
-        if (
-          options.isTeamTwoTimesMinEnabled &&
-          criteria.minPlayers !== null &&
-          lobbyTeamConfig !== 'Humans Vs Nations' &&
-          lobbyCapacity < criteria.minPlayers * 2
         ) {
           continue;
         }
@@ -114,12 +101,15 @@ export class LobbyDiscoveryEngine {
 
     for (const key of BOOLEAN_MODIFIER_KEYS) {
       const state = filters[key];
-      if (!state || state === 'allowed') {
+      if (!state || state === 'any') {
         continue;
       }
 
       const actual = Boolean(getLobbyModifierValue(lobby, key));
       if (state === 'blocked' && actual) {
+        return false;
+      }
+      if (state === 'required' && !actual) {
         return false;
       }
     }
@@ -159,6 +149,19 @@ export class LobbyDiscoveryEngine {
 
     if (numericActual !== null && blockedValues.includes(numericActual)) {
       return false;
+    }
+
+    const requiredValues = entries
+      .filter(([, state]) => state === 'required')
+      .map(([value]) => Number(value));
+
+    if (requiredValues.length > 0) {
+      if (numericActual === null) {
+        return false;
+      }
+      if (!requiredValues.includes(numericActual)) {
+        return false;
+      }
     }
 
     return true;

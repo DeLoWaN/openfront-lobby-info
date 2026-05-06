@@ -14,11 +14,6 @@ export const CONFIG = {
 export const STORAGE_KEYS = {
   lobbyDiscoverySettings: "OF_LOBBY_DISCOVERY_SETTINGS",
   lobbyDiscoveryPanelSize: "OF_LOBBY_DISCOVERY_PANEL_SIZE",
-  playerListPanelPosition: "OF_PLAYER_LIST_PANEL_POSITION",
-  playerListPanelSize: "OF_PLAYER_LIST_PANEL_SIZE",
-  playerListShowOnlyClans: "OF_PLAYER_LIST_SHOW_ONLY_CLANS",
-  playerListCollapseStates: "OF_PLAYER_LIST_COLLAPSE_STATES",
-  playerListRecentTags: "OF_PLAYER_LIST_RECENT_TAGS",
 } as const;
 
 /**
@@ -35,3 +30,23 @@ export const Z_INDEX = {
  * Type helper for storage keys
  */
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
+
+/**
+ * Stops for the "Players per team" slider — quasi-logarithmic spacing
+ * with denser low-end resolution to match real-world team-lobby distribution.
+ * Values must be strictly monotonically increasing.
+ */
+export const TEAM_PLAYERS_PER_TEAM_STOPS = [
+  2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 62,
+] as const;
+
+/**
+ * Minimum players-per-team value. 1-per-team would be solo (FFA), so the
+ * floor is 2.
+ */
+export const TEAM_MIN_PLAYERS_PER_TEAM = 2;
+
+/**
+ * Maximum players-per-team value (matches OpenFront's lobby capacity ceiling).
+ */
+export const TEAM_MAX_PLAYERS_PER_TEAM = 62;

@@ -1,5 +1,5 @@
 /**
- * OpenFront.io Lobby Intel + Discovery
+ * OpenFront Game Notifier
  *
  * Main entry point for the userscript.
  */
@@ -14,7 +14,7 @@ import { CurrentPlayerHighlighter } from '@/modules/lobby-discovery/CurrentPlaye
 (function () {
   'use strict';
 
-  console.log('[OpenFront Bundle] Initializing adaptation for OpenFront 0.30...');
+  console.log('[OpenFront Game Notifier] Initializing adaptation for OpenFront 0.30...');
 
   GM_addStyle(getStyles());
   SoundUtils.preloadSounds();
@@ -30,5 +30,25 @@ import { CurrentPlayerHighlighter } from '@/modules/lobby-discovery/CurrentPlaye
 
   currentPlayerHighlighter.start();
 
-  console.log('[OpenFront Bundle] Ready! 🚀');
+  // OpenFront adds `?live` to the URL exactly when the server's
+  // ServerStartGameMessage arrives (history.pushState in OpenFront's
+  // Main.ts). Treat the false→true transition as "game just started".
+  const isLiveGameUrl = (url: string): boolean => {
+    try {
+      return new URL(url).searchParams.has('live');
+    } catch {
+      return false;
+    }
+  };
+
+  let wasLive = isLiveGameUrl(location.href);
+  URLObserver.subscribe((url) => {
+    const isLive = isLiveGameUrl(url);
+    if (!wasLive && isLive && lobbyDiscovery.isSoundEnabled()) {
+      SoundUtils.playGameStartSound();
+    }
+    wasLive = isLive;
+  });
+
+  console.log('[OpenFront Game Notifier] Ready! 🚀');
 })();

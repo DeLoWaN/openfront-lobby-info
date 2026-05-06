@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   sanitizeCriteria,
-  migrateLegacySettings,
+  normalizeSettings,
   getLobbyTeamConfig,
   getLobbyGameMode,
   getLobbyCapacity,
@@ -10,6 +10,9 @@ import {
   getLobbyQueueSource,
   getGameDetailsText,
   getBrowserNotificationContent,
+  formatElapsedSince,
+  getLobbyModifierValue,
+  getActiveModifierLabels,
 } from '@/modules/lobby-discovery/LobbyDiscoveryHelpers';
 
 describe('LobbyDiscoveryHelpers', () => {
@@ -29,7 +32,7 @@ describe('LobbyDiscoveryHelpers', () => {
 
     expect(criteria).toEqual([
       { gameMode: 'FFA', teamCount: null, minPlayers: 10, maxPlayers: 30 },
-      { gameMode: 'Team', teamCount: 'Duos', minPlayers: 8, maxPlayers: 16 },
+      { gameMode: 'Team', teamCount: null, minPlayers: 8, maxPlayers: 16 },
       { gameMode: 'Team', teamCount: 3, minPlayers: 9, maxPlayers: 18 },
       {
         gameMode: 'Team',
@@ -40,46 +43,20 @@ describe('LobbyDiscoveryHelpers', () => {
     ]);
   });
 
-  it('migrates legacy settings to notify-only discovery settings', () => {
-    const migrated = migrateLegacySettings(
-      {
-        autoJoinEnabled: false,
-        soundEnabled: false,
-        isTeamThreeTimesMinEnabled: true,
-        criteria: [
-          { gameMode: 'FFA', minPlayers: 10, maxPlayers: 30 },
-          { gameMode: 'Team', teamCount: 'Quads', minPlayers: 2, maxPlayers: 4 },
-        ],
-      },
-      null
-    );
+  it('returns defaults when no settings are persisted', () => {
+    const normalized = normalizeSettings(null);
 
-    expect(migrated).toEqual({
-      criteria: [
-        {
-          gameMode: 'FFA',
-          teamCount: null,
-          minPlayers: 10,
-          maxPlayers: 30,
-          modifiers: undefined,
-        },
-        {
-          gameMode: 'Team',
-          teamCount: 'Quads',
-          minPlayers: 2,
-          maxPlayers: 4,
-          modifiers: undefined,
-        },
-      ],
-      discoveryEnabled: false,
-      soundEnabled: false,
+    expect(normalized).toEqual({
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
       desktopNotificationsEnabled: false,
-      isTeamTwoTimesMinEnabled: true,
+      isTeamTwoTimesMinEnabled: false,
     });
   });
 
-  it('preserves persisted desktop notification preference when current settings exist', () => {
-    const migrated = migrateLegacySettings(null, {
+  it('preserves persisted settings on load', () => {
+    const normalized = normalizeSettings({
       criteria: [{ gameMode: 'FFA', teamCount: null, minPlayers: 5, maxPlayers: 25 }],
       discoveryEnabled: true,
       soundEnabled: true,
@@ -87,20 +64,35 @@ describe('LobbyDiscoveryHelpers', () => {
       isTeamTwoTimesMinEnabled: false,
     });
 
-    expect(migrated.desktopNotificationsEnabled).toBe(true);
+    expect(normalized.desktopNotificationsEnabled).toBe(true);
+    expect(normalized.criteria).toHaveLength(1);
   });
 
-  it('collapses legacy modifier states into the new allowed or blocked model', () => {
+  it('upgrades the legacy isTeamThreeTimesMinEnabled flag when isTeamTwoTimesMinEnabled is absent', () => {
+    const normalized = normalizeSettings({
+      criteria: [],
+      discoveryEnabled: true,
+      soundEnabled: true,
+      desktopNotificationsEnabled: false,
+      isTeamThreeTimesMinEnabled: true,
+    } as any);
+
+    expect(normalized.isTeamTwoTimesMinEnabled).toBe(true);
+  });
+
+  it('migrates legacy allowed/rejected modifier states to any/blocked, preserves required', () => {
     const criteria = sanitizeCriteria([
       {
         gameMode: 'FFA',
         minPlayers: 10,
         maxPlayers: 30,
         modifiers: {
-          isCompact: 'required',
+          isCompact: 'allowed',
           isCrowded: 'rejected',
+          isHardNations: 'required',
+          isPeaceTime: 'indifferent',
           startingGold: {
-            1000000: 'indifferent',
+            1000000: 'allowed',
             5000000: 'required',
             25000000: 'rejected',
           },
@@ -115,23 +107,40 @@ describe('LobbyDiscoveryHelpers', () => {
         minPlayers: 10,
         maxPlayers: 30,
         modifiers: {
-          isCompact: 'allowed',
-          isRandomSpawn: 'allowed',
+          isCompact: 'any',
+          isRandomSpawn: 'any',
           isCrowded: 'blocked',
-          isHardNations: 'allowed',
-          isAlliancesDisabled: 'allowed',
-          isPortsDisabled: 'allowed',
-          isNukesDisabled: 'allowed',
-          isSAMsDisabled: 'allowed',
-          isPeaceTime: 'allowed',
+          isHardNations: 'required',
+          isAlliancesDisabled: 'any',
+          isPortsDisabled: 'any',
+          isNukesDisabled: 'any',
+          isSAMsDisabled: 'any',
+          isPeaceTime: 'any',
+          isWaterNukes: 'any',
           startingGold: {
-            1000000: 'allowed',
-            5000000: 'allowed',
+            1000000: 'any',
+            5000000: 'required',
             25000000: 'blocked',
           },
         },
       },
     ]);
+  });
+
+  it('treats unknown modifier values as any (defensive default)', () => {
+    const criteria = sanitizeCriteria([
+      {
+        gameMode: 'FFA',
+        minPlayers: 10,
+        maxPlayers: 30,
+        modifiers: {
+          isCompact: 'something-bogus' as any,
+          startingGold: { 5000000: undefined as any },
+        },
+      },
+    ]);
+
+    expect(criteria[0]?.modifiers?.isCompact).toBe('any');
   });
 
   it('detects Humans Vs Nations as a valid team config', () => {
@@ -222,6 +231,68 @@ describe('LobbyDiscoveryHelpers', () => {
     });
   });
 
+  it('reads startingGold and goldMultiplier from publicGameModifiers when present', () => {
+    const lobby = {
+      gameID: 'pgm',
+      gameConfig: {
+        gameMode: 'Free For All',
+        publicGameModifiers: { startingGold: 5_000_000, goldMultiplier: 2 },
+      },
+    } as any;
+
+    expect(getLobbyModifierValue(lobby, 'startingGold')).toBe(5_000_000);
+    expect(getLobbyModifierValue(lobby, 'goldMultiplier')).toBe(2);
+  });
+
+  it('falls back to gameConfig.startingGold and gameConfig.goldMultiplier (host-set custom lobby)', () => {
+    const lobby = {
+      gameID: 'host',
+      gameConfig: {
+        gameMode: 'Team',
+        startingGold: 1_000_000,
+        goldMultiplier: 3,
+      },
+    } as any;
+
+    expect(getLobbyModifierValue(lobby, 'startingGold')).toBe(1_000_000);
+    expect(getLobbyModifierValue(lobby, 'goldMultiplier')).toBe(3);
+  });
+
+  it('treats null host-set gold as undefined', () => {
+    const lobby = {
+      gameID: 'null',
+      gameConfig: {
+        gameMode: 'Team',
+        startingGold: null,
+        goldMultiplier: null,
+      },
+    } as any;
+
+    expect(getLobbyModifierValue(lobby, 'startingGold')).toBeUndefined();
+    expect(getLobbyModifierValue(lobby, 'goldMultiplier')).toBeUndefined();
+  });
+
+  it('builds badge labels from the host-set fallback when publicGameModifiers is absent', () => {
+    const lobby = {
+      gameID: 'host-labels',
+      gameConfig: {
+        gameMode: 'Team',
+        startingGold: 25_000_000,
+        goldMultiplier: 2,
+      },
+    } as any;
+
+    expect(getActiveModifierLabels(lobby)).toEqual(['25M', 'x2']);
+  });
+
+  it('formats elapsed time since a timestamp as Xm Ys', () => {
+    const now = 1_000_000_000_000;
+    expect(formatElapsedSince(now, now)).toBe('0m 0s');
+    expect(formatElapsedSince(now - 12_000, now)).toBe('0m 12s');
+    expect(formatElapsedSince(now - 75_000, now)).toBe('1m 15s');
+    expect(formatElapsedSince(now + 1000, now)).toBe('0m 0s');
+  });
+
   it('builds compact browser notification content for ffa lobbies', () => {
     const lobby = {
       gameID: 'ffa-notif',
@@ -240,6 +311,84 @@ describe('LobbyDiscoveryHelpers', () => {
     expect(getBrowserNotificationContent(lobby)).toEqual({
       title: 'Black Sea • FFA',
       body: '25 slots • Crowded, No Ports',
+    });
+  });
+
+  describe('sanitizeCriteria — Team minPlayers floor', () => {
+    it('clamps Team minPlayers below 2 to 2', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: null, minPlayers: 1, maxPlayers: 62 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(2);
+      expect(result[0]!.maxPlayers).toBe(62);
+    });
+
+    it('clamps Team minPlayers below 2, bumps maxPlayers if needed', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: null, minPlayers: 1, maxPlayers: 1 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(2);
+      expect(result[0]!.maxPlayers).toBe(2);
+    });
+
+    it('preserves Team minPlayers >= 2 untouched even if not on stops list', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 3, minPlayers: 7, maxPlayers: 12 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(7);
+      expect(result[0]!.maxPlayers).toBe(12);
+    });
+
+    it('does not apply the per-team floor to FFA criteria', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'FFA', teamCount: null, minPlayers: 1, maxPlayers: 125 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.minPlayers).toBe(1);
+      expect(result[0]!.maxPlayers).toBe(125);
+    });
+  });
+
+  describe('sanitizeCriteria — drops deprecated string team counts', () => {
+    it('coerces teamCount: "Duos" to null and preserves slider range', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Duos', minPlayers: 4, maxPlayers: 12 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.teamCount).toBeNull();
+      expect(result[0]!.minPlayers).toBe(4);
+      expect(result[0]!.maxPlayers).toBe(12);
+    });
+
+    it('coerces teamCount: "Trios" to null', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Trios', minPlayers: 6, maxPlayers: 18 },
+      ]);
+      expect(result[0]!.teamCount).toBeNull();
+    });
+
+    it('coerces teamCount: "Quads" to null', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Quads', minPlayers: 8, maxPlayers: 24 },
+      ]);
+      expect(result[0]!.teamCount).toBeNull();
+    });
+
+    it('preserves teamCount: "Humans Vs Nations"', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Humans Vs Nations', minPlayers: 2, maxPlayers: 62 },
+      ]);
+      expect(result[0]!.teamCount).toBe('Humans Vs Nations');
+    });
+
+    it('preserves numeric teamCount', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 4, minPlayers: 2, maxPlayers: 16 },
+      ]);
+      expect(result[0]!.teamCount).toBe(4);
     });
   });
 });

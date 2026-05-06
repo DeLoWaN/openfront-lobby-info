@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         OpenFront.io Lobby Intel + Discovery
+// @name         OpenFront Game Notifier
 // @namespace    https://openfront.io/
-// @version      2.8.17
-// @description  Live lobby player list and notify-only lobby discovery with Team criteria filters, shared API calls, and optional alerts.
+// @version      2.10.7
+// @description  Notifies you when a public OpenFront lobby matches your filters (mode, team format, capacity, modifiers) via in-page highlight, sound, and optional desktop notifications. Never auto-joins.
 // @homepageURL  https://github.com/DeLoWaN/openfront-autojoin-lobby
 // @downloadURL  https://raw.githubusercontent.com/DeLoWaN/openfront-autojoin-lobby/main/dist/bundle.user.js
 // @updateURL    https://raw.githubusercontent.com/DeLoWaN/openfront-autojoin-lobby/main/dist/bundle.user.js
@@ -11,837 +11,755 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_addStyle
+// @grant        unsafeWindow
 // @license      UNLICENSED
 // ==/UserScript==
 
-"use strict";(()=>{var a={bgPrimary:"rgba(10, 14, 22, 0.92)",bgSecondary:"rgba(18, 26, 40, 0.75)",bgHover:"rgba(35, 48, 70, 0.6)",textPrimary:"#e7f1ff",textSecondary:"rgba(231, 241, 255, 0.7)",textMuted:"rgba(231, 241, 255, 0.5)",accent:"rgba(46, 211, 241, 0.95)",accentHover:"rgba(99, 224, 255, 0.95)",accentMuted:"rgba(46, 211, 241, 0.18)",accentAlt:"rgba(99, 110, 255, 0.9)",success:"rgba(20, 220, 170, 0.9)",successSolid:"#38d9a9",warning:"#f2c94c",error:"#ff7d87",highlight:"rgba(88, 211, 255, 0.2)",border:"rgba(120, 140, 180, 0.3)",borderAccent:"rgba(46, 211, 241, 0.55)"},m={display:"'Trebuchet MS', 'Segoe UI', Tahoma, Verdana, sans-serif",body:"'Segoe UI', Tahoma, Verdana, sans-serif",mono:"'Consolas', 'Courier New', monospace"},n={xs:"4px",sm:"8px",md:"12px",lg:"16px",xl:"20px",xxl:"24px"},b={sm:"4px",md:"6px",lg:"8px",xl:"12px"},T={sm:"0 2px 8px rgba(3, 8, 18, 0.35)",md:"0 10px 22px rgba(3, 8, 18, 0.45)",lg:"0 24px 40px rgba(2, 6, 16, 0.55), 0 0 24px rgba(46, 211, 241, 0.08)"},d={fast:"0.12s",normal:"0.2s",slow:"0.3s"};var O={threadCount:20,lobbyPollingRate:1e3},k={lobbyDiscoverySettings:"OF_LOBBY_DISCOVERY_SETTINGS",lobbyDiscoveryPanelSize:"OF_LOBBY_DISCOVERY_PANEL_SIZE",playerListPanelPosition:"OF_PLAYER_LIST_PANEL_POSITION",playerListPanelSize:"OF_PLAYER_LIST_PANEL_SIZE",playerListShowOnlyClans:"OF_PLAYER_LIST_SHOW_ONLY_CLANS",playerListCollapseStates:"OF_PLAYER_LIST_COLLAPSE_STATES",playerListRecentTags:"OF_PLAYER_LIST_RECENT_TAGS"},E={panel:9998,panelOverlay:9999,modal:1e4,notification:2e4};function V(){return`
-    /* Body layout wrapper for flexbox */
-    #of-game-layout-wrapper {
-      display: flex;
-      height: 100vh;
-      width: 100vw;
-    }
-    #of-game-content {
-      flex: 1;
-      overflow: auto;
-      min-width: 0;
-    }
-
+"use strict";(()=>{var u={bgPrimary:"#0d0f10",bgSecondary:"#14171a",bgElevated:"#1a1e22",bgRaised:"#20252a",bgHover:"rgba(255,255,255,0.04)",textPrimary:"#f2f1ee",textSecondary:"#c8c6c0",textMuted:"#8e8c85",textFaint:"#5a5853",border:"rgba(255,255,255,0.06)",borderSubtle:"rgba(255,255,255,0.10)",borderStrong:"rgba(255,255,255,0.16)",accent:"#7aa7d4",accentSoft:"rgba(122,167,212,0.14)",accentLine:"rgba(122,167,212,0.32)",accentShadow:"122,167,212",warning:"#d4a056",warningSoft:"rgba(212,160,86,0.14)",danger:"#d27a6b",dangerSoft:"rgba(210,122,107,0.14)",dangerLine:"rgba(210,122,107,0.30)",accentMuted:"rgba(122,167,212,0.14)",accentHover:"#9bbfe0",accentAlt:"#9bbfe0",borderAccent:"rgba(122,167,212,0.32)",highlight:"rgba(122,167,212,0.20)",success:"#74c69d",successSolid:"#74c69d",error:"#d27a6b"},f={body:"'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",display:"'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",mono:"'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace"};var O={sm:"6px",md:"7px",lg:"10px",xl:"14px"},C={sm:"0 1px 3px rgba(0,0,0,0.4)",md:"0 2px 8px rgba(0,0,0,0.3)",lg:"0 1px 0 rgba(255,255,255,0.04) inset, 0 24px 48px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3)"},c={fast:"0.12s",normal:"0.2s",slow:"0.3s"};var K={threadCount:20,lobbyPollingRate:1e3},w={lobbyDiscoverySettings:"OF_LOBBY_DISCOVERY_SETTINGS",lobbyDiscoveryPanelSize:"OF_LOBBY_DISCOVERY_PANEL_SIZE"},J={panel:9998,panelOverlay:9999,modal:1e4,notification:2e4},X=[2,3,4,5,6,8,10,15,20,30,62],y=2,U=62;function Z(){return`
     :root {
-      --of-hud-accent: ${a.accent};
-      --of-hud-accent-soft: ${a.accentMuted};
-      --of-hud-accent-alt: ${a.accentAlt};
-      --of-hud-border: ${a.border};
-      --of-hud-border-strong: ${a.borderAccent};
-      --of-hud-bg: ${a.bgPrimary};
-      --of-hud-bg-2: ${a.bgSecondary};
-      --of-hud-text: ${a.textPrimary};
+      --of-hud-accent: ${u.accent};
+      --of-hud-accent-soft: ${u.accentSoft};
+      --of-hud-accent-line: ${u.accentLine};
+      --of-hud-bg-0: ${u.bgPrimary};
+      --of-hud-bg-1: ${u.bgSecondary};
+      --of-hud-bg-2: ${u.bgElevated};
+      --of-hud-bg-3: ${u.bgRaised};
+      --of-hud-text-1: ${u.textPrimary};
+      --of-hud-text-2: ${u.textSecondary};
+      --of-hud-text-3: ${u.textMuted};
+      --of-hud-text-4: ${u.textFaint};
+      --of-hud-line-1: ${u.border};
+      --of-hud-line-2: ${u.borderSubtle};
+      --of-hud-line-3: ${u.borderStrong};
+      --of-hud-danger: ${u.danger};
+      --of-hud-danger-soft: ${u.dangerSoft};
+      --of-hud-danger-line: ${u.dangerLine};
     }
 
     @keyframes ofPanelEnter {
       from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes livePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(${u.accentShadow}, 0.5); }
+      70%  { box-shadow: 0 0 0 8px rgba(${u.accentShadow}, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(${u.accentShadow}, 0); }
     }
 
     .of-panel {
       position: fixed;
-      background: linear-gradient(145deg, rgba(12, 18, 30, 0.98) 0%, rgba(10, 16, 26, 0.94) 60%, rgba(8, 12, 20, 0.96) 100%);
-      border: 1px solid ${a.border};
-      border-radius: ${b.lg};
-      box-shadow: ${T.lg};
-      font-family: ${m.body};
-      color: ${a.textPrimary};
+      background: linear-gradient(180deg, var(--of-hud-bg-2) 0%, var(--of-hud-bg-1) 100%);
+      border: 1px solid var(--of-hud-line-2);
+      border-radius: ${O.xl};
+      box-shadow: ${C.lg};
+      font-family: ${f.body};
+      color: var(--of-hud-text-1);
       user-select: none;
-      z-index: ${E.panel};
+      z-index: ${J.panel};
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      animation: ofPanelEnter ${d.slow} ease;
+      animation: ofPanelEnter ${c.slow} ease;
     }
-    .of-panel input[type="checkbox"] { accent-color: ${a.accent}; }
     .of-panel.hidden { display: none; }
-    .of-header {
-      padding: ${n.md} ${n.lg};
-      background: linear-gradient(90deg, rgba(20, 30, 46, 0.85), rgba(12, 18, 30, 0.6));
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-      font-size: 0.85em;
-      border-bottom: 1px solid ${a.border};
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: ${m.display};
-    }
-    .of-header-title {
-      display: flex;
-      align-items: center;
-      gap: ${n.sm};
-    }
-    .of-player-list-title {
-      font-size: 1em;
-      color: ${a.textPrimary};
-    }
-    .of-player-list-header {
-      position: relative;
-    }
-    .of-player-list-header::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(46, 211, 241, 0.7), transparent);
-      pointer-events: none;
-    }
-    .discovery-header {
-      cursor: pointer;
-      gap: ${n.sm};
-      padding: ${n.sm} ${n.md};
-      font-size: 0.85em;
-      position: relative;
-    }
-    .discovery-header:hover {
-      background: ${a.bgHover};
-    }
-    .discovery-header::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(46, 211, 241, 0.7), transparent);
-      pointer-events: none;
-    }
-    .discovery-title {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .discovery-title-text {
-      color: ${a.textPrimary};
-      font-weight: 700;
-    }
-    .discovery-title-sub {
-      font-size: 0.72em;
-      color: ${a.textMuted};
-      letter-spacing: 0.2em;
-    }
-    .of-content { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(80,110,160,0.4) transparent; }
-    .of-content::-webkit-scrollbar { width: 7px; }
-    .of-content::-webkit-scrollbar-thumb { background: rgba(80,110,160,0.4); border-radius: 5px; }
-    .of-footer {
-      padding: ${n.sm} ${n.lg};
-      display: flex;
-      justify-content: space-between;
-      background: ${a.bgSecondary};
-      flex-shrink: 0;
-      border-top: 1px solid ${a.border};
-    }
-    .of-button {
-      background: ${a.bgHover};
-      border: 1px solid ${a.border};
-      color: ${a.textPrimary};
-      padding: ${n.sm} ${n.md};
-      border-radius: ${b.md};
-      cursor: pointer;
-      font-size: 0.95em;
-      font-weight: 600;
-      transition: background ${d.fast}, border-color ${d.fast}, color ${d.fast};
-      outline: none;
-    }
-    .of-button:hover { background: rgba(80,110,160,0.5); border-color: ${a.borderAccent}; }
-    .of-button.primary { background: ${a.accent}; color: #04131a; }
-    .of-button.primary:hover { background: ${a.accentHover}; }
-    .of-input {
-      padding: ${n.sm};
-      background: rgba(20, 30, 46, 0.7);
-      border: 1px solid ${a.border};
-      border-radius: ${b.md};
-      color: ${a.textPrimary};
-      font-size: 0.95em;
-      outline: none;
-      transition: border ${d.fast};
-    }
-    .of-input:focus { border-color: ${a.accent}; }
-    .of-badge {
-      background: ${a.accentMuted};
-      border: 1px solid ${a.borderAccent};
-      border-radius: ${b.xl};
-      padding: 2px 10px;
-      font-size: 0.75em;
-      color: ${a.textPrimary};
-    }
-    .of-toggle {
-      width: 34px;
-      height: 18px;
-      border-radius: 11px;
-      background: rgba(35, 48, 70, 0.9);
-      border: 1px solid ${a.border};
-      position: relative;
-      transition: background ${d.fast}, border-color ${d.fast};
-      cursor: pointer;
-    }
-    .of-toggle.on { background: ${a.successSolid}; }
-    .of-toggle-ball {
-      position: absolute; left: 2px; top: 2px; width: 14px; height: 14px;
-      border-radius: 50%; background: #fff; transition: left ${d.fast};
-    }
-    .of-toggle.on .of-toggle-ball { left: 18px; }
-
-    .of-player-list-container {
-      width: var(--player-list-width, 320px);
-      min-width: 240px;
-      max-width: 50vw;
-      height: 100vh;
-      flex-shrink: 0;
-      position: relative;
-      background: linear-gradient(180deg, rgba(12, 18, 30, 0.98), rgba(8, 12, 20, 0.95));
-      border: 1px solid ${a.border};
-      border-left: 1px solid ${a.borderAccent};
-      border-radius: 0;
-      box-shadow: ${T.lg};
-      font-family: ${m.body};
-      color: ${a.textPrimary};
-      user-select: none;
-      z-index: ${E.panel};
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      resize: none;
-    }
-    .of-discovery-slot {
-      width: 100%;
-      flex-shrink: 0;
-    }
-    .of-resize-handle {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(180deg, ${a.accent}, rgba(46, 211, 241, 0.1));
-      cursor: ew-resize;
-      z-index: ${E.panel+1};
-      opacity: 0.35;
-      transition: opacity ${d.fast}, box-shadow ${d.fast};
-    }
-    .of-resize-handle:hover {
-      opacity: 0.8;
-      box-shadow: 0 0 12px rgba(46, 211, 241, 0.4);
-    }
-    .of-resize-handle.dragging {
-      opacity: 1;
-    }
-    .of-player-list-count { font-size: 0.72em; letter-spacing: 0.12em; font-family: ${m.mono}; }
-    .of-player-debug-info { font-size: 0.75em; color: rgba(148, 170, 210, 0.7); padding: 2px 6px; display: none; font-family: ${m.mono}; }
-
-    .of-quick-tag-switch {
-      padding: ${n.md} ${n.lg};
-      background: rgba(14, 22, 34, 0.75);
-      border-bottom: 1px solid ${a.border};
-      display: flex;
-      align-items: center;
-      gap: ${n.sm};
-      flex-shrink: 0;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-    }
-    .of-quick-tag-switch::-webkit-scrollbar { height: 5px; }
-    .of-quick-tag-switch::-webkit-scrollbar-thumb { background: rgba(80,110,160,0.45); border-radius: 4px; }
-    .of-quick-tag-label {
-      font-size: 0.75em;
-      color: ${a.textMuted};
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-    }
-    .of-quick-tag-item {
-      display: flex;
-      align-items: center;
-      gap: ${n.xs};
-    }
-    .of-quick-tag-btn {
-      padding: 4px 12px;
-      font-size: 0.8em;
-      background: rgba(22, 34, 52, 0.9);
-      color: ${a.textPrimary};
-      border: 1px solid ${a.border};
-      border-radius: ${b.md};
-      cursor: pointer;
-      transition: all ${d.fast};
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: ${m.display};
-    }
-    .of-quick-tag-btn:hover {
-      background: ${a.accentMuted};
-      border-color: ${a.accent};
-    }
-    .of-quick-tag-remove {
-      width: 16px;
-      height: 16px;
-      padding: 0;
-      font-size: 11px;
-      line-height: 1;
-      background: rgba(255, 125, 135, 0.15);
-      color: ${a.error};
-      border: 1px solid rgba(255, 125, 135, 0.6);
-      border-radius: 50%;
-      cursor: pointer;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background ${d.fast}, border-color ${d.fast}, transform ${d.fast};
-    }
-    .of-quick-tag-remove:hover {
-      background: rgba(255, 117, 117, 0.25);
-      border-color: ${a.error};
-      transform: scale(1.05);
-    }
-
-    .of-clan-checkbox-filter {
-      padding: ${n.md} ${n.lg};
-      background: rgba(14, 22, 34, 0.75);
-      border-bottom: 1px solid ${a.border};
-      display: flex;
-      align-items: center;
-      gap: ${n.sm};
-      flex-shrink: 0;
-    }
-    .of-clan-checkbox-filter input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      margin: 0;
-    }
-    .of-clan-checkbox-filter label {
-      cursor: pointer;
-      color: ${a.textPrimary};
-      font-size: 0.85em;
-      user-select: none;
-      flex: 1;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: ${m.display};
-    }
-
-    .of-team-group {
-      position: relative;
-      padding: 12px ${n.md} 6px ${n.md};
-    }
-    .of-team-group + .of-team-group {
-      border-top: 1px dashed rgba(90, 110, 150, 0.35);
-    }
-    .of-team-group.current-player-team .of-team-band {
-      border-left-width: 5px;
-      box-shadow: 0 0 12px var(--team-color, ${a.accent});
-    }
-    .of-team-band {
-      position: absolute;
-      inset: 0;
-      border-left: 3px solid var(--team-color, ${a.accent});
-      background: transparent;
-      pointer-events: none;
-    }
-    .of-team-header {
-      position: relative;
-      z-index: 1;
-      display: inline-flex;
-      align-items: center;
-      gap: ${n.xs};
-      padding: 4px 10px;
-      border-radius: ${b.xl};
-      border: 1px solid var(--team-color, ${a.borderAccent});
-      background: rgba(10, 16, 28, 0.7);
-      font-size: 0.7em;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--team-color, ${a.textPrimary});
-      font-family: ${m.display};
-      margin-bottom: ${n.xs};
-    }
-    .of-team-group.current-player-team .of-team-header::before {
-      content: "\u25C6";
-      color: var(--team-color, ${a.accent});
-      font-size: 0.85em;
-      margin-right: 2px;
-    }
-    .of-team-label {
-      font-weight: 700;
-    }
-    .of-team-count {
-      color: ${a.textSecondary};
-      font-size: 0.85em;
-      letter-spacing: 0.1em;
-      font-family: ${m.mono};
-      margin-left: ${n.xs};
-    }
-
-    .of-clan-group {
-      margin: 8px ${n.md};
-      border: 1px solid rgba(90, 110, 150, 0.35);
-      border-radius: ${b.md};
-      background: rgba(14, 20, 32, 0.78);
-      overflow: hidden;
-      box-shadow: 0 10px 18px rgba(2, 6, 16, 0.35);
-      --clan-color: ${a.accent};
-      --clan-color-soft: rgba(46, 211, 241, 0.14);
-      --clan-color-strong: rgba(46, 211, 241, 0.28);
-      --clan-color-border: rgba(46, 211, 241, 0.6);
-    }
-    .of-clan-group.of-clan-group-neutral {
-      --clan-color: rgba(150, 165, 190, 0.5);
-      --clan-color-soft: rgba(90, 105, 130, 0.2);
-      --clan-color-strong: rgba(120, 135, 170, 0.35);
-      --clan-color-border: rgba(120, 135, 170, 0.6);
-    }
-    .of-clan-group-enter {
-      animation: clanGroupEnter ${d.slow} cubic-bezier(.27,.82,.48,1.06) forwards;
-    }
-    @keyframes clanGroupEnter {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .of-clan-group-exit {
-      animation: clanGroupExit 0.25s cubic-bezier(.51,.01,1,1.01) forwards;
-    }
-    @keyframes clanGroupExit {
-      from { opacity: 1; transform: translateY(0); }
-      to { opacity: 0; transform: translateY(-8px); }
-    }
-    .of-clan-group-header {
-      padding: calc(${n.sm} - 2px) ${n.md};
-      background: linear-gradient(90deg, var(--clan-color-soft), rgba(22, 32, 48, 0.9) 65%);
-      border-left: 3px solid var(--clan-color-border);
-      cursor: default;
-      display: flex;
-      align-items: center;
-      gap: ${n.sm};
-      transition: background ${d.fast}, border-color ${d.fast};
-      flex-wrap: wrap;
-      font-family: ${m.display};
-    }
-    .of-clan-group-header:hover {
-      background: linear-gradient(90deg, var(--clan-color-strong), rgba(28, 40, 60, 0.95) 65%);
-    }
-    .of-clan-arrow {
-      font-size: 0.8em;
-      color: ${a.textSecondary};
-      transition: transform ${d.fast};
-      width: 16px;
-      display: inline-block;
-    }
-    .of-clan-group.collapsed .of-clan-arrow {
-      transform: rotate(-90deg);
-    }
-    .of-clan-tag {
-      font-weight: 700;
-      color: ${a.textPrimary};
-      font-size: 0.85em;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-family: ${m.display};
-    }
-    .of-clan-you-badge {
-      font-size: 0.7em;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      padding: 2px 6px;
-      border-radius: ${b.xl};
-      border: 1px solid var(--clan-color-border);
-      background: var(--clan-color-soft);
-      color: ${a.textPrimary};
-      font-family: ${m.mono};
-    }
-    .of-clan-count {
-      font-size: 0.75em;
-      color: ${a.textPrimary};
-      background: var(--clan-color-soft);
-      padding: 2px 7px;
-      border-radius: ${b.xl};
-      border: 1px solid var(--clan-color-border);
-      letter-spacing: 0.1em;
-      font-family: ${m.mono};
-    }
-    .of-clan-actions {
-      display: flex;
-      gap: ${n.xs};
-      flex-wrap: wrap;
-      align-items: center;
-      margin-left: auto;
-    }
-    .of-clan-stats {
-      display: flex;
-      gap: ${n.xs};
-      font-size: 0.66em;
-      color: ${a.textSecondary};
-      flex-wrap: wrap;
-      font-family: ${m.mono};
-      line-height: 1.2;
-    }
-    .of-clan-stats span {
-      white-space: nowrap;
-    }
-    .of-clan-use-btn {
-      padding: 4px 10px;
-      font-size: 0.75em;
-      background: rgba(46, 211, 241, 0.15);
-      color: ${a.textPrimary};
-      border: 1px solid ${a.borderAccent};
-      border-radius: ${b.sm};
-      cursor: pointer;
-      transition: all ${d.fast};
-      font-weight: 700;
-      white-space: nowrap;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: ${m.display};
-    }
-    .of-clan-use-btn:hover {
-      background: ${a.accent};
-      border-color: ${a.accent};
-      color: #04131a;
-    }
-    .of-clan-group-players {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 10px 10px 12px 10px;
-      overflow: visible;
-      transition: max-height ${d.normal} ease-in-out, opacity ${d.normal} ease-in-out;
-      border-top: 1px solid rgba(60, 80, 120, 0.35);
-    }
-    .of-clan-group.collapsed .of-clan-group-players {
-      max-height: 0;
-      padding: 0;
-      opacity: 0;
-      overflow: hidden;
-    }
-    .of-clan-group-players .of-player-item {
-      display: inline-flex;
-      padding: 4px 10px;
-      border: 1px solid var(--clan-color-border);
-      border-radius: ${b.sm};
-      background: var(--clan-color-soft);
-      cursor: default;
-      transition: background ${d.fast}, border-color ${d.fast}, transform ${d.fast};
-      font-size: 0.85em;
-    }
-    .of-clan-group-players .of-player-item:hover {
-      background: var(--clan-color-strong);
-      border-color: var(--clan-color);
-      transform: translateY(-1px);
-    }
-    .of-solo-players {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 8px 10px 12px 10px;
-      border-top: 1px dashed rgba(70, 90, 120, 0.35);
-    }
-    .of-solo-players .of-player-item {
-      display: inline-flex;
-      padding: 4px 10px;
-      border: 1px solid var(--player-accent-border, rgba(120, 135, 170, 0.5));
-      border-radius: ${b.sm};
-      background: var(--player-accent-soft, rgba(90, 105, 130, 0.18));
-      cursor: default;
-      transition: background ${d.fast}, border-color ${d.fast}, transform ${d.fast};
-      font-size: 0.85em;
-    }
-    .of-solo-players .of-player-item:hover {
-      background: var(--player-accent-strong, rgba(120, 135, 170, 0.28));
-      border-color: var(--player-accent, rgba(150, 165, 190, 0.6));
-      transform: translateY(-1px);
-    }
-    .of-player-list-content { flex: 1; padding: ${n.xs} 0; }
-    /* Base player item styles (for untagged players) */
-    .of-player-list-content > .of-player-item {
-      padding: 6px ${n.md};
-      border-bottom: 1px solid rgba(60, 80, 120, 0.35);
-      font-size: 0.85em;
-      line-height: 1.4;
-      position: relative;
-      transition: background-color ${d.slow}, border-color ${d.slow};
-      cursor: default;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .of-player-list-content > .of-player-item:hover {
-      background: rgba(24, 34, 52, 0.7);
-      border-bottom-color: rgba(80, 110, 160, 0.5);
-    }
-    .of-player-item.of-player-item-accent {
-      border-left: 3px solid var(--player-accent-border, rgba(120, 135, 170, 0.6));
-      background: var(--player-accent-soft, rgba(120, 135, 170, 0.18));
-    }
-    .of-clan-group-players .of-player-item.of-player-item-clanmate {
-      border-left: 4px solid var(--clan-color, ${a.accent});
-      background: var(--clan-color);
-      box-shadow: 0 0 0 1px var(--clan-color-border) inset, 0 0 12px rgba(46, 211, 241, 0.3);
-      color: #fff;
-      text-shadow: 0 1px 2px rgba(6, 10, 18, 0.8);
-    }
-    .of-player-name { color: ${a.textPrimary}; white-space: nowrap; overflow: visible; font-weight: 400; flex: 1; }
-    .of-player-highlighted { background: linear-gradient(90deg, ${a.highlight} 40%, rgba(46, 211, 241, 0.05)); border-left: 3px solid ${a.accent}; }
-    .of-player-enter { animation: playerEnter ${d.slow} cubic-bezier(.27,.82,.48,1.06) forwards; }
-    .of-player-enter-stagger-1 { animation-delay: 30ms; }
-    .of-player-enter-stagger-2 { animation-delay: 60ms; }
-    .of-player-enter-stagger-3 { animation-delay: 90ms; }
-    .of-player-enter-stagger-4 { animation-delay: 120ms; }
-    .of-player-enter-highlight { background-color: rgba(110,160,255,0.14) !important; }
-    .of-player-exit-highlight { background-color: rgba(220, 70, 90, 0.18); }
-    .of-player-exit { animation: playerExit 0.25s cubic-bezier(.51,.01,1,1.01) forwards; }
-    @keyframes playerEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes playerExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
-    .of-player-list-footer { padding: ${n.sm} ${n.lg}; display: flex; justify-content: space-between; background: ${a.bgSecondary}; font-size: 0.95em; flex-shrink: 0; border-top: 1px solid ${a.border}; }
-    .of-player-list-button { background: ${a.bgHover}; border: 1px solid ${a.border}; color: ${a.textPrimary}; padding: 6px 13px; border-radius: ${b.md}; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: background ${d.fast}, border-color ${d.fast}; outline: none; }
-    .of-player-list-button:hover { background: rgba(80,110,160,0.5); border-color: ${a.borderAccent}; }
 
     .discovery-panel {
-      position: fixed;
       top: 24px;
       right: 24px;
-      width: min(560px, calc(100vw - 32px));
+      width: 380px;
       max-height: calc(100vh - 48px);
-      margin: 0;
-      border: 1px solid ${a.border};
-      border-radius: ${b.lg};
-      box-shadow: ${T.lg};
-      transition: opacity ${d.slow}, transform ${d.slow};
-      cursor: default;
+    }
+
+    .discovery-body {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1;
       overflow: hidden;
     }
-    .discovery-panel::after { display: none; }
-    .discovery-panel.hidden { display: none; }
-    .discovery-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-    .discovery-content { display: flex; flex-direction: column; gap: ${n.sm}; padding: ${n.sm} ${n.md} ${n.md}; overflow-y: auto; overflow-x: hidden; min-height: 0; }
-    .discovery-status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: ${n.sm};
-      flex-wrap: wrap;
-      padding: ${n.sm} ${n.md};
-      background: rgba(18, 26, 40, 0.75);
-      border: 1px solid ${a.border};
-      border-radius: ${b.md};
-    }
-    .discovery-action-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: ${n.sm};
-    }
-    .discovery-modes { display: flex; flex-direction: column; gap: ${n.sm}; }
-    .discovery-clanmate-button {
-      width: 100%;
-      background: rgba(22, 34, 52, 0.9);
-      border: 1px solid ${a.border};
-      color: ${a.textPrimary};
-      padding: ${n.sm} ${n.md};
-      border-radius: ${b.md};
-      font-size: 0.8em;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background ${d.fast}, border-color ${d.fast};
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: ${m.display};
-    }
-    .discovery-clanmate-button:hover { background: rgba(30, 44, 66, 0.95); border-color: ${a.borderAccent}; }
-    .discovery-clanmate-button.armed { background: ${a.accent}; border-color: ${a.accentHover}; color: #04131a; box-shadow: 0 0 12px rgba(46, 211, 241, 0.35); }
-    .discovery-clanmate-button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .discovery-config-grid { display: flex; flex-direction: column; gap: ${n.sm}; }
-    .discovery-config-card { flex: 1 1 auto; min-width: 0; width: 100%; background: rgba(14, 22, 34, 0.7); border: 1px solid ${a.border}; border-radius: ${b.md}; }
-    .discovery-mode-inner {
-      display: flex;
-      flex-direction: column;
-      gap: ${n.xs};
-      margin-top: ${n.xs};
-    }
-    .discovery-mode-inner.is-disabled {
-      opacity: 0.72;
-    }
-    .discovery-section {
-      display: flex;
-      flex-direction: column;
-      gap: ${n.xs};
-    }
-    .discovery-section-title {
-      font-size: 0.72em;
-      color: ${a.textMuted};
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      font-family: ${m.display};
-      margin-top: ${n.xs};
-    }
-    .discovery-footer { align-items: center; justify-content: flex-start; gap: ${n.sm}; flex-wrap: wrap; padding: ${n.sm} ${n.md}; background: rgba(14, 22, 34, 0.75); border-top: 1px solid ${a.border}; }
-    .discovery-main-button {
-      width: auto;
-      flex: 1 1 160px;
-      padding: ${n.sm} ${n.md};
-      border: 1px solid ${a.border};
-      border-radius: ${b.md};
-      font-size: 0.8em;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all ${d.slow};
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: ${m.display};
-    }
-    .discovery-main-button.active { background: ${a.accent}; color: #04131a; border-color: ${a.accentHover}; box-shadow: 0 0 14px rgba(46, 211, 241, 0.35); }
-    .discovery-main-button.inactive { background: rgba(28, 38, 58, 0.9); color: ${a.textSecondary}; }
-    .discovery-mode-config { margin-bottom: ${n.xs}; padding: ${n.sm}; background: rgba(18, 26, 40, 0.8); border-radius: ${b.md}; border: 1px solid rgba(90, 110, 150, 0.35); }
-    .mode-checkbox-label {
+
+    /* Status pill */
+    .ld-status {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-bottom: 6px;
-      font-size: 0.8em;
-      color: ${a.textPrimary};
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-family: ${m.display};
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--of-hud-line-1);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
     }
-    .mode-checkbox-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-    .player-filter-info { margin-bottom: 4px; padding: 2px 0; }
-    .player-filter-info small { color: ${a.textSecondary}; font-size: 0.8em; }
-    .capacity-range-wrapper { margin-top: 4px; }
-    .capacity-range-visual { position: relative; padding: 8px 0 4px 0; }
-    .capacity-track { position: relative; height: 6px; background: rgba(46, 211, 241, 0.2); border-radius: 3px; margin-bottom: ${n.sm}; }
-    .team-count-options-centered { display: flex; justify-content: space-between; gap: 10px; margin: ${n.xs} 0; }
-    .team-count-column { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; background: rgba(12, 18, 30, 0.6); padding: 5px; border-radius: ${b.sm}; border: 1px solid rgba(90, 110, 150, 0.25); }
-    .team-count-column label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.78em; color: ${a.textPrimary}; white-space: nowrap; user-select: none; }
-    .team-count-column input[type="checkbox"] { width: 16px; height: 16px; margin: 0; }
-    .select-all-btn { background: rgba(46, 211, 241, 0.15); color: ${a.textPrimary}; border: 1px solid ${a.borderAccent}; border-radius: ${b.sm}; padding: ${n.xs} ${n.sm}; font-size: 0.75em; cursor: pointer; flex: 1; text-align: center; margin: 0 2px; text-transform: uppercase; letter-spacing: 0.1em; font-family: ${m.display}; }
-    .select-all-btn:hover { background: rgba(46, 211, 241, 0.25); }
-    .team-count-section > div:first-of-type { display: flex; gap: 5px; margin-bottom: ${n.xs}; }
-    .team-count-section > label { font-size: 0.8em; color: ${a.textPrimary}; font-weight: 600; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.08em; font-family: ${m.display}; }
-    .capacity-labels { display: flex; justify-content: space-between; align-items: center; margin-top: ${n.sm}; }
-    .three-times-checkbox { display: flex; align-items: center; gap: ${n.xs}; font-size: 0.78em; color: ${a.textPrimary}; margin: 0 5px; }
-    .three-times-checkbox input[type="checkbox"] { width: 15px; height: 15px; }
-    .capacity-range-fill { position: absolute; height: 100%; background: rgba(46, 211, 241, 0.5); border-radius: 3px; pointer-events: none; opacity: 0.7; transition: left 0.1s ease, width 0.1s ease; }
-    .discovery-modifier-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: ${n.xs};
-    }
-    .discovery-modifier-grid label {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: ${n.sm};
-      font-size: 0.82em;
-      color: ${a.textSecondary};
-      min-width: 0;
-    }
-    .discovery-modifier-grid label > span:first-child {
-      flex: 1 1 auto;
-      min-width: 0;
-      color: ${a.textPrimary};
-      white-space: nowrap;
-    }
-    .discovery-binary-toggle {
-      display: inline-grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 2px;
-      flex: 0 0 144px;
-      min-width: 144px;
-      padding: 2px;
-      border: 1px solid ${a.border};
-      border-radius: 999px;
-      background: rgba(20, 30, 46, 0.78);
-    }
-    .discovery-binary-option {
+    .ld-pulse {
       position: relative;
-      display: flex;
-      width: 100%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--of-hud-accent);
+      box-shadow: 0 0 0 0 var(--of-hud-accent);
+      animation: livePulse 2s cubic-bezier(.4,0,.2,1) infinite;
+      flex-shrink: 0;
+    }
+    .ld-pulse.is-paused {
+      background: var(--of-hud-text-4);
+      animation: none;
+      box-shadow: none;
+    }
+    .ld-status-text {
+      flex: 1;
       min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--of-hud-text-2);
       cursor: pointer;
-      border: 0;
-      padding: 0;
-      margin: 0;
-      background: transparent;
+    }
+    .ld-status-text strong {
+      font-weight: 500;
+      color: var(--of-hud-text-1);
+      letter-spacing: 0.01em;
+    }
+    .ld-status-text .sep { color: var(--of-hud-text-4); }
+    .ld-status-text .meta {
+      font-family: ${f.mono};
+      font-size: 11px;
+      color: var(--of-hud-text-3);
+      font-variant-numeric: tabular-nums;
+    }
+    .ld-icons {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .ld-icon-btn {
       appearance: none;
-      -webkit-appearance: none;
+      border: 0;
+      cursor: pointer;
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--of-hud-text-3);
+      transition: background ${c.fast}, color ${c.fast};
+      padding: 0;
     }
-    .discovery-binary-option:focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.28);
-      outline-offset: 1px;
-      border-radius: 999px;
+    .ld-icon-btn:hover {
+      background: var(--of-hud-bg-3);
+      color: var(--of-hud-text-1);
     }
-    .discovery-binary-label {
+    .ld-icon-btn.is-on {
+      background: var(--of-hud-accent-soft);
+      color: var(--of-hud-accent);
+    }
+    .ld-icon-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .ld-icon-btn input { display: none; }
+    .ld-mode-btn input { display: none; }
+    .ld-chip input { display: none; }
+
+    /* Header */
+    .ld-head {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--of-hud-line-1);
+      flex-shrink: 0;
+    }
+    .ld-eyebrow {
+      font-family: ${f.mono};
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--of-hud-text-4);
+      margin-bottom: 4px;
+    }
+    .ld-title {
+      font-family: ${f.display};
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--of-hud-text-1);
+      margin: 0;
+    }
+
+    /* Scroll body */
+    .discovery-content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+    .discovery-content::-webkit-scrollbar { width: 8px; }
+    .discovery-content::-webkit-scrollbar-track { background: transparent; }
+    .discovery-content::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    .ld-section {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--of-hud-line-1);
+    }
+    .ld-section:last-child { border-bottom: 0; }
+
+    .ld-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .ld-section-label {
+      font-family: ${f.mono};
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--of-hud-text-3);
+    }
+    .ld-section-aside {
+      font-size: 11px;
+      color: var(--of-hud-text-4);
+    }
+
+    /* Mode segmented selector */
+    .ld-modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 4px;
+      background: var(--of-hud-bg-0);
+      border: 1px solid var(--of-hud-line-1);
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .ld-mode-btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      background: transparent;
+      color: var(--of-hud-text-3);
+      padding: 8px 10px;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      min-height: 24px;
-      padding: 0 8px;
-      border-radius: 999px;
-      color: ${a.textMuted};
-      font-size: 0.66em;
-      font-weight: 700;
-      letter-spacing: 0.08em;
+      gap: 8px;
+      transition: background ${c.fast}, color ${c.fast};
+    }
+    .ld-mode-btn:hover { color: var(--of-hud-text-1); }
+    .ld-mode-btn.is-on {
+      background: var(--of-hud-bg-3);
+      color: var(--of-hud-text-1);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .ld-mode-btn .check {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1.5px solid var(--of-hud-text-4);
+      display: grid;
+      place-items: center;
+      transition: background ${c.fast}, border-color ${c.fast};
+      flex-shrink: 0;
+    }
+    .ld-mode-btn.is-on .check {
+      background: var(--of-hud-accent);
+      border-color: var(--of-hud-accent);
+    }
+    .ld-mode-btn.is-on .check svg {
+      width: 9px;
+      height: 9px;
+      stroke: var(--of-hud-bg-0);
+      stroke-width: 2.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Mode panel */
+    .ld-mode-panel {
+      background: rgba(0,0,0,0.18);
+      border: 1px solid var(--of-hud-line-1);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      transition: opacity ${c.normal};
+    }
+    .ld-mode-panel.is-off {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .ld-mode-panel-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .ld-mode-panel-head .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--of-hud-accent);
+    }
+    .ld-mode-panel.is-off .ld-mode-panel-head .dot {
+      background: var(--of-hud-text-4);
+    }
+    .ld-mode-panel-head .title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--of-hud-text-1);
       text-transform: uppercase;
-      font-family: ${m.display};
-      transition: background ${d.fast}, color ${d.fast}, box-shadow ${d.fast};
-      user-select: none;
-      white-space: nowrap;
     }
-    .discovery-binary-option[aria-pressed="true"] .discovery-binary-label {
-      color: ${a.textPrimary};
-      background: rgba(46, 211, 241, 0.18);
-      box-shadow: inset 0 0 0 1px rgba(46, 211, 241, 0.24);
+
+    .ld-format-label {
+      font-size: 11px;
+      color: var(--of-hud-text-4);
+      font-family: ${f.mono};
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
     }
-    .discovery-binary-toggle[data-state="blocked"] .discovery-binary-option[aria-pressed="true"] .discovery-binary-label {
-      background: rgba(245, 101, 101, 0.22);
-      box-shadow: inset 0 0 0 1px rgba(245, 101, 101, 0.3);
+
+    /* Format chips */
+    .ld-formats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
     }
-    .of-current-player-boost {
-      box-shadow: 0 0 0 1px rgba(46, 211, 241, 0.75), 0 0 16px rgba(46, 211, 241, 0.25);
-      background: linear-gradient(90deg, rgba(46, 211, 241, 0.16), rgba(46, 211, 241, 0.06));
+    .ld-formats:last-of-type { margin-bottom: 14px; }
+    .ld-chip {
+      appearance: none;
+      cursor: pointer;
+      background: var(--of-hud-bg-3);
+      color: var(--of-hud-text-3);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      transition: background ${c.fast}, color ${c.fast}, border-color ${c.fast};
     }
-    .of-current-player-team-boost {
-      box-shadow: inset 0 0 0 1px rgba(46, 211, 241, 0.55), 0 0 20px rgba(46, 211, 241, 0.15);
+    .ld-chip:hover { color: var(--of-hud-text-1); }
+    .ld-chip.is-on {
+      background: var(--of-hud-accent-soft);
+      color: var(--of-hud-accent);
+      border-color: var(--of-hud-accent-line);
     }
-    .capacity-slider { position: absolute; width: 100%; height: 6px; top: 0; left: 0; background: transparent; outline: none; -webkit-appearance: none; pointer-events: none; margin: 0; }
-    .capacity-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: ${a.accent}; cursor: pointer; pointer-events: all; border: 2px solid rgba(5, 20, 26, 0.9); box-shadow: ${T.sm}; }
+
+    /* Slider */
+    .ld-slider-row { margin-bottom: 4px; }
+    .ld-slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 11px;
+      color: var(--of-hud-text-3);
+      margin-bottom: 8px;
+    }
+    .ld-slider-label .val {
+      font-family: ${f.mono};
+      color: var(--of-hud-text-1);
+      font-variant-numeric: tabular-nums;
+    }
+    .ld-slider-label .val .sep {
+      color: var(--of-hud-text-4);
+      margin: 0 4px;
+    }
+    .ld-range {
+      --lo: 0%;
+      --hi: 100%;
+      position: relative;
+      height: 22px;
+      margin: 0 6px;
+    }
+    .capacity-slider.is-max-locked::-webkit-slider-thumb {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .capacity-slider.is-max-locked::-moz-range-thumb {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .capacity-slider.is-max-locked {
+      pointer-events: none;
+    }
+    .ld-range .track {
+      position: absolute;
+      left: -6px;
+      right: -6px;
+      top: 9px;
+      height: 4px;
+      background: var(--of-hud-bg-3);
+      border-radius: 2px;
+    }
+    .ld-range .track-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: var(--lo);
+      right: calc(100% - var(--hi));
+      background: var(--of-hud-accent);
+      border-radius: 2px;
+    }
+    .capacity-slider {
+      position: absolute;
+      left: -6px;
+      right: -6px;
+      width: calc(100% + 12px);
+      top: 0;
+      height: 22px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      pointer-events: none;
+      margin: 0;
+      outline: none;
+    }
+    .capacity-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--of-hud-text-1);
+      border: 1px solid rgba(0,0,0,0.4);
+      box-shadow: ${C.sm};
+      pointer-events: auto;
+      cursor: grab;
+    }
+    .capacity-slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--of-hud-text-1);
+      border: 1px solid rgba(0,0,0,0.4);
+      box-shadow: ${C.sm};
+      pointer-events: auto;
+      cursor: grab;
+    }
     .capacity-slider-min { z-index: 2; }
     .capacity-slider-max { z-index: 1; }
-    .capacity-label-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .capacity-label-group label { font-size: 0.8em; color: ${a.textSecondary}; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 0.08em; font-family: ${m.display}; }
-    .capacity-value { font-size: 0.85em; color: #FFFFFF; font-weight: 600; min-width: 40px; text-align: center; }
-    .capacity-inputs-hidden { display: none; }
-    .discovery-status { display: flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; flex-wrap: wrap; }
-    @keyframes statusPulse {
-      0% { box-shadow: 0 0 0 0 rgba(20, 220, 170, 0.4); }
-      70% { box-shadow: 0 0 0 8px rgba(20, 220, 170, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(20, 220, 170, 0); }
+
+    /* Stepper (number input + - / + buttons) */
+    .ld-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--of-hud-line-1);
+      border-radius: 6px;
+      padding: 2px 4px;
+      font-family: ${f.mono};
     }
-    .status-indicator { width: 8px; height: 8px; border-radius: 50%; background: ${a.success}; box-shadow: 0 0 10px rgba(20, 220, 170, 0.4); }
-    .status-indicator.active { animation: statusPulse 2s infinite; }
-    .status-indicator.inactive { animation: none; box-shadow: none; }
-    .status-text { font-size: 0.8em; color: ${a.textPrimary}; text-transform: uppercase; letter-spacing: 0.12em; font-family: ${m.display}; }
-    .search-timer { font-size: 0.8em; color: rgba(147, 197, 253, 0.9); font-weight: 500; font-family: ${m.mono}; }
-    .discovery-settings { display: flex; align-items: center; gap: ${n.sm}; flex-wrap: wrap; }
-    .discovery-toggle-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8em; color: ${a.textPrimary}; font-family: ${m.display}; text-transform: uppercase; letter-spacing: 0.08em; }
-    .discovery-toggle-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-    .current-game-info { margin: 6px 0; padding: 6px ${n.sm}; background: rgba(46, 211, 241, 0.1); border-radius: ${b.sm}; font-size: 0.8em; color: rgba(147, 197, 253, 0.9); text-align: center; border: 1px solid rgba(46, 211, 241, 0.25); }
-    .current-game-info.not-applicable { background: rgba(100, 100, 100, 0.1); color: ${a.textMuted}; border-color: rgba(100, 100, 100, 0.2); font-style: italic; }
+    .ld-stepper input[type="number"] {
+      width: 2.5em;
+      background: transparent;
+      border: none;
+      color: var(--of-hud-text-1);
+      font: inherit;
+      text-align: center;
+      padding: 0 2px;
+      font-variant-numeric: tabular-nums;
+      -moz-appearance: textfield;
+    }
+    .ld-stepper input[type="number"]::-webkit-outer-spin-button,
+    .ld-stepper input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .ld-stepper input[type="number"]:focus { outline: none; color: var(--of-hud-accent); }
+    .ld-stepper input[type="number"]:disabled { opacity: 0.45; cursor: not-allowed; }
+    .ld-step-btn {
+      width: 18px; height: 18px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--of-hud-text-3);
+      cursor: pointer;
+      border-radius: 3px;
+      font: inherit;
+      line-height: 1;
+      padding: 0;
+    }
+    .ld-step-btn:hover:not(:disabled) {
+      background: var(--of-hud-bg-3);
+      color: var(--of-hud-text-1);
+    }
+    .ld-step-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Ticks under the slider track */
+    .ld-ticks {
+      position: relative;
+      height: 18px;
+      margin: 6px 6px 4px;
+      pointer-events: none;
+    }
+    .ld-tick {
+      position: absolute;
+      top: 0;
+      width: 1px;
+      height: 4px;
+      background: var(--of-hud-text-4);
+      transform: translateX(-0.5px);
+    }
+    .ld-tick-label {
+      position: absolute;
+      top: 6px;
+      transform: translateX(-50%);
+      font-family: ${f.mono};
+      font-size: 10px;
+      color: var(--of-hud-text-3);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 2x card */
+    .ld-2x {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--of-hud-line-1);
+      border-radius: 7px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ld-2x .check {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1.5px solid var(--of-hud-text-4);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: background ${c.fast}, border-color ${c.fast};
+    }
+    .ld-2x.is-on .check {
+      background: var(--of-hud-accent);
+      border-color: var(--of-hud-accent);
+    }
+    .ld-2x.is-on .check svg {
+      width: 9px;
+      height: 9px;
+      stroke: var(--of-hud-bg-0);
+      stroke-width: 2.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .ld-2x .lbl {
+      font-size: 11px;
+      color: var(--of-hud-text-2);
+    }
+    .ld-2x .lbl strong {
+      font-family: ${f.mono};
+      font-weight: 500;
+      color: var(--of-hud-text-1);
+    }
+    .ld-2x .lbl .hint {
+      color: var(--of-hud-text-4);
+      margin-left: 6px;
+    }
+    .ld-2x input { display: none; }
+
+    /* Current game info */
+    .ld-current-game-info {
+      margin-top: 10px;
+      padding: 6px 10px;
+      background: var(--of-hud-accent-soft);
+      border: 1px solid var(--of-hud-accent-line);
+      border-radius: ${O.sm};
+      font-size: 11px;
+      color: var(--of-hud-text-2);
+      text-align: center;
+    }
+
+    /* Modifiers */
+    .ld-mods-legend {
+      display: flex;
+      gap: 10px;
+      font-size: 10px;
+      color: var(--of-hud-text-4);
+      font-family: ${f.mono};
+      letter-spacing: 0.06em;
+    }
+    .ld-mods-legend .key {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ld-mods-legend .swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--of-hud-bg-3);
+    }
+    .ld-mods-legend .swatch.req { background: var(--of-hud-accent); }
+    .ld-mods-legend .swatch.blk { background: var(--of-hud-danger); }
+
+    .ld-mod-group {
+      margin-bottom: 10px;
+    }
+    .ld-mod-group:last-child { margin-bottom: 0; }
+    .ld-mod-group-label {
+      font-size: 10px;
+      color: var(--of-hud-text-4);
+      font-family: ${f.mono};
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .ld-mods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 8px;
+    }
+    .ld-mod {
+      appearance: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--of-hud-text-2);
+      padding: 7px 8px 7px 9px;
+      border-radius: 7px;
+      font: inherit;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background ${c.fast}, color ${c.fast}, border-color ${c.fast};
+      text-align: left;
+      border: 1px solid transparent;
+    }
+    .ld-mod-name { font-weight: 500; }
+    .ld-mod:hover {
+      background: rgba(255,255,255,0.025);
+      color: var(--of-hud-text-1);
+    }
+    .ld-mod-ind {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1.5px solid var(--of-hud-text-4);
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      transition: background ${c.fast}, border-color ${c.fast};
+    }
+    .ld-mod-ind svg {
+      width: 9px;
+      height: 9px;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .ld-mod[data-state="required"] {
+      color: var(--of-hud-text-1);
+      background: var(--of-hud-accent-soft);
+      border-color: var(--of-hud-accent-line);
+    }
+    .ld-mod[data-state="required"] .ld-mod-ind {
+      background: var(--of-hud-accent);
+      border-color: var(--of-hud-accent);
+    }
+    .ld-mod[data-state="required"] .ld-mod-ind svg {
+      stroke: var(--of-hud-bg-0);
+    }
+    .ld-mod[data-state="blocked"] {
+      color: var(--of-hud-text-2);
+      background: var(--of-hud-danger-soft);
+      border-color: var(--of-hud-danger-line);
+    }
+    .ld-mod[data-state="blocked"] .ld-mod-name {
+      text-decoration: line-through;
+      text-decoration-color: rgba(210,122,107,0.6);
+      text-decoration-thickness: 1px;
+    }
+    .ld-mod[data-state="blocked"] .ld-mod-ind {
+      background: var(--of-hud-danger);
+      border-color: var(--of-hud-danger);
+    }
+    .ld-mod[data-state="blocked"] .ld-mod-ind svg {
+      stroke: var(--of-hud-bg-0);
+    }
+    .ld-mod-name {
+      flex: 1;
+      min-width: 0;
+    }
+    .ld-mods-hint {
+      font-size: 11px;
+      color: var(--of-hud-text-4);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .ld-mods-hint strong { font-weight: 500; }
+    .ld-mods-hint .req { color: var(--of-hud-accent); }
+    .ld-mods-hint .blk { color: var(--of-hud-danger); }
+
+    /* Footer */
+    .discovery-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--of-hud-line-1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+    .discovery-footer .summary {
+      font-size: 11px;
+      color: var(--of-hud-text-3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .discovery-footer .summary .num {
+      font-family: ${f.mono};
+      color: var(--of-hud-text-1);
+      font-variant-numeric: tabular-nums;
+    }
+    .discovery-footer .reset {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      background: transparent;
+      color: var(--of-hud-text-3);
+      font: inherit;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background ${c.fast}, color ${c.fast};
+    }
+    .discovery-footer .reset:hover {
+      color: var(--of-hud-text-1);
+      background: rgba(255,255,255,0.04);
+    }
+
+    /* Native join-modal player highlights \u2014 re-themed to blue accent */
+    .of-current-player-boost {
+      box-shadow: 0 0 0 1px var(--of-hud-accent), 0 0 16px var(--of-hud-accent-soft);
+      background: linear-gradient(90deg, var(--of-hud-accent-soft), rgba(${u.accentShadow}, 0.06));
+    }
+    .of-current-player-team-boost {
+      box-shadow: inset 0 0 0 1px var(--of-hud-accent-line), 0 0 20px var(--of-hud-accent-soft);
+    }
+
+    /* Queue card pulse \u2014 orange alarm contrast against the blue panel (intentional) */
     @keyframes discoveryCardActiveBeacon {
       0% {
         box-shadow:
@@ -866,167 +784,193 @@
     .of-discovery-card-active {
       border-color: rgba(255, 168, 38, 0.96) !important;
       transition:
-        box-shadow ${d.fast},
-        filter ${d.fast},
-        border-color ${d.fast};
+        box-shadow ${c.fast},
+        filter ${c.fast},
+        border-color ${c.fast};
       animation: discoveryCardActiveBeacon 1.45s ease-in-out infinite;
     }
-
-  `}var C={gameFoundAudio:null,gameStartAudio:null,audioUnlocked:!1,preloadSounds(){try{this.gameFoundAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/new-notification-014-363678.mp3"),this.gameFoundAudio.volume=.5,this.gameFoundAudio.preload="auto",this.gameStartAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/opening-bell-421471.mp3"),this.gameStartAudio.volume=.5,this.gameStartAudio.preload="auto",this.setupAudioUnlock()}catch(i){console.warn("[SoundUtils] Could not preload audio:",i)}},setupAudioUnlock(){let i=()=>{if(this.audioUnlocked)return;let e=[];this.gameFoundAudio&&(this.gameFoundAudio.volume=.01,e.push(this.gameFoundAudio.play().then(()=>{this.gameFoundAudio&&(this.gameFoundAudio.pause(),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.volume=.5)}).catch(()=>{}))),this.gameStartAudio&&(this.gameStartAudio.volume=.01,e.push(this.gameStartAudio.play().then(()=>{this.gameStartAudio&&(this.gameStartAudio.pause(),this.gameStartAudio.currentTime=0,this.gameStartAudio.volume=.5)}).catch(()=>{}))),Promise.all(e).then(()=>{this.audioUnlocked=!0,console.log("[SoundUtils] Audio unlocked successfully"),document.removeEventListener("click",i),document.removeEventListener("keydown",i),document.removeEventListener("touchstart",i)})};document.addEventListener("click",i,{once:!0}),document.addEventListener("keydown",i,{once:!0}),document.addEventListener("touchstart",i,{once:!0})},playGameFoundSound(){this.gameFoundAudio?(console.log("[SoundUtils] Attempting to play game found sound"),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game found sound:",i)})):console.warn("[SoundUtils] Game found audio not initialized")},playGameStartSound(){this.gameStartAudio?(console.log("[SoundUtils] Attempting to play game start sound"),this.gameStartAudio.currentTime=0,this.gameStartAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game start sound:",i)})):console.warn("[SoundUtils] Game start audio not initialized")}};var I={callbacks:[],lastUrl:location.href,initialized:!1,init(){if(this.initialized)return;this.initialized=!0;let i=()=>{location.href!==this.lastUrl&&(this.lastUrl=location.href,this.notify())};window.addEventListener("popstate",i),window.addEventListener("hashchange",i);let e=history.pushState,t=history.replaceState;history.pushState=function(...o){e.apply(history,o),setTimeout(i,0)},history.replaceState=function(...o){t.apply(history,o),setTimeout(i,0)},setInterval(i,200)},subscribe(i){this.callbacks.push(i),this.init()},notify(){this.callbacks.forEach(i=>i(location.href))}};var G={subscribers:[],fallbackInterval:null,fallbackStartTimeout:null,lastLobbies:[],pollingRate:O.lobbyPollingRate,started:!1,publicLobbiesListener:null,start(){this.started||(this.started=!0,this.publicLobbiesListener=i=>this.handlePublicLobbiesUpdate(i),document.addEventListener("public-lobbies-update",this.publicLobbiesListener),this.scheduleFallbackPolling())},stop(){this.started&&(this.started=!1,this.publicLobbiesListener&&(document.removeEventListener("public-lobbies-update",this.publicLobbiesListener),this.publicLobbiesListener=null),this.fallbackStartTimeout&&(clearTimeout(this.fallbackStartTimeout),this.fallbackStartTimeout=null),this.stopFallbackPolling())},subscribe(i){this.subscribers.push(i),this.lastLobbies.length>0&&i(this.lastLobbies)},scheduleFallbackPolling(){!this.started||this.fallbackInterval||this.fallbackStartTimeout||(this.fallbackStartTimeout=setTimeout(()=>{this.fallbackStartTimeout=null,this.startFallbackPolling()},this.pollingRate*2))},startFallbackPolling(){this.fallbackInterval||(this.fetchData(),this.fallbackInterval=setInterval(()=>void this.fetchData(),this.pollingRate))},stopFallbackPolling(){this.fallbackInterval&&(clearInterval(this.fallbackInterval),this.fallbackInterval=null)},async fetchData(){if(!(location.pathname!=="/"&&!location.pathname.startsWith("/public-lobby")))try{let i=await fetch("/api/public_lobbies");if(i.status===429){console.warn("[Bundle] Rate limited.");return}if(!i.ok){console.warn(`[Bundle] API error: ${i.status}`);return}let e=await i.json();this.lastLobbies=this.extractLobbies(e),this.notifySubscribers()}catch(i){console.error("[Bundle] API Error:",i)}},notifySubscribers(){this.subscribers.forEach(i=>i(this.lastLobbies))},handlePublicLobbiesUpdate(i){this.fallbackStartTimeout&&(clearTimeout(this.fallbackStartTimeout),this.fallbackStartTimeout=null),this.stopFallbackPolling();let e=i.detail?.payload;this.lastLobbies=this.extractLobbies(e),this.notifySubscribers(),this.scheduleFallbackPolling()},extractLobbies(i){if(!i||typeof i!="object")return[];if(Array.isArray(i.lobbies))return i.lobbies;let e=i.games;return e?["ffa","team","special"].flatMap(t=>(e[t]??[]).map(o=>({...o,publicGameType:o.publicGameType??t}))):[]}};var P={lastActionTime:0,debounceDelay:800,getLobbyButton(){return document.querySelector("public-lobby")?.querySelector("button.group.relative.isolate")},canJoinLobby(){let i=document.querySelector("public-lobby");if(!i)return!1;let e=this.getLobbyButton();return!!(e&&!i.isLobbyHighlighted&&i.lobbies&&i.lobbies.length>0&&!e.disabled&&e.offsetParent!==null)},verifyState(i){let e=document.querySelector("public-lobby");if(!e)return!1;let t=this.getLobbyButton();return!t||t.disabled||t.offsetParent===null?!1:i==="in"?e.isLobbyHighlighted===!0:i==="out"?!!(!e.isLobbyHighlighted&&e.lobbies&&e.lobbies.length>0):!1},tryJoinLobby(){let i=Date.now();if(i-this.lastActionTime<this.debounceDelay)return!1;let e=this.getLobbyButton(),t=document.querySelector("public-lobby");return e&&t&&!t.isLobbyHighlighted&&t.lobbies&&t.lobbies.length>0&&!e.disabled&&e.offsetParent!==null?(this.lastActionTime=i,e.click(),setTimeout(()=>{this.verifyState("in")||console.warn("[LobbyUtils] Join may have failed, state not updated")},100),!0):!1},isOnLobbyPage(){let i=document.getElementById("page-game");if(i&&!i.classList.contains("hidden"))return!1;let e=document.querySelector("canvas");if(e&&e.offsetParent!==null){let s=e.getBoundingClientRect();if(s.width>100&&s.height>100)return!1}let t=document.querySelector("public-lobby");if(t&&t.offsetParent!==null)return!0;if(t&&t.offsetParent===null)return!1;let o=document.getElementById("page-play");if(o&&!o.classList.contains("hidden")&&t)return!0;let r=window.location.pathname.replace(/\/+$/,"")||"/";return r==="/"||r==="/public-lobby"}};var z={isSupported(){return typeof Notification<"u"},isBackgrounded(){let i=document.visibilityState==="hidden"||document.hidden,e=typeof document.hasFocus=="function"?document.hasFocus():!0;return i||!e},async ensurePermission(){if(typeof Notification>"u")return!1;if(Notification.permission==="granted")return!0;if(Notification.permission==="denied")return!1;try{return await Notification.requestPermission()==="granted"}catch(i){return console.warn("[BrowserNotificationUtils] Permission request failed:",i),!1}},show(i){if(!this.isSupported()||!this.isBackgrounded())return!1;if(Notification.permission==="granted"){let e=new Notification(i.title,{body:i.body});return e.onclick=()=>{this.focusWindow(),e.close()},!0}return!1},focusWindow(){window.focus()}};var A=class{constructor(e,t,o=null,r=200,s=50){this.isDragging=!1;this.startX=0;this.startWidth=0;this.el=e,this.onResize=t,this.storageKey=o,this.minWidth=r,this.maxWidthVw=s,this.handleMouseDown=this._handleMouseDown.bind(this),this.handleMouseMove=this._handleMouseMove.bind(this),this.handleMouseUp=this._handleMouseUp.bind(this),this.handle=this.createHandle(),e.appendChild(this.handle),o&&this.loadWidth()}createHandle(){let e=document.createElement("div");return e.className="of-resize-handle",e.addEventListener("mousedown",this.handleMouseDown),e}loadWidth(){if(!this.storageKey)return;let e=GM_getValue(this.storageKey,null);if(e&&e.width){let t=this.clampWidth(e.width);this.el.style.width=t+"px",this.onResize(t)}}saveWidth(){this.storageKey&&GM_setValue(this.storageKey,{width:this.el.offsetWidth})}clampWidth(e){let t=window.innerWidth*(this.maxWidthVw/100);return Math.max(this.minWidth,Math.min(e,t))}_handleMouseDown(e){e.preventDefault(),e.stopPropagation(),this.isDragging=!0,this.startX=e.clientX,this.startWidth=this.el.offsetWidth,this.handle.classList.add("dragging"),document.addEventListener("mousemove",this.handleMouseMove),document.addEventListener("mouseup",this.handleMouseUp)}_handleMouseMove(e){if(!this.isDragging)return;let t=this.startX-e.clientX,o=this.clampWidth(this.startWidth+t);this.el.style.width=o+"px",this.onResize(o)}_handleMouseUp(){this.isDragging&&(this.isDragging=!1,this.handle.classList.remove("dragging"),document.removeEventListener("mousemove",this.handleMouseMove),document.removeEventListener("mouseup",this.handleMouseUp),this.saveWidth())}destroy(){this.handle.removeEventListener("mousedown",this.handleMouseDown),document.removeEventListener("mousemove",this.handleMouseMove),document.removeEventListener("mouseup",this.handleMouseUp),this.handle.parentNode&&this.handle.parentNode.removeChild(this.handle)}};var ee="allowed";function Y(i){if(!i)return null;let e=i.toLowerCase().trim();return e==="free for all"||e==="ffa"||e==="free-for-all"?"FFA":e==="team"||e==="teams"?"Team":null}function M(i){return Y(i.gameConfig?.gameMode)}function j(i){let e=i.publicGameType?.toLowerCase().trim();return e==="ffa"||e==="team"||e==="special"?e:null}function U(i){if(i==="Duos"||i==="Trios"||i==="Quads"||i==="Humans Vs Nations"||typeof i=="number"&&Number.isFinite(i)&&i>0)return i;if(typeof i=="string"){let e=parseInt(i,10);if(!Number.isNaN(e)&&e>0)return e}return null}function $(i){let e=i.gameConfig;if(!e||M(i)!=="Team")return null;let t=U(e.playerTeams??null);return t!==null?t:U(e.teamCount??e.teams??null)}function N(i){let e=i.gameConfig;return e?e.maxPlayers??e.maxClients??e.maxPlayersPerGame??i.maxClients??null:null}function D(i,e){return!i||!e?null:i==="Duos"?2:i==="Trios"?3:i==="Quads"?4:i==="Humans Vs Nations"?e:typeof i=="number"&&i>0?Math.floor(e/i):null}function F(i,e){let t=i.gameConfig?.publicGameModifiers;if(t)switch(e){case"isCompact":return t.isCompact;case"isRandomSpawn":return t.isRandomSpawn;case"isCrowded":return t.isCrowded;case"isHardNations":return t.isHardNations;case"isAlliancesDisabled":return t.isAlliancesDisabled;case"isPortsDisabled":return t.isPortsDisabled;case"isNukesDisabled":return t.isNukesDisabled;case"isSAMsDisabled":return t.isSAMsDisabled;case"isPeaceTime":return t.isPeaceTime;case"startingGold":return t.startingGold;case"goldMultiplier":return t.goldMultiplier;default:return}}function K(i){let e=M(i),t=$(i),o=N(i);if(e==="FFA")return o!==null?`FFA \u2022 ${o} slots`:"FFA";if(e!=="Team")return"Unsupported mode";if(t==="Humans Vs Nations")return o!==null?`Humans Vs Nations (${o})`:"Humans Vs Nations";if(t==="Duos")return"Duos";if(t==="Trios")return"Trios";if(t==="Quads")return"Quads";if(typeof t=="number"&&o!==null){let r=D(t,o);return r!==null?`${t} teams (${r} per team)`:`${t} teams`}return"Team"}function te(i){let e=M(i),t=$(i);return e==="FFA"?"FFA":e!=="Team"?"Unsupported mode":t==="Humans Vs Nations"?"Humans Vs Nations":t==="Duos"||t==="Trios"||t==="Quads"?t:typeof t=="number"?`${t} teams`:"Team"}function ie(i){return i>=1e6&&i%1e6===0?`${i/1e6}M`:i>=1e3&&i%1e3===0?`${i/1e3}K`:String(i)}function oe(i){let e=i.gameConfig?.publicGameModifiers;if(!e)return[];let t=[];return e.isCompact&&t.push("Compact"),e.isRandomSpawn&&t.push("Random"),e.isCrowded&&t.push("Crowded"),e.isHardNations&&t.push("Hard"),typeof e.startingGold=="number"&&t.push(ie(e.startingGold)),typeof e.goldMultiplier=="number"&&t.push(`x${e.goldMultiplier}`),e.isAlliancesDisabled&&t.push("No Alliances"),e.isPortsDisabled&&t.push("No Ports"),e.isNukesDisabled&&t.push("No Nukes"),e.isSAMsDisabled&&t.push("No SAMs"),e.isPeaceTime&&t.push("Peace"),t}function J(i){let e=[],t=i.gameConfig?.gameMap?.trim(),o=N(i),r=$(i),s=te(i);if(t&&e.push(t),M(i)==="Team"&&r!=="Humans Vs Nations"){e.push(s);let u=D(r,o);u!==null&&e.push(`${u}/team`)}else e.push(s);let l=[];o!==null&&l.push(`${o} slots`);let p=oe(i);return p.length>0&&l.push(p.join(", ")),{title:e.join(" \u2022 "),body:l.join(" \u2022 ")}}function q(i){return typeof i=="number"&&Number.isFinite(i)?i:null}function v(i){return i==="blocked"||i==="rejected"?"blocked":i==="allowed"||i==="required"||i==="indifferent"?"allowed":ee}function W(i){if(!i||typeof i!="object")return;let e={};for(let[t,o]of Object.entries(i)){let r=Number(t);Number.isFinite(r)&&(e[r]=v(o))}return Object.keys(e).length>0?e:void 0}function ae(i){if(!i||typeof i!="object")return;let e=i;return{isCompact:v(e.isCompact),isRandomSpawn:v(e.isRandomSpawn),isCrowded:v(e.isCrowded),isHardNations:v(e.isHardNations),isAlliancesDisabled:v(e.isAlliancesDisabled),isPortsDisabled:v(e.isPortsDisabled),isNukesDisabled:v(e.isNukesDisabled),isSAMsDisabled:v(e.isSAMsDisabled),isPeaceTime:v(e.isPeaceTime),startingGold:W(e.startingGold),goldMultiplier:W(e.goldMultiplier)}}function Q(i){if(!Array.isArray(i))return[];let e=[];for(let t of i){let o=t,r=Y(o.gameMode??null);r&&e.push({gameMode:r,teamCount:r==="Team"?U(o.teamCount??null):null,minPlayers:q(o.minPlayers),maxPlayers:q(o.maxPlayers),modifiers:ae(o.modifiers)})}return e}function X(i,e){return e?{criteria:Q(e.criteria),discoveryEnabled:typeof e.discoveryEnabled=="boolean"?e.discoveryEnabled:!0,soundEnabled:typeof e.soundEnabled=="boolean"?e.soundEnabled:!0,desktopNotificationsEnabled:typeof e.desktopNotificationsEnabled=="boolean"?e.desktopNotificationsEnabled:!1,isTeamTwoTimesMinEnabled:typeof e.isTeamTwoTimesMinEnabled=="boolean"?e.isTeamTwoTimesMinEnabled:!!e.isTeamThreeTimesMinEnabled}:{criteria:Q(i?.criteria),discoveryEnabled:typeof i?.autoJoinEnabled=="boolean"?i.autoJoinEnabled:!0,soundEnabled:typeof i?.soundEnabled=="boolean"?i.soundEnabled:!0,desktopNotificationsEnabled:!1,isTeamTwoTimesMinEnabled:typeof i?.isTeamTwoTimesMinEnabled=="boolean"?i.isTeamTwoTimesMinEnabled:!!i?.isTeamThreeTimesMinEnabled}}var re=["isCompact","isRandomSpawn","isCrowded","isHardNations","isAlliancesDisabled","isPortsDisabled","isNukesDisabled","isSAMsDisabled","isPeaceTime"],H=class{matchesCriteria(e,t,o={}){if(!e||!e.gameConfig||!t||t.length===0)return!1;let r=M(e),s=N(e);if(!r||s===null)return!1;let l=$(e),p=r==="Team"?D(l,s):null;for(let u of t){if(u.gameMode!==r||r==="Team"&&(u.teamCount!==null&&u.teamCount!==void 0&&u.teamCount!==l||o.isTeamTwoTimesMinEnabled&&u.minPlayers!==null&&l!=="Humans Vs Nations"&&s<u.minPlayers*2||p===null))continue;let f=r==="Team"?p:s;if(f!==null&&!(u.minPlayers!==null&&f<u.minPlayers)&&!(u.maxPlayers!==null&&f>u.maxPlayers)&&this.matchesModifiers(e,u.modifiers))return!0}return!1}matchesModifiers(e,t){if(!t)return!0;for(let o of re){let r=t[o];if(!r||r==="allowed")continue;let s=!!F(e,o);if(r==="blocked"&&s)return!1}return!(!this.matchesNumericModifier(F(e,"startingGold"),t.startingGold)||!this.matchesNumericModifier(F(e,"goldMultiplier"),t.goldMultiplier))}matchesNumericModifier(e,t){if(!t)return!0;let o=typeof e=="number"&&Number.isFinite(e)?e:null,r=Object.entries(t);if(r.length===0)return!0;let s=r.filter(([,l])=>l==="blocked").map(([l])=>Number(l));return!(o!==null&&s.includes(o))}};var ne=[1e6,5e6,25e6],se=[2],B=class{constructor(){this.discoveryEnabled=!0;this.criteriaList=[];this.searchStartTime=null;this.gameFoundTime=null;this.soundEnabled=!0;this.desktopNotificationsEnabled=!1;this.desktopNotificationRequestId=0;this.activeMatchSources=new Set;this.seenLobbies=new Set;this.desktopNotifiedLobbies=new Set;this.isTeamTwoTimesMinEnabled=!1;this.sleeping=!1;this.isDisposed=!1;this.timerInterval=null;this.gameInfoInterval=null;this.pulseSyncTimeout=null;this.resizeHandler=null;this.engine=new H,this.loadSettings(),this.createUI(),this.updateSleepState(),I.subscribe(()=>this.updateSleepState())}receiveLobbyUpdate(e){this.processLobbies(e)}migrateSettings(){let e=GM_getValue("autoJoinSettings",null),t=GM_getValue(k.lobbyDiscoverySettings,null),o=X(e,t);GM_setValue(k.lobbyDiscoverySettings,o)}loadSettings(){this.migrateSettings();let e=GM_getValue(k.lobbyDiscoverySettings,null);e&&(this.criteriaList=e.criteria||[],this.soundEnabled=e.soundEnabled!==void 0?e.soundEnabled:!0,this.desktopNotificationsEnabled=e.desktopNotificationsEnabled!==void 0?e.desktopNotificationsEnabled:!1,this.discoveryEnabled=e.discoveryEnabled!==void 0?e.discoveryEnabled:!0,this.isTeamTwoTimesMinEnabled=e.isTeamTwoTimesMinEnabled||!1)}saveSettings(){GM_setValue(k.lobbyDiscoverySettings,{criteria:this.criteriaList,discoveryEnabled:this.discoveryEnabled,soundEnabled:this.soundEnabled,desktopNotificationsEnabled:this.desktopNotificationsEnabled,isTeamTwoTimesMinEnabled:this.isTeamTwoTimesMinEnabled})}updateSearchTimer(){let e=document.getElementById("discovery-search-timer");if(!e)return;if(!this.discoveryEnabled||this.criteriaList.length===0||this.searchStartTime===null||!this.isDiscoveryFeedbackAllowed()){e.style.display="none";return}let t=this.gameFoundTime??Date.now(),o=Math.floor((t-this.searchStartTime)/1e3);e.textContent=this.gameFoundTime?`Match found (${Math.floor(o/60)}m ${o%60}s)`:`Scanning ${Math.floor(o/60)}m ${o%60}s`,e.style.display="inline"}updateCurrentGameInfo(){let e=document.getElementById("discovery-current-game-info");if(!e||!P.isOnLobbyPage()){e&&(e.style.display="none");return}let t=document.querySelector("public-lobby");if(!t||!Array.isArray(t.lobbies)||t.lobbies.length===0){e.style.display="none";return}let o=t.lobbies[0];if(!o||!o.gameConfig){e.style.display="none";return}e.style.display="block",e.textContent=`Current game: ${K(o)}`,e.classList.remove("not-applicable")}processLobbies(e){try{if(this.updateCurrentGameInfo(),this.syncSearchTimer(),!this.discoveryEnabled||this.criteriaList.length===0||!this.isDiscoveryFeedbackAllowed()){this.seenLobbies.clear(),this.desktopNotifiedLobbies.clear(),this.updateQueueCardPulses(new Set),this.gameFoundTime=null,this.updateSearchTimer();return}let t=new Set,o=new Set,r=[],s=!1;for(let l of e){let p=j(l);if(!p||!this.engine.matchesCriteria(l,this.criteriaList,{isTeamTwoTimesMinEnabled:this.isTeamTwoTimesMinEnabled}))continue;t.add(p);let u=this.getNotificationKey(l);o.add(u),this.seenLobbies.has(u)||(s=!0),this.desktopNotifiedLobbies.has(u)||r.push(l)}if(this.updateQueueCardPulses(t),s&&this.soundEnabled&&C.playGameFoundSound(),this.desktopNotificationsEnabled){let l=new Set;for(let p of r){let u=J(p),f=this.getNotificationKey(p);z.show({title:u.title,body:u.body,tag:f})&&l.add(f)}this.desktopNotifiedLobbies=new Set([...[...this.desktopNotifiedLobbies].filter(p=>o.has(p)),...l])}else this.desktopNotifiedLobbies.clear();this.seenLobbies=o,this.gameFoundTime=o.size>0?this.gameFoundTime??Date.now():null,this.updateSearchTimer()}catch(t){console.error("[LobbyDiscovery] Error processing lobbies:",t)}}getNotificationKey(e){return JSON.stringify({gameID:e.gameID,mode:e.gameConfig?.gameMode??null,playerTeams:e.gameConfig?.playerTeams??e.gameConfig?.teamCount??null,capacity:e.gameConfig?.maxPlayers??e.maxClients??null,modifiers:e.gameConfig?.publicGameModifiers??{}})}isDiscoveryFeedbackAllowed(){return!(!P.isOnLobbyPage()||document.getElementById("page-play")?.classList.contains("hidden")||document.querySelector("public-lobby")?.isLobbyHighlighted===!0||document.querySelector("join-lobby-modal")?.currentLobbyId||document.querySelector("host-lobby-modal")?.lobbyId)}getQueueCardElements(){let e=document.querySelector("game-mode-selector");if(!e)return{};let t=Array.from(e.querySelectorAll("div")).find(l=>l.className.includes("sm:grid-cols-[2fr_1fr]"));if(!(t instanceof HTMLElement))return{};let[o,r]=Array.from(t.children),s=r?Array.from(r.children):[];return{ffa:o?.querySelector("button"),special:s[0]?.querySelector("button"),team:s[1]?.querySelector("button")}}updateQueueCardPulses(e){this.activeMatchSources=new Set(e),this.applyQueueCardPulses(),this.scheduleQueueCardPulseSync()}applyQueueCardPulses(){let e=this.getQueueCardElements();for(let t of["ffa","special","team"]){let o=e[t];if(!o)continue;let r=this.activeMatchSources.has(t);o.classList.toggle("of-discovery-card-active",r),o.classList.remove("of-discovery-card-burst");let s=o.querySelector(".of-discovery-card-badge");s&&s.remove()}}scheduleQueueCardPulseSync(){this.pulseSyncTimeout&&clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=setTimeout(()=>{this.pulseSyncTimeout=null,this.applyQueueCardPulses()},16)}stopTimer(){this.timerInterval&&(clearInterval(this.timerInterval),this.timerInterval=null)}startGameInfoUpdates(){this.stopGameInfoUpdates(),this.updateCurrentGameInfo(),this.gameInfoInterval=setInterval(()=>this.updateCurrentGameInfo(),1e3)}stopGameInfoUpdates(){this.gameInfoInterval&&(clearInterval(this.gameInfoInterval),this.gameInfoInterval=null)}syncSearchTimer(e={}){let{resetStart:t=!1}=e;this.stopTimer(),t&&(this.searchStartTime=null,this.gameFoundTime=null,this.seenLobbies.clear(),this.desktopNotifiedLobbies.clear()),this.discoveryEnabled&&this.criteriaList.length>0&&this.isDiscoveryFeedbackAllowed()?(this.searchStartTime===null&&(this.searchStartTime=Date.now()),this.timerInterval=setInterval(()=>this.updateSearchTimer(),1e3)):(this.searchStartTime=null,this.gameFoundTime=null),this.updateSearchTimer()}setDiscoveryEnabled(e,t={}){this.discoveryEnabled=e,this.saveSettings(),this.updateUI(),this.syncSearchTimer({resetStart:t.resetTimer??!1})}getNumberValue(e){let t=document.getElementById(e);if(!t)return null;let o=parseInt(t.value,10);return Number.isNaN(o)?null:o}getModifierFilterValue(e){let t=document.getElementById(`${e}-allowed`);return document.getElementById(`${e}-blocked`)?.getAttribute("aria-pressed")==="true"||t?.getAttribute("aria-pressed")==="false"?"blocked":"allowed"}getNumericModifierState(e){let t={};for(let[o,r]of Object.entries(e))t[Number(o)]=this.getModifierFilterValue(r);return t}getModifierFiltersFromUI(){return{isCompact:this.getModifierFilterValue("modifier-isCompact"),isRandomSpawn:this.getModifierFilterValue("modifier-isRandomSpawn"),isCrowded:this.getModifierFilterValue("modifier-isCrowded"),isHardNations:this.getModifierFilterValue("modifier-isHardNations"),isAlliancesDisabled:this.getModifierFilterValue("modifier-isAlliancesDisabled"),isPortsDisabled:this.getModifierFilterValue("modifier-isPortsDisabled"),isNukesDisabled:this.getModifierFilterValue("modifier-isNukesDisabled"),isSAMsDisabled:this.getModifierFilterValue("modifier-isSAMsDisabled"),isPeaceTime:this.getModifierFilterValue("modifier-isPeaceTime"),startingGold:this.getNumericModifierState({1e6:"modifier-startingGold-1000000",5e6:"modifier-startingGold-5000000",25e6:"modifier-startingGold-25000000"}),goldMultiplier:this.getNumericModifierState({2:"modifier-goldMultiplier-2"})}}getAllTeamCountValues(){let e=[],t=["discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7"];for(let o of t){let r=document.getElementById(o);if(r?.checked)if(r.value==="Duos"||r.value==="Trios"||r.value==="Quads"||r.value==="Humans Vs Nations")e.push(r.value);else{let s=parseInt(r.value,10);Number.isNaN(s)||e.push(s)}}return e}setAllTeamCounts(e){let t=["discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7"];for(let o of t){let r=document.getElementById(o);r&&(r.checked=e)}}buildCriteriaFromUI(){let e=this.getModifierFiltersFromUI(),t=[];if(document.getElementById("discovery-ffa")?.checked&&t.push({gameMode:"FFA",teamCount:null,minPlayers:this.getNumberValue("discovery-ffa-min"),maxPlayers:this.getNumberValue("discovery-ffa-max"),modifiers:e}),!document.getElementById("discovery-team")?.checked)return t;let s=this.getAllTeamCountValues();if(s.length===0)return t.push({gameMode:"Team",teamCount:null,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e}),t;for(let l of s)t.push({gameMode:"Team",teamCount:l,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e});return t}updateUI(){let e=document.querySelector(".status-text"),t=document.querySelector(".status-indicator");!e||!t||(this.discoveryEnabled?(e.textContent="Discovery Active",t.style.background="#38d9a9",t.classList.add("active"),t.classList.remove("inactive")):(e.textContent="Discovery Paused",t.style.background="#888",t.classList.remove("active"),t.classList.add("inactive")))}applyModeVisibility(e,t){let o=document.getElementById(e);o&&o.classList.toggle("is-disabled",!t)}setTeamCountSelections(e){for(let t of e){let o=null;t==="Duos"?o=document.getElementById("discovery-team-duos"):t==="Trios"?o=document.getElementById("discovery-team-trios"):t==="Quads"?o=document.getElementById("discovery-team-quads"):t==="Humans Vs Nations"?o=document.getElementById("discovery-team-hvn"):typeof t=="number"&&(o=document.getElementById(`discovery-team-${t}`)),o&&(o.checked=!0)}}setModifierControl(e,t){let o=t??"allowed",r=document.getElementById(e),s=document.getElementById(`${e}-allowed`),l=document.getElementById(`${e}-blocked`);!r||!s||!l||(r.dataset.state=o,r.setAttribute("aria-valuetext",o),s.setAttribute("aria-pressed",String(o==="allowed")),l.setAttribute("aria-pressed",String(o==="blocked")))}loadUIFromSettings(){let e=this.criteriaList.find(c=>c.gameMode==="FFA"),t=this.criteriaList.filter(c=>c.gameMode==="Team"),o=document.getElementById("discovery-ffa"),r=document.getElementById("discovery-team");if(o&&(o.checked=!!e,this.applyModeVisibility("discovery-ffa-config",!!e)),r&&(r.checked=t.length>0,this.applyModeVisibility("discovery-team-config",t.length>0)),e){let c=document.getElementById("discovery-ffa-min"),y=document.getElementById("discovery-ffa-max");c&&e.minPlayers!==null&&(c.value=String(e.minPlayers)),y&&e.maxPlayers!==null&&(y.value=String(e.maxPlayers))}if(t[0]){let c=document.getElementById("discovery-team-min"),y=document.getElementById("discovery-team-max");c&&t[0].minPlayers!==null&&(c.value=String(t[0].minPlayers)),y&&t[0].maxPlayers!==null&&(y.value=String(t[0].maxPlayers)),this.setTeamCountSelections(t.map(w=>w.teamCount))}let l=(e??t[0])?.modifiers;if(l){this.setModifierControl("modifier-isCompact",l.isCompact),this.setModifierControl("modifier-isRandomSpawn",l.isRandomSpawn),this.setModifierControl("modifier-isCrowded",l.isCrowded),this.setModifierControl("modifier-isHardNations",l.isHardNations),this.setModifierControl("modifier-isAlliancesDisabled",l.isAlliancesDisabled),this.setModifierControl("modifier-isPortsDisabled",l.isPortsDisabled),this.setModifierControl("modifier-isNukesDisabled",l.isNukesDisabled),this.setModifierControl("modifier-isSAMsDisabled",l.isSAMsDisabled),this.setModifierControl("modifier-isPeaceTime",l.isPeaceTime);for(let c of ne)this.setModifierControl(`modifier-startingGold-${c}`,l.startingGold?.[c]);for(let c of se)this.setModifierControl(`modifier-goldMultiplier-${c}`,l.goldMultiplier?.[c])}else for(let c of["modifier-isCompact","modifier-isRandomSpawn","modifier-isCrowded","modifier-isHardNations","modifier-isAlliancesDisabled","modifier-isPortsDisabled","modifier-isNukesDisabled","modifier-isSAMsDisabled","modifier-isPeaceTime","modifier-startingGold-1000000","modifier-startingGold-5000000","modifier-startingGold-25000000","modifier-goldMultiplier-2"])this.setModifierControl(c,"allowed");let p=document.getElementById("discovery-sound-toggle");p&&(p.checked=this.soundEnabled);let u=document.getElementById("discovery-desktop-toggle");u&&(u.checked=this.desktopNotificationsEnabled);let f=document.getElementById("discovery-team-two-times");f&&(f.checked=this.isTeamTwoTimesMinEnabled)}initializeSlider(e,t,o,r,s,l,p,u=!1){let f=document.getElementById(e),c=document.getElementById(t),y=document.getElementById(o),w=document.getElementById(r);if(!f||!c||!y||!w)return;let h=parseInt(y.value,10),g=parseInt(w.value,10);Number.isNaN(h)||(f.value=String(h)),Number.isNaN(g)||(c.value=String(g));let x=()=>{this.updateSliderRange(e,t,o,r,s,l,p,u),this.refreshCriteria()};f.addEventListener("input",x),c.addEventListener("input",x),this.updateSliderRange(e,t,o,r,s,l,p,u)}updateSliderRange(e,t,o,r,s,l,p,u){let f=document.getElementById(e),c=document.getElementById(t),y=document.getElementById(o),w=document.getElementById(r),h=document.getElementById(s),g=document.getElementById(l),x=document.getElementById(p);if(!f||!c||!y||!w)return;let S=parseInt(f.value,10),L=parseInt(c.value,10);if(u&&this.isTeamTwoTimesMinEnabled&&(L=Math.min(parseInt(c.max,10),Math.max(1,L))),S>L&&(S=L,f.value=String(S)),y.value=String(S),w.value=String(L),g&&(g.textContent=S===1?"Any":String(S)),x&&(x.textContent=L===parseInt(c.max,10)?"Any":String(L)),h){let _=(S-parseInt(f.min,10))/(parseInt(f.max,10)-parseInt(f.min,10))*100,Z=(L-parseInt(f.min,10))/(parseInt(c.max,10)-parseInt(c.min,10))*100;h.style.left=`${_}%`,h.style.width=`${Z-_}%`}}refreshCriteria(){this.criteriaList=this.buildCriteriaFromUI(),this.saveSettings(),this.syncSearchTimer({resetStart:!0})}async handleDesktopNotificationToggleChange(e){let t=++this.desktopNotificationRequestId;if(!e.checked){this.desktopNotificationsEnabled=!1,this.saveSettings();return}let o=await z.ensurePermission();t!==this.desktopNotificationRequestId||this.isDisposed||!e.isConnected||!e.checked||(this.desktopNotificationsEnabled=o,e.checked=o,e.toggleAttribute("checked",o),this.saveSettings())}setupEventListeners(){document.getElementById("discovery-status")?.addEventListener("click",()=>{this.setDiscoveryEnabled(!this.discoveryEnabled,{resetTimer:!0})});for(let[t,o]of[["discovery-ffa","discovery-ffa-config"],["discovery-team","discovery-team-config"]]){let r=document.getElementById(t);r?.addEventListener("change",()=>{this.applyModeVisibility(o,r.checked),this.refreshCriteria()})}let e=document.getElementById("discovery-team-two-times");e?.addEventListener("change",()=>{this.isTeamTwoTimesMinEnabled=e.checked,this.updateSliderRange("discovery-team-min-slider","discovery-team-max-slider","discovery-team-min","discovery-team-max","discovery-team-range-fill","discovery-team-min-value","discovery-team-max-value",!0),this.refreshCriteria()}),document.getElementById("discovery-team-select-all")?.addEventListener("click",()=>{this.setAllTeamCounts(!0),this.refreshCriteria()}),document.getElementById("discovery-team-deselect-all")?.addEventListener("click",()=>{this.setAllTeamCounts(!1),this.refreshCriteria()});for(let t of["discovery-team-2","discovery-team-3","discovery-team-4","discovery-team-5","discovery-team-6","discovery-team-7","discovery-team-duos","discovery-team-trios","discovery-team-quads","discovery-team-hvn","discovery-sound-toggle","discovery-desktop-toggle"]){let o=document.getElementById(t);o&&o.addEventListener("change",()=>{if(t==="discovery-sound-toggle"&&o instanceof HTMLInputElement){this.soundEnabled=o.checked,this.saveSettings();return}if(t==="discovery-desktop-toggle"&&o instanceof HTMLInputElement){this.handleDesktopNotificationToggleChange(o);return}this.refreshCriteria()})}for(let t of["modifier-isCompact","modifier-isRandomSpawn","modifier-isCrowded","modifier-isHardNations","modifier-isAlliancesDisabled","modifier-isPortsDisabled","modifier-isNukesDisabled","modifier-isSAMsDisabled","modifier-isPeaceTime","modifier-startingGold-1000000","modifier-startingGold-5000000","modifier-startingGold-25000000","modifier-goldMultiplier-2"]){let o=document.getElementById(`${t}-allowed`),r=document.getElementById(`${t}-blocked`);for(let s of[o,r])s?.addEventListener("click",()=>{this.setModifierControl(t,s.dataset.value),this.refreshCriteria()})}}createModifierControl(e){return`
-      <div
-        id="${e}"
-        class="discovery-binary-toggle"
-        data-state="allowed"
-        role="group"
-        aria-valuetext="allowed"
-      >
-        <button
-            type="button"
-            class="discovery-binary-option"
-            id="${e}-allowed"
-            data-value="allowed"
-            aria-pressed="true"
-          >
-          <span class="discovery-binary-label">Allowed</span>
-        </button>
-        <button
-            type="button"
-            class="discovery-binary-option"
-            id="${e}-blocked"
-            data-value="blocked"
-            aria-pressed="false"
-          >
-          <span class="discovery-binary-label">Blocked</span>
-        </button>
-      </div>
-    `}createUI(){document.getElementById("openfront-discovery-panel")||(this.panel=document.createElement("div"),this.panel.id="openfront-discovery-panel",this.panel.className="of-panel discovery-panel",this.panel.style.width="560px",this.panel.innerHTML=`
-      <div class="of-header discovery-header">
-        <div class="discovery-title">
-          <span class="discovery-title-text">Lobby Discovery</span>
-          <span class="discovery-title-sub">NOTIFY ONLY</span>
+  `}var L={gameFoundAudio:null,gameStartAudio:null,audioUnlocked:!1,preloadSounds(){try{this.gameFoundAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/new-notification-014-363678.mp3"),this.gameFoundAudio.volume=.5,this.gameFoundAudio.preload="auto",this.gameStartAudio=new Audio("https://github.com/DeLoWaN/openfront-autojoin-lobby/raw/refs/heads/main/notification_sounds/opening-bell-421471.mp3"),this.gameStartAudio.volume=.5,this.gameStartAudio.preload="auto",this.setupAudioUnlock()}catch(i){console.warn("[SoundUtils] Could not preload audio:",i)}},setupAudioUnlock(){let i=()=>{if(this.audioUnlocked)return;let e=[];this.gameFoundAudio&&(this.gameFoundAudio.volume=.01,e.push(this.gameFoundAudio.play().then(()=>{this.gameFoundAudio&&(this.gameFoundAudio.pause(),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.volume=.5)}).catch(()=>{}))),this.gameStartAudio&&(this.gameStartAudio.volume=.01,e.push(this.gameStartAudio.play().then(()=>{this.gameStartAudio&&(this.gameStartAudio.pause(),this.gameStartAudio.currentTime=0,this.gameStartAudio.volume=.5)}).catch(()=>{}))),Promise.all(e).then(()=>{this.audioUnlocked=!0,console.log("[SoundUtils] Audio unlocked successfully"),document.removeEventListener("click",i),document.removeEventListener("keydown",i),document.removeEventListener("touchstart",i)})};document.addEventListener("click",i,{once:!0}),document.addEventListener("keydown",i,{once:!0}),document.addEventListener("touchstart",i,{once:!0})},playGameFoundSound(){this.gameFoundAudio?(console.log("[SoundUtils] Attempting to play game found sound"),this.gameFoundAudio.currentTime=0,this.gameFoundAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game found sound:",i)})):console.warn("[SoundUtils] Game found audio not initialized")},playGameStartSound(){this.gameStartAudio?(console.log("[SoundUtils] Attempting to play game start sound"),this.gameStartAudio.currentTime=0,this.gameStartAudio.play().catch(i=>{console.warn("[SoundUtils] Failed to play game start sound:",i)})):console.warn("[SoundUtils] Game start audio not initialized")}};var k={callbacks:[],lastUrl:location.href,initialized:!1,init(){if(this.initialized)return;this.initialized=!0;let i=()=>{location.href!==this.lastUrl&&(this.lastUrl=location.href,this.notify())};window.addEventListener("popstate",i),window.addEventListener("hashchange",i);let e=history.pushState,t=history.replaceState;history.pushState=function(...n){e.apply(history,n),setTimeout(i,0)},history.replaceState=function(...n){t.apply(history,n),setTimeout(i,0)},setInterval(i,200)},subscribe(i){this.callbacks.push(i),this.init()},notify(){this.callbacks.forEach(i=>i(location.href))}};var V={subscribers:[],fallbackInterval:null,fallbackStartTimeout:null,lastLobbies:[],pollingRate:K.lobbyPollingRate,started:!1,publicLobbiesListener:null,start(){this.started||(this.started=!0,this.publicLobbiesListener=i=>this.handlePublicLobbiesUpdate(i),document.addEventListener("public-lobbies-update",this.publicLobbiesListener),this.scheduleFallbackPolling())},stop(){this.started&&(this.started=!1,this.publicLobbiesListener&&(document.removeEventListener("public-lobbies-update",this.publicLobbiesListener),this.publicLobbiesListener=null),this.fallbackStartTimeout&&(clearTimeout(this.fallbackStartTimeout),this.fallbackStartTimeout=null),this.stopFallbackPolling())},subscribe(i){this.subscribers.push(i),this.lastLobbies.length>0&&i(this.lastLobbies)},scheduleFallbackPolling(){!this.started||this.fallbackInterval||this.fallbackStartTimeout||(this.fallbackStartTimeout=setTimeout(()=>{this.fallbackStartTimeout=null,this.startFallbackPolling()},this.pollingRate*2))},startFallbackPolling(){this.fallbackInterval||(this.fetchData(),this.fallbackInterval=setInterval(()=>void this.fetchData(),this.pollingRate))},stopFallbackPolling(){this.fallbackInterval&&(clearInterval(this.fallbackInterval),this.fallbackInterval=null)},async fetchData(){if(!(location.pathname!=="/"&&!location.pathname.startsWith("/public-lobby")))try{let i=await fetch("/api/public_lobbies");if(i.status===429){console.warn("[Bundle] Rate limited.");return}if(!i.ok){console.warn(`[Bundle] API error: ${i.status}`);return}let e=await i.json();this.lastLobbies=this.extractLobbies(e),this.notifySubscribers()}catch(i){console.error("[Bundle] API Error:",i)}},notifySubscribers(){this.subscribers.forEach(i=>i(this.lastLobbies))},handlePublicLobbiesUpdate(i){this.fallbackStartTimeout&&(clearTimeout(this.fallbackStartTimeout),this.fallbackStartTimeout=null),this.stopFallbackPolling();let e=i.detail?.payload;this.lastLobbies=this.extractLobbies(e),this.notifySubscribers(),this.scheduleFallbackPolling()},extractLobbies(i){if(!i||typeof i!="object")return[];if(Array.isArray(i.lobbies))return i.lobbies;let e=i.games;return e?["ffa","team","special"].flatMap(t=>(e[t]??[]).map(n=>({...n,publicGameType:n.publicGameType??t}))):[]}};var A={lastActionTime:0,debounceDelay:800,getLobbyButton(){return document.querySelector("public-lobby")?.querySelector("button.group.relative.isolate")},canJoinLobby(){let i=document.querySelector("public-lobby");if(!i)return!1;let e=this.getLobbyButton();return!!(e&&!i.isLobbyHighlighted&&i.lobbies&&i.lobbies.length>0&&!e.disabled&&e.offsetParent!==null)},verifyState(i){let e=document.querySelector("public-lobby");if(!e)return!1;let t=this.getLobbyButton();return!t||t.disabled||t.offsetParent===null?!1:i==="in"?e.isLobbyHighlighted===!0:i==="out"?!!(!e.isLobbyHighlighted&&e.lobbies&&e.lobbies.length>0):!1},tryJoinLobby(){let i=Date.now();if(i-this.lastActionTime<this.debounceDelay)return!1;let e=this.getLobbyButton(),t=document.querySelector("public-lobby");return e&&t&&!t.isLobbyHighlighted&&t.lobbies&&t.lobbies.length>0&&!e.disabled&&e.offsetParent!==null?(this.lastActionTime=i,e.click(),setTimeout(()=>{this.verifyState("in")||console.warn("[LobbyUtils] Join may have failed, state not updated")},100),!0):!1},isOnLobbyPage(){let i=document.getElementById("page-game");if(i&&!i.classList.contains("hidden"))return!1;let e=document.querySelector("canvas");if(e&&e.offsetParent!==null){let a=e.getBoundingClientRect();if(a.width>100&&a.height>100)return!1}let t=document.querySelector("public-lobby");if(t&&t.offsetParent!==null)return!0;if(t&&t.offsetParent===null)return!1;let n=document.getElementById("page-play");if(n&&!n.classList.contains("hidden")&&t)return!0;let o=window.location.pathname.replace(/\/+$/,"")||"/";return o==="/"||o==="/public-lobby"}};var q={isSupported(){return typeof Notification<"u"},isBackgrounded(){let i=document.visibilityState==="hidden"||document.hidden,e=typeof document.hasFocus=="function"?document.hasFocus():!0;return i||!e},async ensurePermission(){if(typeof Notification>"u")return!1;if(Notification.permission==="granted")return!0;if(Notification.permission==="denied")return!1;try{return await Notification.requestPermission()==="granted"}catch(i){return console.warn("[BrowserNotificationUtils] Permission request failed:",i),!1}},show(i){if(!this.isSupported()||!this.isBackgrounded())return!1;if(Notification.permission==="granted"){let e=new Notification(i.title,{body:i.body});return e.onclick=()=>{this.focusWindow(),e.close()},!0}return!1},focusWindow(){window.focus()}};var re="any";function ie(i){if(!i)return null;let e=i.toLowerCase().trim();return e==="free for all"||e==="ffa"||e==="free-for-all"?"FFA":e==="team"||e==="teams"?"Team":null}function v(i){return ie(i.gameConfig?.gameMode)}function ne(i){let e=i.publicGameType?.toLowerCase().trim();return e==="ffa"||e==="team"||e==="special"?e:null}function z(i){if(i==="Duos"||i==="Trios"||i==="Quads"||i==="Humans Vs Nations"||typeof i=="number"&&Number.isFinite(i)&&i>0)return i;if(typeof i=="string"){let e=parseInt(i,10);if(!Number.isNaN(e)&&e>0)return e}return null}function T(i){let e=i.gameConfig;if(!e||v(i)!=="Team")return null;let t=z(e.playerTeams??null);return t!==null?t:z(e.teamCount??e.teams??null)}function N(i){let e=i.gameConfig;return e?e.maxPlayers??e.maxClients??e.maxPlayersPerGame??i.maxClients??null:null}function P(i,e){return!i||!e?null:i==="Duos"?2:i==="Trios"?3:i==="Quads"?4:i==="Humans Vs Nations"?e:typeof i=="number"&&i>0?Math.floor(e/i):null}function D(i,e){let t=i.gameConfig?.publicGameModifiers;switch(e){case"isCompact":return t?.isCompact;case"isRandomSpawn":return t?.isRandomSpawn;case"isCrowded":return t?.isCrowded;case"isHardNations":return t?.isHardNations;case"isAlliancesDisabled":return t?.isAlliancesDisabled;case"isPortsDisabled":return t?.isPortsDisabled;case"isNukesDisabled":return t?.isNukesDisabled;case"isSAMsDisabled":return t?.isSAMsDisabled;case"isPeaceTime":return t?.isPeaceTime;case"isWaterNukes":return t?.isWaterNukes;case"startingGold":return t?.startingGold??i.gameConfig?.startingGold??void 0;case"goldMultiplier":return t?.goldMultiplier??i.gameConfig?.goldMultiplier??void 0;default:return}}function oe(i){let e=v(i),t=T(i),n=N(i);if(e==="FFA")return n!==null?`FFA \u2022 ${n} slots`:"FFA";if(e!=="Team")return"Unsupported mode";if(t==="Humans Vs Nations")return n!==null?`Humans Vs Nations (${n})`:"Humans Vs Nations";if(t==="Duos")return"Duos";if(t==="Trios")return"Trios";if(t==="Quads")return"Quads";if(typeof t=="number"&&n!==null){let o=P(t,n);return o!==null?`${t} teams (${o} per team)`:`${t} teams`}return"Team"}function le(i){let e=v(i),t=T(i);return e==="FFA"?"FFA":e!=="Team"?"Unsupported mode":t==="Humans Vs Nations"?"Humans Vs Nations":t==="Duos"||t==="Trios"||t==="Quads"?t:typeof t=="number"?`${t} teams`:"Team"}function de(i){return i>=1e6&&i%1e6===0?`${i/1e6}M`:i>=1e3&&i%1e3===0?`${i/1e3}K`:String(i)}function ce(i){let e=i.gameConfig?.publicGameModifiers,t=[];e?.isCompact&&t.push("Compact"),e?.isRandomSpawn&&t.push("Random"),e?.isCrowded&&t.push("Crowded"),e?.isHardNations&&t.push("Hard");let n=e?.startingGold??i.gameConfig?.startingGold;typeof n=="number"&&t.push(de(n));let o=e?.goldMultiplier??i.gameConfig?.goldMultiplier;return typeof o=="number"&&t.push(`x${o}`),e?.isAlliancesDisabled&&t.push("No Alliances"),e?.isPortsDisabled&&t.push("No Ports"),e?.isNukesDisabled&&t.push("No Nukes"),e?.isSAMsDisabled&&t.push("No SAMs"),e?.isPeaceTime&&t.push("Peace"),e?.isWaterNukes&&t.push("Water Nukes"),t}function ae(i){let e=[],t=i.gameConfig?.gameMap?.trim(),n=N(i),o=T(i),a=le(i);if(t&&e.push(t),v(i)==="Team"&&o!=="Humans Vs Nations"){e.push(a);let l=P(o,n);l!==null&&e.push(`${l}/team`)}else e.push(a);let s=[];n!==null&&s.push(`${n} slots`);let r=ce(i);return r.length>0&&s.push(r.join(", ")),{title:e.join(" \u2022 "),body:s.join(" \u2022 ")}}function ee(i){return typeof i=="number"&&Number.isFinite(i)?i:null}function b(i){return i==="blocked"||i==="rejected"?"blocked":i==="required"?"required":i==="any"||i==="allowed"||i==="indifferent"?"any":re}function te(i){if(!i||typeof i!="object")return;let e={};for(let[t,n]of Object.entries(i)){let o=Number(t);Number.isFinite(o)&&(e[o]=b(n))}return Object.keys(e).length>0?e:void 0}function ue(i){if(!i||typeof i!="object")return;let e=i;return{isCompact:b(e.isCompact),isRandomSpawn:b(e.isRandomSpawn),isCrowded:b(e.isCrowded),isHardNations:b(e.isHardNations),isAlliancesDisabled:b(e.isAlliancesDisabled),isPortsDisabled:b(e.isPortsDisabled),isNukesDisabled:b(e.isNukesDisabled),isSAMsDisabled:b(e.isSAMsDisabled),isPeaceTime:b(e.isPeaceTime),isWaterNukes:b(e.isWaterNukes),startingGold:te(e.startingGold),goldMultiplier:te(e.goldMultiplier)}}function me(i){let e=z(i);return e==="Duos"||e==="Trios"||e==="Quads"?null:e}function pe(i){if(!Array.isArray(i))return[];let e=[];for(let t of i){let n=t,o=ie(n.gameMode??null);if(!o)continue;let a=ee(n.minPlayers),s=ee(n.maxPlayers);o==="Team"&&(typeof a=="number"&&a<y&&(a=y),typeof a=="number"&&typeof s=="number"&&s<a&&(s=a)),e.push({gameMode:o,teamCount:o==="Team"?me(n.teamCount??null):null,minPlayers:a,maxPlayers:s,modifiers:ue(n.modifiers)})}return e}function Q(i,e=Date.now()){let t=Math.max(0,Math.floor((e-i)/1e3));return`${Math.floor(t/60)}m ${t%60}s`}function se(i){return{criteria:pe(i?.criteria),discoveryEnabled:typeof i?.discoveryEnabled=="boolean"?i.discoveryEnabled:!0,soundEnabled:typeof i?.soundEnabled=="boolean"?i.soundEnabled:!0,desktopNotificationsEnabled:typeof i?.desktopNotificationsEnabled=="boolean"?i.desktopNotificationsEnabled:!1,isTeamTwoTimesMinEnabled:typeof i?.isTeamTwoTimesMinEnabled=="boolean"?i.isTeamTwoTimesMinEnabled:!!i?.isTeamThreeTimesMinEnabled}}var fe=["isCompact","isRandomSpawn","isCrowded","isHardNations","isAlliancesDisabled","isPortsDisabled","isNukesDisabled","isSAMsDisabled","isPeaceTime","isWaterNukes"],F=class{matchesCriteria(e,t){if(!e||!e.gameConfig||!t||t.length===0)return!1;let n=v(e),o=N(e);if(!n||o===null)return!1;let a=T(e),s=n==="Team"?P(a,o):null;for(let r of t){if(r.gameMode!==n||n==="Team"&&(r.teamCount!==null&&r.teamCount!==void 0&&r.teamCount!==a||s===null))continue;let l=n==="Team"?s:o;if(l!==null&&!(r.minPlayers!==null&&l<r.minPlayers)&&!(r.maxPlayers!==null&&l>r.maxPlayers)&&this.matchesModifiers(e,r.modifiers))return!0}return!1}matchesModifiers(e,t){if(!t)return!0;for(let n of fe){let o=t[n];if(!o||o==="any")continue;let a=!!D(e,n);if(o==="blocked"&&a||o==="required"&&!a)return!1}return!(!this.matchesNumericModifier(D(e,"startingGold"),t.startingGold)||!this.matchesNumericModifier(D(e,"goldMultiplier"),t.goldMultiplier))}matchesNumericModifier(e,t){if(!t)return!0;let n=typeof e=="number"&&Number.isFinite(e)?e:null,o=Object.entries(t);if(o.length===0)return!0;let a=o.filter(([,r])=>r==="blocked").map(([r])=>Number(r));if(n!==null&&a.includes(n))return!1;let s=o.filter(([,r])=>r==="required").map(([r])=>Number(r));return!(s.length>0&&(n===null||!s.includes(n)))}};function g(i,e){if(e.length===0)return i;let t=e[0],n=e[e.length-1];return i<t?t:i>n?n:i}function x(i,e){if(e.length<2)return 0;let t=g(i,e),n=e.length-1;if(t>=e[n])return 1;if(t<=e[0])return 0;for(let o=0;o<n;o++){let a=e[o],s=e[o+1];if(t>=a&&t<=s){let r=(t-a)/(s-a);return(o+r)/n}}return 1}function j(i,e){if(e.length<2)return e[0]??0;let t=e.length-1;if(i<=0)return e[0];if(i>=1)return e[t];let n=i*t,o=Math.floor(n),a=n-o,s=e[o]+a*(e[o+1]-e[o]);return Math.round(s)}var S=1e3,E=class{constructor(e){this.onMinSliderInput=()=>{let e=parseInt(this.minSlider.value,10)/S,t=j(e,this.stops);this.applyValues(t,this.lastMax,{fireOnChange:!0,changed:"min"})};this.onMaxSliderInput=()=>{let e=parseInt(this.maxSlider.value,10)/S,t=j(e,this.stops);this.applyValues(this.lastMin,t,{fireOnChange:!0,changed:"max"})};this.onMinInputChange=()=>{let e=parseInt(this.minInput.value,10);if(!Number.isFinite(e)){this.applyValues(this.lastMin,this.lastMax,{fireOnChange:!1,changed:"both"});return}let t=g(e,[this.cfg.bounds.min,this.cfg.bounds.max]);this.applyValues(t,this.lastMax,{fireOnChange:!0,changed:"min"})};this.onMaxInputChange=()=>{let e=parseInt(this.maxInput.value,10);if(!Number.isFinite(e)){this.applyValues(this.lastMin,this.lastMax,{fireOnChange:!1,changed:"both"});return}let t=g(e,[this.cfg.bounds.min,this.cfg.bounds.max]);this.applyValues(this.lastMin,t,{fireOnChange:!0,changed:"max"})};if(this.cfg=e,this.stops=e.stops??[e.bounds.min,e.bounds.max],this.minSlider=document.getElementById(e.minSliderId),this.maxSlider=document.getElementById(e.maxSliderId),this.minInput=document.getElementById(e.minInputId),this.maxInput=document.getElementById(e.maxInputId),this.rangeRoot=document.getElementById(e.rangeRootId),this.container=document.getElementById(e.containerId),!this.minSlider||!this.maxSlider||!this.minInput||!this.maxInput)throw new Error(`RangeSlider: missing required element in ${e.rangeRootId}`);this.minSlider.min="0",this.minSlider.max=String(S),this.maxSlider.min="0",this.maxSlider.max=String(S),this.lastMin=this.readInputClamped(this.minInput,e.bounds.min),this.lastMax=this.readInputClamped(this.maxInput,e.bounds.max),this.lastMax<this.lastMin&&(this.lastMax=this.lastMin),this.minSlider.addEventListener("input",this.onMinSliderInput),this.maxSlider.addEventListener("input",this.onMaxSliderInput),this.minInput.addEventListener("change",this.onMinInputChange),this.maxInput.addEventListener("change",this.onMaxInputChange),this.applyValues(this.lastMin,this.lastMax,{fireOnChange:!1,changed:"both"}),this.renderTicks(),this.wireSteppers(),this.applyLockState()}applyLockState(){let e=!!this.cfg.lockMaxToTwiceMin?.();this.maxSlider.disabled=e,this.maxSlider.classList.toggle("is-max-locked",e),this.maxInput.disabled=e,this.container&&this.container.querySelectorAll('.ld-step-btn[data-target="max"]').forEach(t=>{t.disabled=e}),e&&this.applyValues(this.lastMin,this.lastMax,{fireOnChange:!1,changed:"min"})}setMin(e){this.applyValues(e,this.lastMax,{fireOnChange:!0,changed:"min"})}setRange(e,t){this.applyValues(e,t,{fireOnChange:!1,changed:"both"})}readInputClamped(e,t){let n=parseInt(e.value,10);return Number.isFinite(n)?g(n,[this.cfg.bounds.min,this.cfg.bounds.max]):t}applyValues(e,t,n){let o=e,a=t;if(this.cfg.lockMaxToTwiceMin?.()&&(a=g(o*2,[this.cfg.bounds.min,this.cfg.bounds.max])),o>a){let s=n.changed??"both";s==="min"?a=o:s==="max"?o=a:(o=Math.min(e,t),a=Math.max(e,t))}if(this.lastMin=o,this.lastMax=a,this.minInput.value=String(o),this.maxInput.value=String(a),this.minSlider.value=String(Math.round(x(o,this.stops)*S)),this.maxSlider.value=String(Math.round(x(a,this.stops)*S)),this.rangeRoot){let s=x(o,this.stops)*100,r=x(a,this.stops)*100;this.rangeRoot.style.setProperty("--lo",`${s}%`),this.rangeRoot.style.setProperty("--hi",`${r}%`)}n.fireOnChange&&this.cfg.onChange(o,a)}renderTicks(){if(!this.cfg.ticksContainerId||!this.cfg.stops)return;let e=document.getElementById(this.cfg.ticksContainerId);if(e){e.innerHTML="";for(let t of this.cfg.stops){let n=x(t,this.cfg.stops)*100,o=document.createElement("div");o.className="ld-tick",o.style.left=`${n}%`;let a=document.createElement("span");a.className="ld-tick-label",a.style.left=`${n}%`,a.textContent=String(t),e.appendChild(o),e.appendChild(a)}}}wireSteppers(){if(!this.container)return;this.container.querySelectorAll(".ld-step-btn").forEach(t=>{let n=t.dataset.target,o=t.dataset.action;!n||!o||t.addEventListener("click",()=>{let a=o==="inc"?1:-1;if(n==="min"){let s=g(this.lastMin+a,[this.cfg.bounds.min,this.cfg.bounds.max]);this.applyValues(s,this.lastMax,{fireOnChange:!0,changed:"min"})}else{let s=g(this.lastMax+a,[this.cfg.bounds.min,this.cfg.bounds.max]);this.applyValues(this.lastMin,s,{fireOnChange:!0,changed:"max"})}})})}};var H=[1e6,5e6,25e6],$=[2],W=["modifier-isCompact","modifier-isRandomSpawn","modifier-isCrowded","modifier-isHardNations","modifier-isAlliancesDisabled","modifier-isPortsDisabled","modifier-isNukesDisabled","modifier-isSAMsDisabled","modifier-isPeaceTime","modifier-isWaterNukes"],be=[["discovery-team-hvn","Humans Vs Nations",null]],he=[["discovery-team-2","2"],["discovery-team-3","3"],["discovery-team-4","4"],["discovery-team-5","5"],["discovery-team-6","6"],["discovery-team-7","7"]],R=[...be.map(([i])=>i),...he.map(([i])=>i)];function ge(){try{if(typeof unsafeWindow<"u"&&unsafeWindow.__OF_DEBUG_DISCOVERY===!0)return!0}catch{}if(globalThis.__OF_DEBUG_DISCOVERY===!0)return!0;try{if(typeof localStorage<"u"&&localStorage.getItem("__OF_DEBUG_DISCOVERY")==="true")return!0}catch{}return!1}var Y='<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>',ye='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',ve='<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a9 9 0 010 14"/></svg>',xe='<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9z"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg>',B=class{constructor(){this.discoveryEnabled=!0;this.criteriaList=[];this.searchStartTime=null;this.lastMatchTime=null;this.soundEnabled=!0;this.desktopNotificationsEnabled=!1;this.desktopNotificationRequestId=0;this.activeMatchSources=new Set;this.seenLobbies=new Set;this.desktopNotifiedLobbies=new Set;this.isTeamTwoTimesMinEnabled=!1;this.ffaSlider=null;this.teamSlider=null;this.sleeping=!1;this.isDisposed=!1;this.timerInterval=null;this.gameInfoInterval=null;this.pulseSyncTimeout=null;this.engine=new F,this.loadSettings(),this.createUI(),this.updateSleepState(),k.subscribe(()=>this.updateSleepState())}receiveLobbyUpdate(e){this.processLobbies(e)}isSoundEnabled(){return this.soundEnabled}loadSettings(){let e=GM_getValue(w.lobbyDiscoverySettings,null),t=se(e);GM_setValue(w.lobbyDiscoverySettings,t),this.criteriaList=t.criteria,this.soundEnabled=t.soundEnabled,this.desktopNotificationsEnabled=t.desktopNotificationsEnabled,this.discoveryEnabled=t.discoveryEnabled,this.isTeamTwoTimesMinEnabled=t.isTeamTwoTimesMinEnabled}saveSettings(){GM_setValue(w.lobbyDiscoverySettings,{criteria:this.criteriaList,discoveryEnabled:this.discoveryEnabled,soundEnabled:this.soundEnabled,desktopNotificationsEnabled:this.desktopNotificationsEnabled,isTeamTwoTimesMinEnabled:this.isTeamTwoTimesMinEnabled})}updateStatusText(){let e=document.getElementById("discovery-search-timer");if(e){if(!this.discoveryEnabled||this.criteriaList.length===0||!this.isDiscoveryFeedbackAllowed()){e.textContent="",e.style.display="none";return}e.style.display="inline",this.lastMatchTime!==null?e.textContent=`last match ${Q(this.lastMatchTime)}`:this.searchStartTime!==null?e.textContent=`searching \xB7 ${Q(this.searchStartTime)}`:e.textContent="awaiting filters"}}updateCurrentGameInfo(){let e=document.getElementById("discovery-current-game-info");if(!e||!A.isOnLobbyPage()){e&&(e.style.display="none");return}let t=document.querySelector("public-lobby");if(!t||!Array.isArray(t.lobbies)||t.lobbies.length===0){e.style.display="none";return}let n=t.lobbies[0];if(!n||!n.gameConfig){e.style.display="none";return}e.style.display="block",e.textContent=`Current game: ${oe(n)}`}processLobbies(e){try{if(this.updateCurrentGameInfo(),this.syncSearchTimer(),!this.discoveryEnabled||this.criteriaList.length===0||!this.isDiscoveryFeedbackAllowed()){this.seenLobbies.clear(),this.desktopNotifiedLobbies.clear(),this.updateQueueCardPulses(new Set),this.updateStatusText();return}let t=new Set,n=new Set,o=[],a=!1,s=ge(),r=new Set;for(let l of e){let d=ne(l);if(!d)continue;let m=this.engine.matchesCriteria(l,this.criteriaList),h=!r.has(d);if(h&&r.add(d),s&&console.log("[OF Discovery]",{lobbyId:l.gameID,source:d,featured:h,mode:l.gameConfig?.gameMode,playerTeams:l.gameConfig?.playerTeams,modifiers:l.gameConfig?.publicGameModifiers,hostGold:{startingGold:l.gameConfig?.startingGold,goldMultiplier:l.gameConfig?.goldMultiplier},criteriaCount:this.criteriaList.length,matched:m}),!m||!h)continue;t.add(d);let M=this.getNotificationKey(l);n.add(M),this.seenLobbies.has(M)||(a=!0),this.desktopNotifiedLobbies.has(M)||o.push(l)}if(this.updateQueueCardPulses(t),a&&(this.lastMatchTime=Date.now(),this.soundEnabled&&L.playGameFoundSound()),this.desktopNotificationsEnabled){let l=new Set;for(let d of o){let m=ae(d),h=this.getNotificationKey(d);q.show({title:m.title,body:m.body,tag:h})&&l.add(h)}this.desktopNotifiedLobbies=new Set([...[...this.desktopNotifiedLobbies].filter(d=>n.has(d)),...l])}else this.desktopNotifiedLobbies.clear();this.seenLobbies=n,n.size===0&&(this.lastMatchTime=null),this.updateStatusText()}catch(t){console.error("[LobbyDiscovery] Error processing lobbies:",t)}}getNotificationKey(e){return JSON.stringify({gameID:e.gameID,mode:e.gameConfig?.gameMode??null,playerTeams:e.gameConfig?.playerTeams??e.gameConfig?.teamCount??null,capacity:e.gameConfig?.maxPlayers??e.maxClients??null,modifiers:e.gameConfig?.publicGameModifiers??{}})}isDiscoveryFeedbackAllowed(){return!(!A.isOnLobbyPage()||document.getElementById("page-play")?.classList.contains("hidden")||document.querySelector("public-lobby")?.isLobbyHighlighted===!0||document.querySelector("join-lobby-modal")?.currentLobbyId||document.querySelector("host-lobby-modal")?.lobbyId)}getQueueCardElements(){let e=document.querySelector("game-mode-selector");if(!e)return{};let t=Array.from(e.querySelectorAll("div")).find(s=>s.className.includes("sm:grid-cols-[2fr_1fr]"));if(!(t instanceof HTMLElement))return{};let[n,o]=Array.from(t.children),a=o?Array.from(o.children):[];return{ffa:n?.querySelector("button"),special:a[0]?.querySelector("button"),team:a[1]?.querySelector("button")}}updateQueueCardPulses(e){this.activeMatchSources=new Set(e),this.applyQueueCardPulses(),this.scheduleQueueCardPulseSync()}applyQueueCardPulses(){let e=this.getQueueCardElements();for(let t of["ffa","special","team"]){let n=e[t];n&&n.classList.toggle("of-discovery-card-active",this.activeMatchSources.has(t))}}scheduleQueueCardPulseSync(){this.pulseSyncTimeout&&clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=setTimeout(()=>{this.pulseSyncTimeout=null,this.applyQueueCardPulses()},16)}stopTimer(){this.timerInterval&&(clearInterval(this.timerInterval),this.timerInterval=null)}startGameInfoUpdates(){this.stopGameInfoUpdates(),this.updateCurrentGameInfo(),this.gameInfoInterval=setInterval(()=>this.updateCurrentGameInfo(),1e3)}stopGameInfoUpdates(){this.gameInfoInterval&&(clearInterval(this.gameInfoInterval),this.gameInfoInterval=null)}syncSearchTimer(e={}){let{resetStart:t=!1}=e;this.stopTimer(),t&&(this.searchStartTime=null,this.lastMatchTime=null,this.seenLobbies.clear(),this.desktopNotifiedLobbies.clear()),this.discoveryEnabled&&this.criteriaList.length>0&&this.isDiscoveryFeedbackAllowed()?(this.searchStartTime===null&&(this.searchStartTime=Date.now()),this.timerInterval=setInterval(()=>this.updateStatusText(),1e3)):(this.searchStartTime=null,this.lastMatchTime=null),this.updateStatusText(),this.updatePulseIndicator()}updatePulseIndicator(){let e=document.querySelector(".ld-pulse");if(!e)return;let t=this.discoveryEnabled&&this.criteriaList.length>0;e.classList.toggle("is-paused",!t)}setDiscoveryEnabled(e,t={}){this.discoveryEnabled=e,this.saveSettings(),this.updateStatusLabel(),this.syncSearchTimer({resetStart:t.resetTimer??!1})}updateStatusLabel(){let e=document.querySelector(".ld-status-text strong");e&&(e.textContent=this.discoveryEnabled?"Discovery active":"Discovery paused")}getNumberValue(e){let t=document.getElementById(e);if(!t)return null;let n=parseInt(t.value,10);return Number.isNaN(n)?null:n}getModifierState(e){let n=document.getElementById(e)?.dataset.state;return n==="required"||n==="blocked"?n:"any"}setModifierState(e,t){let n=document.getElementById(e);if(!n)return;n.dataset.state=t,n.setAttribute("aria-pressed",String(t!=="any"));let o=n.dataset.modName??n.getAttribute("aria-label")??"",a=t==="blocked"?"excluded":t;o&&n.setAttribute("aria-label",t==="any"?o:`${o} \xB7 ${a}`);let s=n.querySelector(".ld-mod-ind");s&&(t==="required"?s.innerHTML=Y:t==="blocked"?s.innerHTML=ye:s.innerHTML="")}cycleModifierState(e){let t=this.getModifierState(e),n=t==="any"?"required":t==="required"?"blocked":"any";this.setModifierState(e,n)}getNumericModifierState(e){let t={};for(let[n,o]of Object.entries(e))t[Number(n)]=this.getModifierState(o);return t}getModifierFiltersFromUI(){return{isCompact:this.getModifierState("modifier-isCompact"),isRandomSpawn:this.getModifierState("modifier-isRandomSpawn"),isCrowded:this.getModifierState("modifier-isCrowded"),isHardNations:this.getModifierState("modifier-isHardNations"),isAlliancesDisabled:this.getModifierState("modifier-isAlliancesDisabled"),isPortsDisabled:this.getModifierState("modifier-isPortsDisabled"),isNukesDisabled:this.getModifierState("modifier-isNukesDisabled"),isSAMsDisabled:this.getModifierState("modifier-isSAMsDisabled"),isPeaceTime:this.getModifierState("modifier-isPeaceTime"),isWaterNukes:this.getModifierState("modifier-isWaterNukes"),startingGold:this.getNumericModifierState({1e6:"modifier-startingGold-1000000",5e6:"modifier-startingGold-5000000",25e6:"modifier-startingGold-25000000"}),goldMultiplier:this.getNumericModifierState({2:"modifier-goldMultiplier-2"})}}getAllTeamCountValues(){let e=[];for(let t of R){let n=document.getElementById(t);if(!n?.checked)continue;let o=n.value;if(o==="Humans Vs Nations")e.push(o);else{let a=parseInt(o,10);Number.isNaN(a)||e.push(a)}}return e}setAllTeamCounts(e){for(let t of R){let n=document.getElementById(t);n&&(n.checked=e,this.syncChipState(t))}}syncChipState(e){let t=document.getElementById(e);if(!t)return;let n=t.closest(".ld-chip, .ld-mode-btn, .ld-2x");n&&(n.classList.toggle("is-on",t.checked),n.setAttribute("aria-pressed",String(t.checked)))}buildCriteriaFromUI(){let e=this.getModifierFiltersFromUI(),t=[];if(document.getElementById("discovery-ffa")?.checked&&t.push({gameMode:"FFA",teamCount:null,minPlayers:this.getNumberValue("discovery-ffa-min"),maxPlayers:this.getNumberValue("discovery-ffa-max"),modifiers:e}),!document.getElementById("discovery-team")?.checked)return t;let a=this.getAllTeamCountValues();if(a.length===0)return t.push({gameMode:"Team",teamCount:null,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e}),t;for(let s of a)t.push({gameMode:"Team",teamCount:s,minPlayers:this.getNumberValue("discovery-team-min"),maxPlayers:this.getNumberValue("discovery-team-max"),modifiers:e});return t}updateFilterCount(){let e=document.getElementById("discovery-filter-count"),t=document.getElementById("discovery-filter-word");if(!e||!t)return;let n=document.getElementById("discovery-ffa")?.checked,o=document.getElementById("discovery-team")?.checked,a=R.filter(l=>document.getElementById(l)?.checked).length,s=[...W,...H.map(l=>`modifier-startingGold-${l}`),...$.map(l=>`modifier-goldMultiplier-${l}`)].filter(l=>this.getModifierState(l)!=="any").length,r=(n?1:0)+(o?1:0)+a+s;e.textContent=String(r),t.textContent=r===1?"filter":"filters"}setModePanelActive(e,t){let n=document.getElementById(e);n&&n.classList.toggle("is-off",!t)}setIconButtonState(e,t){let n=document.getElementById(e)?.closest(".ld-icon-btn");n&&n.classList.toggle("is-on",t)}loadUIFromSettings(){let e=this.criteriaList.find(d=>d.gameMode==="FFA"),t=this.criteriaList.filter(d=>d.gameMode==="Team"),n=document.getElementById("discovery-ffa"),o=document.getElementById("discovery-team");if(n&&(n.checked=!!e,this.syncChipState("discovery-ffa"),this.setModePanelActive("discovery-ffa-config",!!e)),o&&(o.checked=t.length>0,this.syncChipState("discovery-team"),this.setModePanelActive("discovery-team-config",t.length>0)),e){let d=document.getElementById("discovery-ffa-min"),m=document.getElementById("discovery-ffa-max");d&&e.minPlayers!==null&&(d.value=String(e.minPlayers)),m&&e.maxPlayers!==null&&(m.value=String(e.maxPlayers))}if(t[0]){let d=document.getElementById("discovery-team-min"),m=document.getElementById("discovery-team-max");d&&t[0].minPlayers!==null&&(d.value=String(t[0].minPlayers)),m&&t[0].maxPlayers!==null&&(m.value=String(t[0].maxPlayers)),this.setTeamCountSelections(t.map(h=>h.teamCount))}let a=(e??t[0])?.modifiers;if(a){this.setModifierState("modifier-isCompact",a.isCompact??"any"),this.setModifierState("modifier-isRandomSpawn",a.isRandomSpawn??"any"),this.setModifierState("modifier-isCrowded",a.isCrowded??"any"),this.setModifierState("modifier-isHardNations",a.isHardNations??"any"),this.setModifierState("modifier-isAlliancesDisabled",a.isAlliancesDisabled??"any"),this.setModifierState("modifier-isPortsDisabled",a.isPortsDisabled??"any"),this.setModifierState("modifier-isNukesDisabled",a.isNukesDisabled??"any"),this.setModifierState("modifier-isSAMsDisabled",a.isSAMsDisabled??"any"),this.setModifierState("modifier-isPeaceTime",a.isPeaceTime??"any"),this.setModifierState("modifier-isWaterNukes",a.isWaterNukes??"any");for(let d of H)this.setModifierState(`modifier-startingGold-${d}`,a.startingGold?.[d]??"any");for(let d of $)this.setModifierState(`modifier-goldMultiplier-${d}`,a.goldMultiplier?.[d]??"any")}let s=document.getElementById("discovery-sound-toggle");s&&(s.checked=this.soundEnabled,this.setIconButtonState("discovery-sound-toggle",this.soundEnabled));let r=document.getElementById("discovery-desktop-toggle");r&&(r.checked=this.desktopNotificationsEnabled,this.setIconButtonState("discovery-desktop-toggle",this.desktopNotificationsEnabled));let l=document.getElementById("discovery-team-two-times");l&&(l.checked=this.isTeamTwoTimesMinEnabled,this.syncChipState("discovery-team-two-times")),this.updateFilterCount(),this.updateStatusLabel()}setTeamCountSelections(e){for(let t of e){let n=null;t==="Humans Vs Nations"?n=document.getElementById("discovery-team-hvn"):typeof t=="number"&&(n=document.getElementById(`discovery-team-${t}`)),n&&(n.checked=!0,this.syncChipState(n.id))}}refreshCriteria(){this.criteriaList=this.buildCriteriaFromUI(),this.saveSettings(),this.updateFilterCount(),this.syncSearchTimer({resetStart:!0})}resetAll(){let e=document.getElementById("discovery-ffa"),t=document.getElementById("discovery-team");e&&(e.checked=!1,this.syncChipState("discovery-ffa"),this.setModePanelActive("discovery-ffa-config",!1)),t&&(t.checked=!1,this.syncChipState("discovery-team"),this.setModePanelActive("discovery-team-config",!1)),this.setAllTeamCounts(!1);let n=document.getElementById("discovery-team-two-times");n&&(n.checked=!1,this.syncChipState("discovery-team-two-times"),this.isTeamTwoTimesMinEnabled=!1);for(let o of W)this.setModifierState(o,"any");for(let o of H)this.setModifierState(`modifier-startingGold-${o}`,"any");for(let o of $)this.setModifierState(`modifier-goldMultiplier-${o}`,"any");this.ffaSlider?.setRange(1,125),this.teamSlider?.setRange(y,U),this.teamSlider?.applyLockState(),this.refreshCriteria()}async handleDesktopNotificationToggleChange(e){let t=++this.desktopNotificationRequestId;if(!e.checked){this.desktopNotificationsEnabled=!1,this.setIconButtonState("discovery-desktop-toggle",!1),this.saveSettings();return}let n=await q.ensurePermission();t!==this.desktopNotificationRequestId||this.isDisposed||!e.isConnected||!e.checked||(this.desktopNotificationsEnabled=n,e.checked=n,e.toggleAttribute("checked",n),this.setIconButtonState("discovery-desktop-toggle",n),this.saveSettings())}setupEventListeners(){document.getElementById("discovery-status")?.addEventListener("click",()=>{this.setDiscoveryEnabled(!this.discoveryEnabled,{resetTimer:!0})});for(let[n,o]of[["discovery-ffa","discovery-ffa-config"],["discovery-team","discovery-team-config"]]){let a=document.getElementById(n);a?.addEventListener("change",()=>{this.syncChipState(n),this.setModePanelActive(o,a.checked),this.refreshCriteria()})}let e=document.getElementById("discovery-team-two-times");e?.addEventListener("change",()=>{this.isTeamTwoTimesMinEnabled=e.checked,this.syncChipState("discovery-team-two-times"),this.teamSlider?.applyLockState(),this.refreshCriteria()}),document.getElementById("discovery-reset")?.addEventListener("click",()=>{this.resetAll()});for(let n of[...R,"discovery-sound-toggle","discovery-desktop-toggle"]){let o=document.getElementById(n);o&&o.addEventListener("change",()=>{if(n==="discovery-sound-toggle"){this.soundEnabled=o.checked,this.setIconButtonState("discovery-sound-toggle",o.checked),this.saveSettings();return}if(n==="discovery-desktop-toggle"){this.handleDesktopNotificationToggleChange(o);return}this.syncChipState(n),this.refreshCriteria()})}let t=[...W,...H.map(n=>`modifier-startingGold-${n}`),...$.map(n=>`modifier-goldMultiplier-${n}`)];for(let n of t)document.getElementById(n)?.addEventListener("click",()=>{this.cycleModifierState(n),this.refreshCriteria()})}renderModeButton(e,t){return`
+      <label class="ld-mode-btn" aria-pressed="false">
+        <input type="checkbox" id="${e}" value="${e==="discovery-ffa"?"FFA":"Team"}">
+        <span class="check">${Y}</span>
+        <span>${t}</span>
+      </label>
+    `}renderChip(e,t,n){return`
+      <label class="ld-chip" aria-pressed="false">
+        <input type="checkbox" id="${e}" value="${t}">${n}
+      </label>
+    `}renderModifierChip(e,t){return`
+      <button type="button" class="ld-mod" id="${e}" data-state="any" data-mod-name="${t}" aria-pressed="false" aria-label="${t}">
+        <span class="ld-mod-ind"></span>
+        <span class="ld-mod-name">${t}</span>
+      </button>
+    `}renderIconButton(e,t,n){return`
+      <label class="ld-icon-btn" title="${t}" aria-label="${t}">
+        <input type="checkbox" id="${e}">${n}
+      </label>
+    `}createUI(){document.getElementById("openfront-discovery-panel")||(this.panel=document.createElement("div"),this.panel.id="openfront-discovery-panel",this.panel.className="of-panel discovery-panel",this.panel.style.width="380px",this.panel.innerHTML=`
+      <div class="ld-status">
+        <span class="ld-pulse" aria-hidden="true"></span>
+        <div class="ld-status-text" id="discovery-status" role="button" tabindex="0">
+          <strong>Discovery active</strong>
+          <span class="sep">\xB7</span>
+          <span class="meta" id="discovery-search-timer"></span>
         </div>
+        <div class="ld-icons">
+          ${this.renderIconButton("discovery-sound-toggle","Sound alert",ve)}
+          ${this.renderIconButton("discovery-desktop-toggle","Desktop notification",xe)}
+        </div>
+      </div>
+      <div class="ld-head">
+        <div class="ld-eyebrow">Notify only \xB7 never auto-joins</div>
+        <h2 class="ld-title">OpenFront Game Notifier</h2>
       </div>
       <div class="discovery-body">
-        <div class="of-content discovery-content" style="overflow-y: auto;">
-          <div class="discovery-status-bar">
-            <div class="discovery-status" id="discovery-status">
-              <span class="status-indicator"></span>
-              <span class="status-text">Discovery Active</span>
-              <span class="search-timer" id="discovery-search-timer" style="display: none;"></span>
+        <div class="discovery-content" style="overflow-y: auto;">
+          <div class="ld-section">
+            <div class="ld-section-head">
+              <div class="ld-section-label">Modes</div>
+              <div class="ld-section-aside">Pick one or both</div>
             </div>
-            <label class="discovery-toggle-label">
-              <input type="checkbox" id="discovery-sound-toggle">
-              <span>Sound</span>
-            </label>
-            <label class="discovery-toggle-label">
-              <input type="checkbox" id="discovery-desktop-toggle">
-              <span>Desktop</span>
-            </label>
+            <div class="ld-modes">
+              ${this.renderModeButton("discovery-ffa","FFA")}
+              ${this.renderModeButton("discovery-team","Teams")}
+            </div>
+
+            <div class="ld-mode-panel" id="discovery-ffa-config">
+              <div class="ld-mode-panel-head">
+                <span class="dot"></span>
+                <span class="title">FFA \xB7 Lobby capacity</span>
+              </div>
+              <div class="ld-slider-row" id="discovery-ffa-slider-row">
+                <div class="ld-slider-label">
+                  <span>Players</span>
+                  <span class="val">
+                    <div class="ld-stepper" data-role="min">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="min" aria-label="Decrease minimum">\u2212</button>
+                      <input type="number" id="discovery-ffa-min" min="1" max="125" value="1" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="min" aria-label="Increase minimum">+</button>
+                    </div>
+                    <span class="sep">\u2013</span>
+                    <div class="ld-stepper" data-role="max">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="max" aria-label="Decrease maximum">\u2212</button>
+                      <input type="number" id="discovery-ffa-max" min="1" max="125" value="125" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="max" aria-label="Increase maximum">+</button>
+                    </div>
+                  </span>
+                </div>
+                <div class="ld-range" id="discovery-ffa-range-root">
+                  <div class="track"><div class="track-fill" id="discovery-ffa-range-fill"></div></div>
+                  <input type="range" id="discovery-ffa-min-slider" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+                  <input type="range" id="discovery-ffa-max-slider" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
+                </div>
+              </div>
+            </div>
+
+            <div class="ld-mode-panel" id="discovery-team-config">
+              <div class="ld-mode-panel-head">
+                <span class="dot"></span>
+                <span class="title">Teams \xB7 Format & size</span>
+              </div>
+              <div class="ld-format-label">FORMAT</div>
+              <div class="ld-formats">
+                ${this.renderChip("discovery-team-hvn","Humans Vs Nations","Humans Vs Nations")}
+              </div>
+              <div class="ld-format-label" style="margin-top: 10px;">NUMBER OF TEAMS</div>
+              <div class="ld-formats" style="margin-bottom: 14px;">
+                ${this.renderChip("discovery-team-2","2","2")}
+                ${this.renderChip("discovery-team-3","3","3")}
+                ${this.renderChip("discovery-team-4","4","4")}
+                ${this.renderChip("discovery-team-5","5","5")}
+                ${this.renderChip("discovery-team-6","6","6")}
+                ${this.renderChip("discovery-team-7","7","7")}
+              </div>
+              <div class="ld-slider-row" id="discovery-team-slider-row">
+                <div class="ld-slider-label">
+                  <span>Players per team</span>
+                  <span class="val">
+                    <div class="ld-stepper" data-role="min">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="min" aria-label="Decrease minimum">\u2212</button>
+                      <input type="number" id="discovery-team-min" min="2" max="62" value="2" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="min" aria-label="Increase minimum">+</button>
+                    </div>
+                    <span class="sep">\u2013</span>
+                    <div class="ld-stepper" data-role="max">
+                      <button type="button" class="ld-step-btn" data-action="dec" data-target="max" aria-label="Decrease maximum">\u2212</button>
+                      <input type="number" id="discovery-team-max" min="2" max="62" value="62" inputmode="numeric">
+                      <button type="button" class="ld-step-btn" data-action="inc" data-target="max" aria-label="Increase maximum">+</button>
+                    </div>
+                  </span>
+                </div>
+                <div class="ld-range" id="discovery-team-range-root">
+                  <div class="track"><div class="track-fill" id="discovery-team-range-fill"></div></div>
+                  <input type="range" id="discovery-team-min-slider" min="0" max="1000" value="0" class="capacity-slider capacity-slider-min">
+                  <input type="range" id="discovery-team-max-slider" min="0" max="1000" value="1000" class="capacity-slider capacity-slider-max">
+                </div>
+                <div class="ld-ticks" id="discovery-team-ticks"></div>
+              </div>
+              <label class="ld-2x" aria-pressed="false">
+                <input type="checkbox" id="discovery-team-two-times">
+                <span class="check">${Y}</span>
+                <span class="lbl"><strong>Lock max-per-team to 2\xD7 the min</strong></span>
+              </label>
+              <div class="ld-current-game-info" id="discovery-current-game-info" style="display: none;"></div>
+            </div>
           </div>
-          <div class="discovery-modes" id="discovery-modes">
-              <div class="discovery-section">
-                <div class="discovery-section-title">Modes</div>
-                <div class="discovery-config-grid">
-                  <div class="discovery-mode-config discovery-config-card">
-                    <label class="mode-checkbox-label">
-                      <input type="checkbox" id="discovery-ffa" value="FFA">
-                      <span>FFA</span>
-                    </label>
-                    <div class="discovery-mode-inner" id="discovery-ffa-config">
-                      <div class="player-filter-info"><small>Filter by lobby capacity:</small></div>
-                      <div class="capacity-range-wrapper">
-                        <div class="capacity-range-visual">
-                          <div class="capacity-track">
-                            <div class="capacity-range-fill" id="discovery-ffa-range-fill"></div>
-                            <input type="range" id="discovery-ffa-min-slider" min="1" max="125" value="1" class="capacity-slider capacity-slider-min">
-                            <input type="range" id="discovery-ffa-max-slider" min="1" max="125" value="125" class="capacity-slider capacity-slider-max">
-                          </div>
-                          <div class="capacity-labels">
-                            <div class="capacity-label-group"><label for="discovery-ffa-min-slider">Min:</label><span class="capacity-value" id="discovery-ffa-min-value">1</span></div>
-                            <div class="capacity-label-group"><label for="discovery-ffa-max-slider">Max:</label><span class="capacity-value" id="discovery-ffa-max-value">125</span></div>
-                          </div>
-                        </div>
-                        <div class="capacity-inputs-hidden">
-                          <input type="number" id="discovery-ffa-min" min="1" max="125" style="display: none;">
-                          <input type="number" id="discovery-ffa-max" min="1" max="125" style="display: none;">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="discovery-mode-config discovery-config-card">
-                    <label class="mode-checkbox-label">
-                      <input type="checkbox" id="discovery-team" value="Team">
-                      <span>Team</span>
-                    </label>
-                    <div class="discovery-mode-inner" id="discovery-team-config">
-                      <div class="team-count-section">
-                        <label>Formats (optional):</label>
-                        <div>
-                          <button type="button" id="discovery-team-select-all" class="select-all-btn">Select All</button>
-                          <button type="button" id="discovery-team-deselect-all" class="select-all-btn">Deselect All</button>
-                        </div>
-                        <div class="team-count-options-centered">
-                          <div class="team-count-column">
-                            <label><input type="checkbox" id="discovery-team-duos" value="Duos"> Duos</label>
-                            <label><input type="checkbox" id="discovery-team-trios" value="Trios"> Trios</label>
-                            <label><input type="checkbox" id="discovery-team-quads" value="Quads"> Quads</label>
-                            <label><input type="checkbox" id="discovery-team-hvn" value="Humans Vs Nations"> HvN</label>
-                          </div>
-                          <div class="team-count-column">
-                            <label><input type="checkbox" id="discovery-team-2" value="2"> 2 teams</label>
-                            <label><input type="checkbox" id="discovery-team-3" value="3"> 3 teams</label>
-                            <label><input type="checkbox" id="discovery-team-4" value="4"> 4 teams</label>
-                          </div>
-                          <div class="team-count-column">
-                            <label><input type="checkbox" id="discovery-team-5" value="5"> 5 teams</label>
-                            <label><input type="checkbox" id="discovery-team-6" value="6"> 6 teams</label>
-                            <label><input type="checkbox" id="discovery-team-7" value="7"> 7 teams</label>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="player-filter-info"><small>Filter by lobby capacity:</small></div>
-                      <div class="capacity-range-wrapper">
-                        <div class="capacity-range-visual">
-                          <div class="capacity-track">
-                            <div class="capacity-range-fill" id="discovery-team-range-fill"></div>
-                            <input type="range" id="discovery-team-min-slider" min="1" max="62" value="1" class="capacity-slider capacity-slider-min">
-                            <input type="range" id="discovery-team-max-slider" min="1" max="62" value="62" class="capacity-slider capacity-slider-max">
-                          </div>
-                          <div class="capacity-labels">
-                            <div class="capacity-label-group"><label for="discovery-team-min-slider">Min:</label><span class="capacity-value" id="discovery-team-min-value">1</span></div>
-                            <div class="three-times-checkbox"><label for="discovery-team-two-times">2\xD7</label><input type="checkbox" id="discovery-team-two-times"></div>
-                            <div class="capacity-label-group"><label for="discovery-team-max-slider">Max:</label><span class="capacity-value" id="discovery-team-max-value">62</span></div>
-                          </div>
-                        </div>
-                        <div class="capacity-inputs-hidden">
-                          <input type="number" id="discovery-team-min" min="1" max="62" style="display: none;">
-                          <input type="number" id="discovery-team-max" min="1" max="62" style="display: none;">
-                        </div>
-                      </div>
-                      <div class="current-game-info" id="discovery-current-game-info" style="display: none;"></div>
-                    </div>
-                  </div>
-                </div>
+
+          <div class="ld-section">
+            <div class="ld-section-head">
+              <div class="ld-section-label">Modifiers</div>
+              <div class="ld-mods-legend">
+                <span class="key"><span class="swatch"></span>Any</span>
+                <span class="key"><span class="swatch req"></span>Req</span>
+                <span class="key"><span class="swatch blk"></span>Excl</span>
               </div>
-              <div class="discovery-section">
-                <div class="discovery-section-title">Modifiers</div>
-                <div class="discovery-mode-config discovery-config-card discovery-modifier-grid">
-                  <label><span>Compact</span>${this.createModifierControl("modifier-isCompact")}</label>
-                  <label><span>Random Spawn</span>${this.createModifierControl("modifier-isRandomSpawn")}</label>
-                  <label><span>Crowded</span>${this.createModifierControl("modifier-isCrowded")}</label>
-                  <label><span>Hard Nations</span>${this.createModifierControl("modifier-isHardNations")}</label>
-                  <label><span>Alliances Disabled</span>${this.createModifierControl("modifier-isAlliancesDisabled")}</label>
-                  <label><span>Ports Disabled</span>${this.createModifierControl("modifier-isPortsDisabled")}</label>
-                  <label><span>Nukes Disabled</span>${this.createModifierControl("modifier-isNukesDisabled")}</label>
-                  <label><span>SAMs Disabled</span>${this.createModifierControl("modifier-isSAMsDisabled")}</label>
-                  <label><span>Peace Time</span>${this.createModifierControl("modifier-isPeaceTime")}</label>
-                  <label><span>Starting Gold 1M</span>${this.createModifierControl("modifier-startingGold-1000000")}</label>
-                  <label><span>Starting Gold 5M</span>${this.createModifierControl("modifier-startingGold-5000000")}</label>
-                  <label><span>Starting Gold 25M</span>${this.createModifierControl("modifier-startingGold-25000000")}</label>
-                  <label><span>Gold Multiplier x2</span>${this.createModifierControl("modifier-goldMultiplier-2")}</label>
-                </div>
+            </div>
+
+            <div class="ld-mod-group">
+              <div class="ld-mod-group-label">Map</div>
+              <div class="ld-mods discovery-modifier-grid">
+                ${this.renderModifierChip("modifier-isCompact","Compact")}
+                ${this.renderModifierChip("modifier-isRandomSpawn","Random Spawn")}
+                ${this.renderModifierChip("modifier-isCrowded","Crowded")}
+                ${this.renderModifierChip("modifier-isHardNations","Hard Nations")}
               </div>
+            </div>
+
+            <div class="ld-mod-group">
+              <div class="ld-mod-group-label">Gameplay</div>
+              <div class="ld-mods">
+                ${this.renderModifierChip("modifier-isAlliancesDisabled","Alliances Off")}
+                ${this.renderModifierChip("modifier-isPortsDisabled","Ports Off")}
+                ${this.renderModifierChip("modifier-isNukesDisabled","Nukes Off")}
+                ${this.renderModifierChip("modifier-isSAMsDisabled","SAMs Off")}
+                ${this.renderModifierChip("modifier-isPeaceTime","Peace Time")}
+                ${this.renderModifierChip("modifier-isWaterNukes","Water Nukes")}
+              </div>
+            </div>
+
+            <div class="ld-mod-group">
+              <div class="ld-mod-group-label">Economy</div>
+              <div class="ld-mods">
+                ${this.renderModifierChip("modifier-startingGold-1000000","Start Gold 1M")}
+                ${this.renderModifierChip("modifier-startingGold-5000000","Start Gold 5M")}
+                ${this.renderModifierChip("modifier-startingGold-25000000","Start Gold 25M")}
+                ${this.renderModifierChip("modifier-goldMultiplier-2","Gold \xD72")}
+              </div>
+            </div>
+
+            <div class="ld-mods-hint">
+              Click to cycle <strong>Any</strong> \u2192 <strong class="req">Required</strong> \u2192 <strong class="blk">Excluded</strong>.
+            </div>
           </div>
         </div>
+        <div class="discovery-footer">
+          <div class="summary">
+            <span class="num" id="discovery-filter-count">0</span>
+            <span>active <span id="discovery-filter-word">filters</span></span>
+          </div>
+          <button type="button" class="reset" id="discovery-reset">Reset all</button>
+        </div>
       </div>
-    `,document.body.appendChild(this.panel),this.resizeHandler=new A(this.panel,e=>{this.panel.style.width=`${e}px`},k.lobbyDiscoveryPanelSize,460,88),this.setupEventListeners(),this.loadUIFromSettings(),this.initializeSlider("discovery-ffa-min-slider","discovery-ffa-max-slider","discovery-ffa-min","discovery-ffa-max","discovery-ffa-range-fill","discovery-ffa-min-value","discovery-ffa-max-value"),this.initializeSlider("discovery-team-min-slider","discovery-team-max-slider","discovery-team-min","discovery-team-max","discovery-team-range-fill","discovery-team-min-value","discovery-team-max-value",!0),this.updateUI(),this.syncSearchTimer(),this.startGameInfoUpdates())}updateSleepState(){let e=P.isOnLobbyPage();this.sleeping=!e,this.sleeping?(this.panel.classList.add("hidden"),this.stopTimer(),this.stopGameInfoUpdates(),this.updateQueueCardPulses(new Set)):(this.panel.classList.remove("hidden"),this.syncSearchTimer(),this.startGameInfoUpdates())}cleanup(){this.isDisposed=!0,this.stopTimer(),this.stopGameInfoUpdates(),this.pulseSyncTimeout&&(clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=null),this.activeMatchSources.clear(),this.resizeHandler?.destroy(),this.resizeHandler=null,this.applyQueueCardPulses(),this.panel.parentNode?.removeChild(this.panel)}};var R=class{constructor(){this.observer=null;this.animationFrameId=null}start(){this.observer||(this.observer=new MutationObserver(()=>this.scheduleApplyHighlights()),this.observer.observe(document.body,{attributes:!1,childList:!0,subtree:!0}),this.applyHighlights())}stop(){this.observer?.disconnect(),this.observer=null,this.animationFrameId!==null&&(cancelAnimationFrame(this.animationFrameId),this.animationFrameId=null)}scheduleApplyHighlights(){this.animationFrameId===null&&(this.animationFrameId=requestAnimationFrame(()=>{this.animationFrameId=null,this.applyHighlights()}))}applyHighlights(){for(let e of Array.from(document.querySelectorAll("lobby-player-view")))this.applyHighlightToView(e)}applyHighlightToView(e){this.clearHighlights(e);let t=Array.from(e.querySelectorAll(".player-tag.current-player"));if(t.length>0){t.forEach(s=>s.classList.add("of-current-player-boost"));return}let o=this.getNativeTeamRows(e);o.forEach(s=>s.classList.add("of-current-player-boost"));let r=this.getNativeTeamCards(e);r.forEach(s=>s.classList.add("of-current-player-team-boost")),!(o.length>0||r.length>0)&&this.applyFallbackHighlight(e)}clearHighlights(e){e.querySelectorAll(".of-current-player-boost").forEach(t=>{t.classList.remove("of-current-player-boost")}),e.querySelectorAll(".of-current-player-team-boost").forEach(t=>{t.classList.remove("of-current-player-team-boost")})}getNativeTeamRows(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let o=t.classList;return o.contains("bg-sky-600/20")&&o.contains("border-sky-500/40")})}getNativeTeamCards(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let o=t.classList;return o.contains("rounded-xl")&&o.contains("border-sky-500/60")})}applyFallbackHighlight(e){let t=e.currentClientID,o=Array.isArray(e.clients)?e.clients:[];if(!t||o.length===0)return;let r=o.findIndex(g=>g?.clientID===t);if(r<0)return;let s=o[r],l=this.formatDisplayName(s),p=Array.from(e.querySelectorAll(".player-tag"));if(p[r]){p[r].classList.add("of-current-player-boost");return}Array.from(e.querySelectorAll("[data-client-id]")).filter(g=>g.dataset.clientId===t).forEach(g=>g.classList.add("of-current-player-boost")),this.findRowsByDisplayName(e,l).forEach(g=>g.classList.add("of-current-player-boost"));let c=Array.from(e.querySelectorAll(".rounded-xl")),h=(Array.isArray(e.teamPreview)?e.teamPreview:[]).filter(g=>Array.isArray(g.players)&&g.players.length>0).findIndex(g=>Array.isArray(g.players)&&g.players.some(x=>x?.clientID===t));h>=0&&c[h]&&(c[h].classList.add("of-current-player-team-boost"),this.findRowsByDisplayName(c[h],l).forEach(x=>x.classList.add("of-current-player-boost")))}formatDisplayName(e){return e?.username?e.clanTag?`[${e.clanTag}] ${e.username}`:e.username:""}findRowsByDisplayName(e,t){if(!t)return[];let o=[];for(let r of Array.from(e.querySelectorAll("span, div"))){let s=r.textContent?.trim();if(!s||s!==t)continue;let l=r.closest("[data-client-id]")??r.closest(".player-tag")??r.closest(".team-player-row")??r.closest("div");l&&!o.includes(l)&&o.push(l)}return o}};(function(){"use strict";console.log("[OpenFront Bundle] Initializing adaptation for OpenFront 0.30..."),GM_addStyle(V()),C.preloadSounds(),I.init(),G.start();let i=new B,e=new R;G.subscribe(t=>{i.receiveLobbyUpdate(t)}),e.start(),console.log("[OpenFront Bundle] Ready! \u{1F680}")})();})();
+    `,document.body.appendChild(this.panel),this.setupEventListeners(),this.loadUIFromSettings(),this.ffaSlider=new E({containerId:"discovery-ffa-slider-row",rangeRootId:"discovery-ffa-range-root",minSliderId:"discovery-ffa-min-slider",maxSliderId:"discovery-ffa-max-slider",minInputId:"discovery-ffa-min",maxInputId:"discovery-ffa-max",fillId:"discovery-ffa-range-fill",bounds:{min:1,max:125},onChange:()=>this.refreshCriteria()}),this.teamSlider=new E({containerId:"discovery-team-slider-row",rangeRootId:"discovery-team-range-root",minSliderId:"discovery-team-min-slider",maxSliderId:"discovery-team-max-slider",minInputId:"discovery-team-min",maxInputId:"discovery-team-max",fillId:"discovery-team-range-fill",ticksContainerId:"discovery-team-ticks",bounds:{min:y,max:U},stops:X,lockMaxToTwiceMin:()=>this.isTeamTwoTimesMinEnabled,onChange:()=>this.refreshCriteria()}),this.updateStatusLabel(),this.updateFilterCount(),this.syncSearchTimer(),this.startGameInfoUpdates())}updateSleepState(){let e=A.isOnLobbyPage();this.sleeping=!e,this.sleeping?(this.panel.classList.add("hidden"),this.stopTimer(),this.stopGameInfoUpdates(),this.updateQueueCardPulses(new Set)):(this.panel.classList.remove("hidden"),this.syncSearchTimer(),this.startGameInfoUpdates())}cleanup(){this.isDisposed=!0,this.stopTimer(),this.stopGameInfoUpdates(),this.pulseSyncTimeout&&(clearTimeout(this.pulseSyncTimeout),this.pulseSyncTimeout=null),this.activeMatchSources.clear(),this.applyQueueCardPulses(),this.panel.parentNode?.removeChild(this.panel)}};var _=class{constructor(){this.observer=null;this.animationFrameId=null}start(){this.observer||(this.observer=new MutationObserver(()=>this.scheduleApplyHighlights()),this.observer.observe(document.body,{attributes:!1,childList:!0,subtree:!0}),this.applyHighlights())}stop(){this.observer?.disconnect(),this.observer=null,this.animationFrameId!==null&&(cancelAnimationFrame(this.animationFrameId),this.animationFrameId=null)}scheduleApplyHighlights(){this.animationFrameId===null&&(this.animationFrameId=requestAnimationFrame(()=>{this.animationFrameId=null,this.applyHighlights()}))}applyHighlights(){for(let e of Array.from(document.querySelectorAll("lobby-player-view")))this.applyHighlightToView(e)}applyHighlightToView(e){this.clearHighlights(e);let t=Array.from(e.querySelectorAll(".player-tag.current-player"));if(t.length>0){t.forEach(a=>a.classList.add("of-current-player-boost"));return}let n=this.getNativeTeamRows(e);n.forEach(a=>a.classList.add("of-current-player-boost"));let o=this.getNativeTeamCards(e);o.forEach(a=>a.classList.add("of-current-player-team-boost")),!(n.length>0||o.length>0)&&this.applyFallbackHighlight(e)}clearHighlights(e){e.querySelectorAll(".of-current-player-boost").forEach(t=>{t.classList.remove("of-current-player-boost")}),e.querySelectorAll(".of-current-player-team-boost").forEach(t=>{t.classList.remove("of-current-player-team-boost")})}getNativeTeamRows(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let n=t.classList;return n.contains("bg-sky-600/20")&&n.contains("border-sky-500/40")})}getNativeTeamCards(e){return Array.from(e.querySelectorAll("div")).filter(t=>{let n=t.classList;return n.contains("rounded-xl")&&n.contains("border-sky-500/60")})}applyFallbackHighlight(e){let t=e.currentClientID,n=Array.isArray(e.clients)?e.clients:[];if(!t||n.length===0)return;let o=n.findIndex(p=>p?.clientID===t);if(o<0)return;let a=n[o],s=this.formatDisplayName(a),r=Array.from(e.querySelectorAll(".player-tag"));if(r[o]){r[o].classList.add("of-current-player-boost");return}Array.from(e.querySelectorAll("[data-client-id]")).filter(p=>p.dataset.clientId===t).forEach(p=>p.classList.add("of-current-player-boost")),this.findRowsByDisplayName(e,s).forEach(p=>p.classList.add("of-current-player-boost"));let m=Array.from(e.querySelectorAll(".rounded-xl")),I=(Array.isArray(e.teamPreview)?e.teamPreview:[]).filter(p=>Array.isArray(p.players)&&p.players.length>0).findIndex(p=>Array.isArray(p.players)&&p.players.some(G=>G?.clientID===t));I>=0&&m[I]&&(m[I].classList.add("of-current-player-team-boost"),this.findRowsByDisplayName(m[I],s).forEach(G=>G.classList.add("of-current-player-boost")))}formatDisplayName(e){return e?.username?e.clanTag?`[${e.clanTag}] ${e.username}`:e.username:""}findRowsByDisplayName(e,t){if(!t)return[];let n=[];for(let o of Array.from(e.querySelectorAll("span, div"))){let a=o.textContent?.trim();if(!a||a!==t)continue;let s=o.closest("[data-client-id]")??o.closest(".player-tag")??o.closest(".team-player-row")??o.closest("div");s&&!n.includes(s)&&n.push(s)}return n}};(function(){"use strict";console.log("[OpenFront Game Notifier] Initializing adaptation for OpenFront 0.30..."),GM_addStyle(Z()),L.preloadSounds(),k.init(),V.start();let i=new B,e=new _;V.subscribe(o=>{i.receiveLobbyUpdate(o)}),e.start();let t=o=>{try{return new URL(o).searchParams.has("live")}catch{return!1}},n=t(location.href);k.subscribe(o=>{let a=t(o);!n&&a&&i.isSoundEnabled()&&L.playGameStartSound(),n=a}),console.log("[OpenFront Game Notifier] Ready! \u{1F680}")})();})();
