@@ -10,11 +10,11 @@ A TypeScript userscript for OpenFront `v0.31+` that watches public lobbies and n
 ### Features
 
 **Lobby discovery**
-- Filter `FFA` and `Team` public lobbies by mode, team format, capacity, and modifiers
-- Team format presets: `Duos`, `Trios`, `Quads`, `Humans Vs Nations`, plus custom `2-7` team counts
+- Filter `FFA` and `Team` public lobbies by mode, format, team count, capacity, and modifiers
+- Team panel splits into `Format` (`Humans Vs Nations`) and `Number of teams` (`2`–`7`)
 - Capacity sliders use the right semantics per mode: total lobby size for `FFA`, players-per-team for `Team`
-- Optional `2×` constraint that also requires total lobby capacity to be at least double the per-team minimum
-- Modifier filters with explicit `Allowed` / `Blocked` controls
+- Per-team slider uses log-scaled stops with editable steppers; optional `2×` lock pins the max to twice the minimum
+- Tri-state modifier filters cycle `Any` → `Required` → `Excluded`, grouped by `Map` / `Gameplay` / `Economy`
 
 **Alerts**
 - Pulse highlight on the matching homepage queue card the moment a lobby matches
@@ -23,9 +23,8 @@ A TypeScript userscript for OpenFront `v0.31+` that watches public lobbies and n
 - Sound on game start, triggered by OpenFront's own `?live` URL transition
 
 **Smart UX**
-- Picking `Duos` / `Trios` / `Quads` automatically bumps the team-min slider to `2` / `3` / `4` so you never search for a Duos lobby with three players per team
 - Stronger highlight for your own player row (and your team card) inside the native join modal
-- Resizable, persisted discovery panel
+- Filter settings persist across reloads
 - Discovery feedback automatically pauses while you're already inside a joined lobby flow
 
 ### Modifier filters
@@ -45,7 +44,7 @@ A TypeScript userscript for OpenFront `v0.31+` that watches public lobbies and n
 
 ### Requirements
 
-- OpenFront `v0.30+`
+- OpenFront `v0.31+`
 - [Tampermonkey](https://www.tampermonkey.net/) or [Greasemonkey](https://www.greasespot.net/)
 - Browser notification permission (only if you want desktop alerts)
 
@@ -59,8 +58,8 @@ A TypeScript userscript for OpenFront `v0.31+` that watches public lobbies and n
 
 1. Open the Play page on [openfront.io](https://openfront.io/).
 2. In the `OpenFront Game Notifier` panel, enable `FFA`, `Team`, or both.
-3. For `Team`, optionally pick formats (`Duos`, `Quads`, `HvN`, custom counts).
-4. Set capacity bounds; mark unwanted modifiers as `Blocked`.
+3. For `Team`, optionally toggle `Humans Vs Nations` and pick allowed team counts (`2`–`7`).
+4. Set capacity bounds; click modifier chips to require or exclude them.
 5. When a queue card pulses on the homepage, click it yourself to join.
 
 ### What this doesn't do
@@ -85,7 +84,9 @@ A TypeScript userscript for OpenFront `v0.31+` that watches public lobbies and n
 │   │       ├── LobbyDiscoveryEngine.ts         # criteria matching
 │   │       ├── LobbyDiscoveryHelpers.ts        # pure helpers
 │   │       ├── LobbyDiscoveryTypes.ts
-│   │       └── LobbyDiscoveryUI.ts             # panel UI
+│   │       ├── LobbyDiscoveryUI.ts             # panel UI
+│   │       ├── RangeSlider.ts                  # per-team log-scaled slider component
+│   │       └── RangeSliderHelpers.ts           # pure stop/position helpers
 │   ├── styles/
 │   ├── types/
 │   ├── utils/
@@ -124,7 +125,6 @@ npm run type-check   # tsc --noEmit
 ### Storage keys
 
 - `OF_LOBBY_DISCOVERY_SETTINGS` — criteria, sound/desktop preferences, `2×` toggle
-- `OF_LOBBY_DISCOVERY_PANEL_SIZE` — persisted panel width
 
 ### Testing
 
