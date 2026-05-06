@@ -810,8 +810,8 @@ describe('LobbyDiscoveryUI', () => {
     expect(chip.dataset.state).toBe('any');
   });
 
-  describe('auto-set team min on Duos/Trios/Quads toggle', () => {
-    function setupTeamUI(): void {
+  describe('removed Duos/Trios/Quads chips', () => {
+    it('does not render discovery-team-duos, -trios, or -quads', () => {
       store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
         criteria: [],
         discoveryEnabled: true,
@@ -821,91 +821,11 @@ describe('LobbyDiscoveryUI', () => {
 
       ui = new LobbyDiscoveryUI();
 
-      const teamCheckbox = document.getElementById('discovery-team') as HTMLInputElement;
-      teamCheckbox.checked = true;
-      teamCheckbox.dispatchEvent(new Event('change'));
-    }
-
-    function toggle(id: string, checked: boolean): void {
-      const checkbox = document.getElementById(id) as HTMLInputElement;
-      checkbox.checked = checked;
-      checkbox.dispatchEvent(new Event('change'));
-    }
-
-    it('sets min slider to 2 when Duos is checked', () => {
-      setupTeamUI();
-      toggle('discovery-team-duos', true);
-
-      // minSlider.value is a 0..1000 position; valueToPosition(2, stops) = 0/10 = 0.
-      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
-      expect(minSlider.value).toBe('0');
-      expect(minInput.value).toBe('2');
-    });
-
-    it('sets min slider to 3 when Trios is checked', () => {
-      setupTeamUI();
-      toggle('discovery-team-trios', true);
-
-      // valueToPosition(3, stops) = 1/10 = 0.1 → position 100.
-      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
-      expect(minSlider.value).toBe('100');
-      expect(minInput.value).toBe('3');
-    });
-
-    it('sets min slider to 4 when Quads is checked', () => {
-      setupTeamUI();
-      toggle('discovery-team-quads', true);
-
-      // valueToPosition(4, stops) = 2/10 = 0.2 → position 200.
-      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
-      expect(minSlider.value).toBe('200');
-      expect(minInput.value).toBe('4');
-    });
-
-    it('drops min slider to the lowest selected per-team value when multiple presets are checked', () => {
-      setupTeamUI();
-      toggle('discovery-team-trios', true);
-      toggle('discovery-team-duos', true);
-
-      // min(2, 3) = 2. valueToPosition(2, stops) = 0.
-      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
-      expect(minSlider.value).toBe('0');
-      expect(minInput.value).toBe('2');
-    });
-
-    it('does not touch the min slider when only HvN or numeric team-count checkboxes change', () => {
-      setupTeamUI();
-
-      // Drive min via number input change (RangeSlider owns the slider↔value mapping).
-      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
-      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      minInput.value = '5';
-      minInput.dispatchEvent(new Event('change'));
-
-      toggle('discovery-team-hvn', true);
-      toggle('discovery-team-3', true);
-
-      // valueToPosition(5, stops) = 3/10 = 0.3 → position 300.
-      expect(minSlider.value).toBe('300');
-      expect(minInput.value).toBe('5');
-    });
-
-    it('leaves the min slider where it last landed after a preset is unchecked', () => {
-      setupTeamUI();
-      toggle('discovery-team-trios', true);
-      const minSlider = document.getElementById('discovery-team-min-slider') as HTMLInputElement;
-      const minInput = document.getElementById('discovery-team-min') as HTMLInputElement;
-      // valueToPosition(3, stops) = 1/10 = 0.1 → position 100.
-      expect(minSlider.value).toBe('100');
-      expect(minInput.value).toBe('3');
-
-      toggle('discovery-team-trios', false);
-      expect(minSlider.value).toBe('100');
-      expect(minInput.value).toBe('3');
+      expect(document.getElementById('discovery-team-duos')).toBeNull();
+      expect(document.getElementById('discovery-team-trios')).toBeNull();
+      expect(document.getElementById('discovery-team-quads')).toBeNull();
+      expect(document.getElementById('discovery-team-hvn')).not.toBeNull();
+      expect(document.getElementById('discovery-team-2')).not.toBeNull();
     });
   });
 });
