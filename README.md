@@ -1,10 +1,11 @@
 # OpenFront Game Notifier
 
-A TypeScript userscript for OpenFront `v0.30+` that watches public lobbies and notifies you when one matches your filters — via in-page highlight, sound, and optional desktop notification. It also enhances OpenFront's native join modal. Never auto-joins.
+A TypeScript userscript for OpenFront `v0.31+` that watches public lobbies and notifies you when one matches your filters — via in-page highlight, sound, and optional desktop notification. It also enhances OpenFront's native join modal. Never auto-joins.
 
 ## For Players
 
-<img width="525" height="1119" alt="Discovery panel screenshot" src="https://github.com/user-attachments/assets/4a022e58-d25f-4100-9b54-cf76fe245ccd" />
+<img width="390" height="1163" alt="image" src="https://github.com/user-attachments/assets/406db425-26b9-48f9-867c-8786a7e3d6be" />
+
 
 ### Features
 
