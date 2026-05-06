@@ -525,18 +525,6 @@ export class LobbyDiscoveryUI {
     return values;
   }
 
-  private applyAutoTeamMin(): void {
-    const checked = TEAM_PRESET_IDS.filter(
-      ([id, , min]) =>
-        min !== null && (document.getElementById(id) as HTMLInputElement | null)?.checked
-    ).map(([, , min]) => min as number);
-
-    if (checked.length === 0) return;
-
-    const newMin = Math.min(...checked);
-    this.teamSlider?.setMin(newMin);
-  }
-
   private setAllTeamCounts(checked: boolean): void {
     for (const id of ALL_TEAM_IDS) {
       const checkbox = document.getElementById(id) as HTMLInputElement | null;
@@ -847,13 +835,6 @@ export class LobbyDiscoveryUI {
           return;
         }
         this.syncChipState(id);
-        if (
-          id === 'discovery-team-duos' ||
-          id === 'discovery-team-trios' ||
-          id === 'discovery-team-quads'
-        ) {
-          this.applyAutoTeamMin();
-        }
         this.refreshCriteria();
       });
     }
