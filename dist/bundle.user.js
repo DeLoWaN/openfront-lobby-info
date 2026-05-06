@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OpenFront Game Notifier
 // @namespace    https://openfront.io/
-// @version      2.10.6
+// @version      2.10.7
 // @description  Notifies you when a public OpenFront lobby matches your filters (mode, team format, capacity, modifiers) via in-page highlight, sound, and optional desktop notifications. Never auto-joins.
 // @homepageURL  https://github.com/DeLoWaN/openfront-autojoin-lobby
 // @downloadURL  https://raw.githubusercontent.com/DeLoWaN/openfront-autojoin-lobby/main/dist/bundle.user.js
