@@ -37,8 +37,9 @@ The numeric `2 | 3 | 4 | 5 | 6 | 7 teams` chips are also unaffected — they des
 
 ### 2. Settings normalization ([src/modules/lobby-discovery/LobbyDiscoveryHelpers.ts](src/modules/lobby-discovery/LobbyDiscoveryHelpers.ts))
 
-- In `isValidTeamCount` (lines 56–58), remove `value === 'Duos'`, `value === 'Trios'`, `value === 'Quads'` from the accepted set. Valid criteria team-count values become: `null`, `'Humans Vs Nations'`, or a number.
-- Effect: when `normalizeSettings` loads a saved criterion with `teamCount: 'Duos' | 'Trios' | 'Quads'`, validation fails and `teamCount` is silently coerced to `null`. The slider min/max in that criterion are untouched.
+- `parseTeamCount` (lines 52–76) is shared between criteria sanitization and lobby-data parsing (called by `getLobbyTeamConfig`). It must keep accepting `Duos | Trios | Quads` for lobby data. **Do not modify it.**
+- In `sanitizeCriteria` (lines 371–418), after the `parseTeamCount(candidate.teamCount ?? null)` call at line 410, coerce the result to `null` if it equals `'Duos'`, `'Trios'`, or `'Quads'`. Cleanest implementation: introduce a small private helper `sanitizeCriteriaTeamCount(value)` that wraps `parseTeamCount` and returns `null` for the three deprecated strings.
+- Effect: when `normalizeSettings` loads a saved criterion with `teamCount: 'Duos' | 'Trios' | 'Quads'`, the field is silently coerced to `null`. The slider min/max in that criterion are untouched.
 - Helpers that interpret lobby data — `getPlayersPerTeam` (lines 110–126), `getGameDetailsText` (lines 187–189), and `getLobbyModeLabel` (lines 218–224) — keep their `Duos | Trios | Quads` branches unchanged.
 
 ### 3. Engine ([src/modules/lobby-discovery/LobbyDiscoveryEngine.ts](src/modules/lobby-discovery/LobbyDiscoveryEngine.ts))
