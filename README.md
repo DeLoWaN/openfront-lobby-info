@@ -92,7 +92,6 @@ A TypeScript userscript for OpenFront `v0.31+` that watches public lobbies and n
 │   ├── utils/
 │   │   ├── BrowserNotificationUtils.ts
 │   │   ├── LobbyUtils.ts
-│   │   ├── ResizeHandler.ts
 │   │   ├── SoundUtils.ts
 │   │   └── URLObserver.ts
 │   └── main.ts

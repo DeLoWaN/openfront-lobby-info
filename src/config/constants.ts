@@ -13,7 +13,6 @@ export const CONFIG = {
  */
 export const STORAGE_KEYS = {
   lobbyDiscoverySettings: "OF_LOBBY_DISCOVERY_SETTINGS",
-  lobbyDiscoveryPanelSize: "OF_LOBBY_DISCOVERY_PANEL_SIZE",
 } as const;
 
 /**
