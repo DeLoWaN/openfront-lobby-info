@@ -368,6 +368,16 @@ export function sanitizeModifierFilters(value: unknown): ModifierFilters | undef
   return sanitized;
 }
 
+function sanitizeCriteriaTeamCount(
+  value: string | number | null | undefined
+): TeamCount | null {
+  const parsed = parseTeamCount(value);
+  if (parsed === 'Duos' || parsed === 'Trios' || parsed === 'Quads') {
+    return null;
+  }
+  return parsed;
+}
+
 export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
   if (!Array.isArray(criteria)) {
     return [];
@@ -407,7 +417,7 @@ export function sanitizeCriteria(criteria: unknown): DiscoveryCriteria[] {
 
     sanitized.push({
       gameMode,
-      teamCount: gameMode === 'Team' ? parseTeamCount(candidate.teamCount ?? null) : null,
+      teamCount: gameMode === 'Team' ? sanitizeCriteriaTeamCount(candidate.teamCount ?? null) : null,
       minPlayers,
       maxPlayers,
       modifiers: sanitizeModifierFilters(candidate.modifiers),

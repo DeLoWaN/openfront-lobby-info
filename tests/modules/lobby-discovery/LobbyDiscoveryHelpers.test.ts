@@ -351,4 +351,44 @@ describe('LobbyDiscoveryHelpers', () => {
       expect(result[0]!.maxPlayers).toBe(125);
     });
   });
+
+  describe('sanitizeCriteria — drops deprecated string team counts', () => {
+    it('coerces teamCount: "Duos" to null and preserves slider range', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Duos', minPlayers: 4, maxPlayers: 12 },
+      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.teamCount).toBeNull();
+      expect(result[0]!.minPlayers).toBe(4);
+      expect(result[0]!.maxPlayers).toBe(12);
+    });
+
+    it('coerces teamCount: "Trios" to null', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Trios', minPlayers: 6, maxPlayers: 18 },
+      ]);
+      expect(result[0]!.teamCount).toBeNull();
+    });
+
+    it('coerces teamCount: "Quads" to null', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Quads', minPlayers: 8, maxPlayers: 24 },
+      ]);
+      expect(result[0]!.teamCount).toBeNull();
+    });
+
+    it('preserves teamCount: "Humans Vs Nations"', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 'Humans Vs Nations', minPlayers: 2, maxPlayers: 62 },
+      ]);
+      expect(result[0]!.teamCount).toBe('Humans Vs Nations');
+    });
+
+    it('preserves numeric teamCount', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: 4, minPlayers: 2, maxPlayers: 16 },
+      ]);
+      expect(result[0]!.teamCount).toBe(4);
+    });
+  });
 });
