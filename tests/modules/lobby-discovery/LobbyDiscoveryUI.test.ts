@@ -810,7 +810,7 @@ describe('LobbyDiscoveryUI', () => {
     expect(chip.dataset.state).toBe('any');
   });
 
-  describe('removed Duos/Trios/Quads chips', () => {
+  describe('team panel layout', () => {
     it('does not render discovery-team-duos, -trios, or -quads', () => {
       store.set(STORAGE_KEYS.lobbyDiscoverySettings, {
         criteria: [],
