@@ -398,7 +398,7 @@ describe('LobbyDiscoveryHelpers', () => {
       expect(parseTeamCount('8+')).toBe('8+');
     });
 
-    it('does not return "8+" for the number 8', () => {
+    it('returns the number 8 for numeric input 8', () => {
       expect(parseTeamCount(8)).toBe(8);
     });
   });
