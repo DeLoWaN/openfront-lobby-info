@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   sanitizeCriteria,
   normalizeSettings,
+  parseTeamCount,
   getLobbyTeamConfig,
   getLobbyGameMode,
   getLobbyCapacity,
@@ -389,6 +390,36 @@ describe('LobbyDiscoveryHelpers', () => {
         { gameMode: 'Team', teamCount: 4, minPlayers: 2, maxPlayers: 16 },
       ]);
       expect(result[0]!.teamCount).toBe(4);
+    });
+  });
+
+  describe('parseTeamCount — 8+', () => {
+    it('returns "8+" for the string literal "8+"', () => {
+      expect(parseTeamCount('8+')).toBe('8+');
+    });
+
+    it('does not return "8+" for the number 8', () => {
+      expect(parseTeamCount(8)).toBe(8);
+    });
+  });
+
+  describe('sanitizeCriteria — 8+ team count', () => {
+    it('preserves teamCount: "8+"', () => {
+      const result = sanitizeCriteria([
+        { gameMode: 'Team', teamCount: '8+', minPlayers: 2, maxPlayers: 62 },
+      ]);
+      expect(result[0]!.teamCount).toBe('8+');
+    });
+
+    it('round-trips "8+" through normalizeSettings', () => {
+      const settings = normalizeSettings({
+        criteria: [{ gameMode: 'Team', teamCount: '8+', minPlayers: 2, maxPlayers: 62 }],
+        discoveryEnabled: true,
+        soundEnabled: true,
+        desktopNotificationsEnabled: false,
+        isTeamTwoTimesMinEnabled: false,
+      });
+      expect(settings.criteria[0]!.teamCount).toBe('8+');
     });
   });
 });

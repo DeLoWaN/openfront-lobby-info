@@ -4,7 +4,7 @@
 
 export type QueueSource = 'ffa' | 'team' | 'special';
 export type DiscoveryGameMode = 'FFA' | 'Team';
-export type TeamCount = 'Duos' | 'Trios' | 'Quads' | 'Humans Vs Nations' | number;
+export type TeamCount = 'Duos' | 'Trios' | 'Quads' | 'Humans Vs Nations' | '8+' | number;
 export type ModifierFilterState = 'any' | 'required' | 'blocked';
 
 export interface NumericModifierState {

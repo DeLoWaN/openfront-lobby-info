@@ -56,7 +56,8 @@ export function parseTeamCount(
     value === 'Duos' ||
     value === 'Trios' ||
     value === 'Quads' ||
-    value === 'Humans Vs Nations'
+    value === 'Humans Vs Nations' ||
+    value === '8+'
   ) {
     return value;
   }
