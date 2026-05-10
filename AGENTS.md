@@ -147,6 +147,71 @@ Integrates with:
 
 Contributors: DeLoVaN, SyntaxMenace, DeepSeek, Claude.
 
+---
+
+## Live Integration Testing (no user required)
+
+When unit tests are insufficient — e.g. to verify matching logic against real lobby data or to reproduce a highlighting bug — use the **Playwright MCP** tools directly. No Tampermonkey, no manual steps.
+
+### Key constraints
+
+- **CSP blocks `page.addScriptTag`** on openfront.io. Always use `page.evaluate()` to inject code; it runs via DevTools Protocol and bypasses CSP.
+- **The `/api/public_lobbies` fetch returns HTML** when called manually (SPA routing). Do not `fetch()` it directly.
+- **Live lobby data** is already on the page via WebSocket. Read it from the `game-mode-selector` custom element or wait for the `public-lobbies-update` DOM event.
+- The data feed is at `wss://openfront.io/w{N}/lobbies` (worker index chosen randomly by the game). The page connects automatically on load.
+
+### How to get live lobby data
+
+Navigate to `https://openfront.io/` (root, not `/play` — the data feed starts there), then in a `page.evaluate()`:
+
+```js
+// Option A: already connected — read directly from the DOM element
+const sel = document.querySelector('game-mode-selector');
+const data = sel?.lobbies; // { games: { ffa: [...], team: [...], special: [...] } }
+
+// Option B: wait for the next WebSocket push (up to 15 s)
+const data = await new Promise((resolve) => {
+  document.addEventListener('public-lobbies-update', (e) => {
+    resolve(e.detail?.payload);
+  }, { once: true });
+  setTimeout(() => resolve(null), 15000);
+});
+```
+
+`data.games` is keyed by `"ffa"`, `"team"`, `"special"`. Each value is an array of `Lobby` objects — the game UI always shows index `[0]` of each source; the notifier only evaluates `[0]` as the "featured" lobby for that slot.
+
+### How to run the matcher against live data
+
+Inline the logic from `LobbyDiscoveryHelpers.ts` + `LobbyDiscoveryEngine.ts` directly in `page.evaluate()` (pure functions, no imports needed). Then iterate over the lobbies, annotate each with `{ source, featured, matched, wouldPulse, failReason }`, and return the array. This gives a full picture of what the notifier would do without running the full bundle.
+
+Skeleton (expand with real helper implementations):
+
+```js
+page.evaluate(() => {
+  // paste normalizeGameMode, parseTeamCount, getLobbyTeamConfig,
+  // getLobbyCapacity, getPlayersPerTeam, matchesCriteria inline here
+  const criteria = [ /* test criteria */ ];
+  const data = document.querySelector('game-mode-selector')?.lobbies;
+  const seenSources = new Set();
+  return Object.entries(data.games).flatMap(([source, lobbies]) =>
+    lobbies.map(lobby => {
+      const featured = !seenSources.has(source);
+      if (featured) seenSources.add(source);
+      const matched = matchesCriteria(lobby, criteria);
+      return { source, featured, map: lobby.gameConfig?.gameMap, matched, wouldPulse: matched && featured };
+    })
+  );
+});
+```
+
+### What to watch for
+
+| Symptom | Likely cause |
+|---|---|
+| `matched: true, wouldPulse: false` | Matching lobby is at `[1]` or later — blocked by a non-matching featured lobby at `[0]` |
+| `matched: false` for HvN lobby | `getPlayersPerTeam('Humans Vs Nations', cap)` returns `cap`; players/team filter compares against full capacity |
+| No lobbies at all | Navigated to `/play` instead of `/`; the data feed doesn't start there |
+
 # Version Management
 
 Version is centralized in `package.json` and propagates to:
